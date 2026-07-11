@@ -1,0 +1,1719 @@
+{
+  "users": [
+    {
+      "id": "demo-user",
+      "username": "demo@asteria.local",
+      "displayName": "OmaiwaMuShindeiro",
+      "pronouns": "he/him",
+      "password": "d0cad6359309d414e3203391def70245:6bf5ceeab0e2279042ab946e8f1ae048bd5d04375669011c0450316aeae85aa3db58914b9c0d277214018d865eadf3cfe96f78655450b22554019b39bf89cdb2",
+      "avatar": "",
+      "settings": {
+        "theme": "midnight",
+        "autoplay": true,
+        "autoNext": true,
+        "autoSkip": true,
+        "quality": "Auto",
+        "captions": "English",
+        "softCc": true,
+        "minimizeOnBlur": false,
+        "pauseHistory": false,
+        "nsfwHidden": true
+      },
+      "library": {
+        "slime-s4": {
+          "status": "Watching",
+          "score": 82,
+          "progress": 0.58,
+          "currentEpisode": 8,
+          "rewatched": 0,
+          "notes": "",
+          "list": "watching",
+          "server": "Aurora",
+          "quality": "1080p",
+          "caption": "English"
+        },
+        "mushoku-3": {
+          "status": "Plan to watch",
+          "score": 0,
+          "progress": 0,
+          "currentEpisode": 1,
+          "rewatched": 0,
+          "notes": "",
+          "list": "planning",
+          "server": "Aurora",
+          "quality": "1080p",
+          "caption": "English"
+        },
+        "one-piece": {
+          "status": "Watching",
+          "score": 74,
+          "progress": 0.72,
+          "currentEpisode": 1097,
+          "rewatched": 0,
+          "notes": "",
+          "list": "watching",
+          "server": "Aurora",
+          "quality": "1080p",
+          "caption": "English"
+        },
+        "overlord": {
+          "status": "Finished",
+          "score": 91,
+          "progress": 1,
+          "currentEpisode": 13,
+          "rewatched": 1,
+          "notes": "Rewatch before movie",
+          "list": "finished",
+          "server": "Aurora",
+          "quality": "720p",
+          "caption": "English"
+        }
+      },
+      "favorites": [
+        "slime-s4",
+        "mushoku-3",
+        "one-piece",
+        "overlord",
+        "shield-hero"
+      ],
+      "watchLater": [
+        "mushoku-3",
+        "tsukimichi-2"
+      ],
+      "history": [
+        {
+          "titleId": "slime-s4",
+          "episode": 1,
+          "progress": 0.42,
+          "updatedAt": "2026-07-11T05:57:01.572Z",
+          "server": "Aurora"
+        },
+        {
+          "titleId": "one-piece",
+          "episode": 1097,
+          "progress": 0.12,
+          "updatedAt": "2026-07-11T01:57:01.580Z",
+          "server": "Aurora"
+        },
+        {
+          "titleId": "overlord",
+          "episode": 12,
+          "progress": 0.84,
+          "updatedAt": "2026-07-09T06:57:01.580Z",
+          "server": "Mirror"
+        }
+      ],
+      "continueWatching": [
+        {
+          "titleId": "slime-s4",
+          "episode": 8,
+          "progress": 0.42,
+          "updatedAt": "2026-07-11T05:57:01.580Z"
+        },
+        {
+          "titleId": "one-piece",
+          "episode": 1097,
+          "progress": 0.12,
+          "updatedAt": "2026-07-11T01:57:01.580Z"
+        },
+        {
+          "titleId": "shield-hero",
+          "episode": 14,
+          "progress": 0.71,
+          "updatedAt": "2026-07-09T06:57:01.580Z"
+        }
+      ],
+      "devices": [
+        {
+          "id": "dev-1",
+          "label": "Windows · Chrome",
+          "location": "SG",
+          "lastSeen": "current"
+        },
+        {
+          "id": "dev-2",
+          "label": "Windows · Chrome",
+          "location": "IN",
+          "lastSeen": "9d ago"
+        },
+        {
+          "id": "dev-3",
+          "label": "Windows · Chrome",
+          "location": "IN",
+          "lastSeen": "10d ago"
+        }
+      ],
+      "importLists": {
+        "planning": true,
+        "watching": true,
+        "on_hold": true,
+        "dropped": true,
+        "finished": true,
+        "rewatching": true
+      }
+    }
+  ],
+  "sessions": {
+    "0f27b6d6-f372-45e8-939e-07f9c3bca312": {
+      "userId": "demo-user",
+      "createdAt": "2026-07-11T07:02:49.327Z"
+    }
+  },
+  "titles": [
+    {
+      "id": "slime-s4",
+      "slug": "that-time-i-got-reincarnated-as-a-slime-season-4",
+      "title": "That Time I Got Reincarnated as a Slime Season 4",
+      "altTitle": "Tensei Shitara Slime Datta Ken 4th Season",
+      "season": "Spring 2026",
+      "type": "TV Show",
+      "status": "RELEASING",
+      "year": 2026,
+      "score": 8.2,
+      "episodeCount": 14,
+      "runtime": "24 min",
+      "source": "Light Novel",
+      "studio": "8-bit",
+      "tags": [
+        "Isekai",
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Fantasy"
+      ],
+      "synopsis": "The fourth season of Rimuru's story as Tempest negotiates a fragile balance between monsters, kingdoms, and the looming pressure of a larger war.",
+      "poster": {
+        "from": "#3ca7ff",
+        "to": "#0b1524",
+        "glow": "#7fd7ff"
+      },
+      "intro": [
+        86,
+        192
+      ],
+      "outro": [
+        1330,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        },
+        {
+          "id": "nova",
+          "label": "Nova",
+          "quality": "720p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        },
+        {
+          "id": "mirror",
+          "label": "Mirror",
+          "quality": "480p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "New Days",
+          "views": "201K",
+          "released": "3 months ago"
+        },
+        {
+          "id": 2,
+          "title": "The Dungeon Evolves",
+          "views": "101K",
+          "released": "3 months ago"
+        },
+        {
+          "id": 3,
+          "title": "The Avatar Team Is Formed",
+          "views": "105K",
+          "released": "3 months ago"
+        },
+        {
+          "id": 4,
+          "title": "Invitation",
+          "views": "140K",
+          "released": "3 months ago"
+        },
+        {
+          "id": 5,
+          "title": "The First Step",
+          "views": "167K",
+          "released": "2 months ago"
+        },
+        {
+          "id": 6,
+          "title": "The Council of the West",
+          "views": "209K",
+          "released": "2 months ago"
+        },
+        {
+          "id": 7,
+          "title": "The Mastermind's Identity",
+          "views": "214K",
+          "released": "2 months ago"
+        },
+        {
+          "id": 8,
+          "title": "The Groundwork of Greed",
+          "views": "236K",
+          "released": "2 months ago"
+        },
+        {
+          "id": 9,
+          "title": "Investigating the Ruins",
+          "views": "227K",
+          "released": "1 month ago"
+        },
+        {
+          "id": 10,
+          "title": "The Master of Greed",
+          "views": "215K",
+          "released": "1 month ago"
+        },
+        {
+          "id": 11,
+          "title": "Milim's Friend",
+          "views": "204K",
+          "released": "3 weeks ago"
+        },
+        {
+          "id": 12,
+          "title": "Tempest Evolves",
+          "views": "181K",
+          "released": "2 weeks ago"
+        },
+        {
+          "id": 13,
+          "title": "New Companions",
+          "views": "128K",
+          "released": "1 week ago"
+        },
+        {
+          "id": 14,
+          "title": "Black Numbers",
+          "views": "118K",
+          "released": "2 days ago"
+        }
+      ],
+      "related": [
+        "mushoku-3",
+        "overlord",
+        "shield-hero",
+        "rezero",
+        "tsukimichi-2"
+      ]
+    },
+    {
+      "id": "mushoku-3",
+      "slug": "mushoku-tensei-jobless-reincarnation-season-3",
+      "title": "Mushoku Tensei: Jobless Reincarnation Season 3",
+      "altTitle": "Mushoku Tensei 3",
+      "season": "Winter 2025",
+      "type": "TV Show",
+      "status": "RELEASING",
+      "year": 2025,
+      "score": 8.7,
+      "episodeCount": 12,
+      "runtime": "25 min",
+      "source": "Light Novel",
+      "studio": "Studio Bind",
+      "tags": [
+        "Adventure",
+        "Drama",
+        "Fantasy"
+      ],
+      "synopsis": "Rudeus keeps moving forward in a world that constantly demands a new version of him, with the family, the future, and the cost of growth all colliding at once.",
+      "poster": {
+        "from": "#6bc7ff",
+        "to": "#14223b",
+        "glow": "#d5f3ff"
+      },
+      "intro": [
+        92,
+        204
+      ],
+      "outro": [
+        1330,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        },
+        {
+          "id": "pulse",
+          "label": "Pulse",
+          "quality": "720p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "The Return",
+          "views": "196K",
+          "released": "6 months ago"
+        },
+        {
+          "id": 2,
+          "title": "Crossroads",
+          "views": "122K",
+          "released": "6 months ago"
+        },
+        {
+          "id": 3,
+          "title": "Guild Contract",
+          "views": "118K",
+          "released": "5 months ago"
+        },
+        {
+          "id": 4,
+          "title": "The Promise",
+          "views": "141K",
+          "released": "5 months ago"
+        },
+        {
+          "id": 5,
+          "title": "A New Journey",
+          "views": "130K",
+          "released": "4 months ago"
+        },
+        {
+          "id": 6,
+          "title": "The Old Road",
+          "views": "149K",
+          "released": "4 months ago"
+        },
+        {
+          "id": 7,
+          "title": "Sands and Storms",
+          "views": "162K",
+          "released": "3 months ago"
+        },
+        {
+          "id": 8,
+          "title": "The Family Name",
+          "views": "173K",
+          "released": "2 months ago"
+        },
+        {
+          "id": 9,
+          "title": "Silver Threads",
+          "views": "184K",
+          "released": "1 month ago"
+        },
+        {
+          "id": 10,
+          "title": "The Sky Cart",
+          "views": "193K",
+          "released": "3 weeks ago"
+        },
+        {
+          "id": 11,
+          "title": "Departure",
+          "views": "207K",
+          "released": "1 week ago"
+        },
+        {
+          "id": 12,
+          "title": "The Oath",
+          "views": "229K",
+          "released": "today"
+        }
+      ],
+      "related": [
+        "slime-s4",
+        "overlord",
+        "rezero",
+        "shield-hero"
+      ]
+    },
+    {
+      "id": "overlord",
+      "slug": "overlord",
+      "title": "Overlord",
+      "altTitle": "Overlord",
+      "season": "Summer 2015",
+      "type": "TV Show",
+      "status": "FINISHED",
+      "year": 2015,
+      "score": 8.1,
+      "episodeCount": 13,
+      "runtime": "24 min",
+      "source": "Light Novel",
+      "studio": "Madhouse",
+      "tags": [
+        "Action",
+        "Fantasy",
+        "Game"
+      ],
+      "synopsis": "A guild master wakes in a world that has accepted him as a supreme ruler, and every move he makes changes the board around him.",
+      "poster": {
+        "from": "#4b5cff",
+        "to": "#16192b",
+        "glow": "#d7d8ff"
+      },
+      "intro": [
+        88,
+        194
+      ],
+      "outro": [
+        1320,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        },
+        {
+          "id": "mirror",
+          "label": "Mirror",
+          "quality": "720p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "Episode 1",
+          "views": "201K",
+          "released": "2015"
+        },
+        {
+          "id": 2,
+          "title": "Episode 2",
+          "views": "101K",
+          "released": "2015"
+        },
+        {
+          "id": 3,
+          "title": "Episode 3",
+          "views": "105K",
+          "released": "2015"
+        },
+        {
+          "id": 4,
+          "title": "Episode 4",
+          "views": "140K",
+          "released": "2015"
+        },
+        {
+          "id": 5,
+          "title": "Episode 5",
+          "views": "167K",
+          "released": "2015"
+        },
+        {
+          "id": 6,
+          "title": "Episode 6",
+          "views": "209K",
+          "released": "2015"
+        },
+        {
+          "id": 7,
+          "title": "Episode 7",
+          "views": "214K",
+          "released": "2015"
+        },
+        {
+          "id": 8,
+          "title": "Episode 8",
+          "views": "236K",
+          "released": "2015"
+        },
+        {
+          "id": 9,
+          "title": "Episode 9",
+          "views": "227K",
+          "released": "2015"
+        },
+        {
+          "id": 10,
+          "title": "Episode 10",
+          "views": "215K",
+          "released": "2015"
+        },
+        {
+          "id": 11,
+          "title": "Episode 11",
+          "views": "204K",
+          "released": "2015"
+        },
+        {
+          "id": 12,
+          "title": "Episode 12",
+          "views": "181K",
+          "released": "2015"
+        },
+        {
+          "id": 13,
+          "title": "Episode 13",
+          "views": "128K",
+          "released": "2015"
+        }
+      ],
+      "related": [
+        "shield-hero",
+        "rezero",
+        "slime-s4"
+      ]
+    },
+    {
+      "id": "shield-hero",
+      "slug": "the-rising-of-the-shield-hero",
+      "title": "The Rising of the Shield Hero",
+      "altTitle": "Tate no Yuusha",
+      "season": "Winter 2019",
+      "type": "TV Show",
+      "status": "FINISHED",
+      "year": 2019,
+      "score": 7.8,
+      "episodeCount": 25,
+      "runtime": "24 min",
+      "source": "Light Novel",
+      "studio": "Kinema Citrus",
+      "tags": [
+        "Action",
+        "Adventure",
+        "Drama"
+      ],
+      "synopsis": "A reluctant hero is thrown into a world that mistrusts him, then forced to survive long enough to become something the system did not expect.",
+      "poster": {
+        "from": "#26d07c",
+        "to": "#102219",
+        "glow": "#b0ffd9"
+      },
+      "intro": [
+        90,
+        195
+      ],
+      "outro": [
+        1320,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "Episode 1",
+          "views": "201K",
+          "released": "2019"
+        },
+        {
+          "id": 2,
+          "title": "Episode 2",
+          "views": "101K",
+          "released": "2019"
+        },
+        {
+          "id": 3,
+          "title": "Episode 3",
+          "views": "105K",
+          "released": "2019"
+        },
+        {
+          "id": 4,
+          "title": "Episode 4",
+          "views": "140K",
+          "released": "2019"
+        },
+        {
+          "id": 5,
+          "title": "Episode 5",
+          "views": "167K",
+          "released": "2019"
+        },
+        {
+          "id": 6,
+          "title": "Episode 6",
+          "views": "209K",
+          "released": "2019"
+        },
+        {
+          "id": 7,
+          "title": "Episode 7",
+          "views": "214K",
+          "released": "2019"
+        },
+        {
+          "id": 8,
+          "title": "Episode 8",
+          "views": "236K",
+          "released": "2019"
+        },
+        {
+          "id": 9,
+          "title": "Episode 9",
+          "views": "227K",
+          "released": "2019"
+        },
+        {
+          "id": 10,
+          "title": "Episode 10",
+          "views": "215K",
+          "released": "2019"
+        },
+        {
+          "id": 11,
+          "title": "Episode 11",
+          "views": "204K",
+          "released": "2019"
+        },
+        {
+          "id": 12,
+          "title": "Episode 12",
+          "views": "181K",
+          "released": "2019"
+        }
+      ],
+      "related": [
+        "slime-s4",
+        "mushoku-3",
+        "rezero"
+      ]
+    },
+    {
+      "id": "rezero",
+      "slug": "re-zero-starting-life-in-another-world",
+      "title": "Re:ZERO -Starting Life in Another World-",
+      "altTitle": "Re:Zero",
+      "season": "Summer 2020",
+      "type": "TV Show",
+      "status": "FINISHED",
+      "year": 2020,
+      "score": 8.4,
+      "episodeCount": 25,
+      "runtime": "24 min",
+      "source": "Light Novel",
+      "studio": "White Fox",
+      "tags": [
+        "Drama",
+        "Fantasy",
+        "Psychological"
+      ],
+      "synopsis": "Every reset changes the cost of survival, and Subaru keeps learning that the world can remember pain even when time cannot.",
+      "poster": {
+        "from": "#d24cff",
+        "to": "#2a102a",
+        "glow": "#ffbaff"
+      },
+      "intro": [
+        86,
+        196
+      ],
+      "outro": [
+        1320,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "Episode 1",
+          "views": "201K",
+          "released": "2020"
+        },
+        {
+          "id": 2,
+          "title": "Episode 2",
+          "views": "101K",
+          "released": "2020"
+        },
+        {
+          "id": 3,
+          "title": "Episode 3",
+          "views": "105K",
+          "released": "2020"
+        },
+        {
+          "id": 4,
+          "title": "Episode 4",
+          "views": "140K",
+          "released": "2020"
+        },
+        {
+          "id": 5,
+          "title": "Episode 5",
+          "views": "167K",
+          "released": "2020"
+        },
+        {
+          "id": 6,
+          "title": "Episode 6",
+          "views": "209K",
+          "released": "2020"
+        },
+        {
+          "id": 7,
+          "title": "Episode 7",
+          "views": "214K",
+          "released": "2020"
+        },
+        {
+          "id": 8,
+          "title": "Episode 8",
+          "views": "236K",
+          "released": "2020"
+        },
+        {
+          "id": 9,
+          "title": "Episode 9",
+          "views": "227K",
+          "released": "2020"
+        },
+        {
+          "id": 10,
+          "title": "Episode 10",
+          "views": "215K",
+          "released": "2020"
+        },
+        {
+          "id": 11,
+          "title": "Episode 11",
+          "views": "204K",
+          "released": "2020"
+        },
+        {
+          "id": 12,
+          "title": "Episode 12",
+          "views": "181K",
+          "released": "2020"
+        }
+      ],
+      "related": [
+        "slime-s4",
+        "shield-hero",
+        "mushoku-3"
+      ]
+    },
+    {
+      "id": "tsukimichi-2",
+      "slug": "tsukimichi-moonlit-fantasy-season-2",
+      "title": "TSUKIMICHI -Moonlit Fantasy- Season 2",
+      "altTitle": "Tsukimichi S2",
+      "season": "Winter 2024",
+      "type": "TV Show",
+      "status": "FINISHED",
+      "year": 2024,
+      "score": 8,
+      "episodeCount": 25,
+      "runtime": "24 min",
+      "source": "Light Novel",
+      "studio": "J.C.Staff",
+      "tags": [
+        "Adventure",
+        "Comedy",
+        "Fantasy"
+      ],
+      "synopsis": "A human cast away by the gods keeps building a life that is equal parts ridiculous, strategic, and surprisingly effective.",
+      "poster": {
+        "from": "#ffc94d",
+        "to": "#2b1e0f",
+        "glow": "#fff0c5"
+      },
+      "intro": [
+        88,
+        198
+      ],
+      "outro": [
+        1330,
+        1440
+      ],
+      "servers": [
+        {
+          "id": "aurora",
+          "label": "Aurora",
+          "quality": "1080p",
+          "url": "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "Episode 1",
+          "views": "201K",
+          "released": "2024"
+        },
+        {
+          "id": 2,
+          "title": "Episode 2",
+          "views": "101K",
+          "released": "2024"
+        },
+        {
+          "id": 3,
+          "title": "Episode 3",
+          "views": "105K",
+          "released": "2024"
+        },
+        {
+          "id": 4,
+          "title": "Episode 4",
+          "views": "140K",
+          "released": "2024"
+        },
+        {
+          "id": 5,
+          "title": "Episode 5",
+          "views": "167K",
+          "released": "2024"
+        },
+        {
+          "id": 6,
+          "title": "Episode 6",
+          "views": "209K",
+          "released": "2024"
+        },
+        {
+          "id": 7,
+          "title": "Episode 7",
+          "views": "214K",
+          "released": "2024"
+        },
+        {
+          "id": 8,
+          "title": "Episode 8",
+          "views": "236K",
+          "released": "2024"
+        },
+        {
+          "id": 9,
+          "title": "Episode 9",
+          "views": "227K",
+          "released": "2024"
+        },
+        {
+          "id": 10,
+          "title": "Episode 10",
+          "views": "215K",
+          "released": "2024"
+        },
+        {
+          "id": 11,
+          "title": "Episode 11",
+          "views": "204K",
+          "released": "2024"
+        },
+        {
+          "id": 12,
+          "title": "Episode 12",
+          "views": "181K",
+          "released": "2024"
+        }
+      ],
+      "related": [
+        "slime-s4",
+        "one-piece",
+        "mushoku-3"
+      ]
+    },
+    {
+      "id": "one-piece",
+      "slug": "one-piece",
+      "title": "ONE PIECE",
+      "altTitle": "ONE PIECE",
+      "nativeTitle": "ONE PIECE",
+      "synonyms": [
+        "ワンピース",
+        "海贼王",
+        "וואן פיס",
+        "ون بيس",
+        "วันพีซ",
+        "Vua Hải Tặc",
+        "All'arrembaggio!",
+        "Tutti all'arrembaggio!",
+        "Ντρέηκ, το Κυνήγι του Θησαυρού",
+        "OP",
+        "Ван-Пис"
+      ],
+      "season": "FALL 1999",
+      "type": "TV Show",
+      "status": "RELEASING",
+      "year": 1999,
+      "score": 8.7,
+      "meanScore": 8.7,
+      "episodeCount": 1,
+      "runtime": "24 min",
+      "source": "MANGA",
+      "studio": "Toei Animation",
+      "tags": [
+        "Action",
+        "Adventure",
+        "Comedy",
+        "Drama",
+        "Fantasy"
+      ],
+      "tagsList": [
+        "Pirates",
+        "Travel",
+        "Ensemble Cast",
+        "Shounen",
+        "Super Power",
+        "Found Family",
+        "Male Protagonist",
+        "Conspiracy",
+        "Tragedy",
+        "Ships"
+      ],
+      "synopsis": "Gold Roger was known as the Pirate King, the strongest and most infamous being to have sailed the Grand Line. The capture and death of Roger by the World Government brought a change throughout the world. His last words before his death revealed the location of the greatest treasure in the world, One Piece. It was this revelation that brought about the Grand Age of Pirates, men who dreamed of finding One Piece (which promises an unlimited amount of riches and fame), and quite possibly the most coveted of titles for the person who found it, the title of the Pirate King.\nEnter Monkey D. Luffy, a 17-year-old boy that defies your standard definition of a pirate. Rather than the popular persona of a wicked, hardened, toothless pirate who ransacks villages for fun, Luffy’s reason for being a pirate is one of pure wonder; the thought of an exciting adventure and meeting new and intriguing people, along with finding One Piece, are his reasons of becoming a pirate. Following in the footsteps of his childhood hero, Luffy and his crew travel across the Grand Line, experiencing crazy adventures, unveiling dark mysteries and battling strong enemies, all in order to reach One Piece.\n*This includes the following special episodes:\n- Chopperman to the Rescue! Protect the TV Station by the Shore! (Episode 336)\n- The Strongest Tag-Team! Luffy and Toriko's Hard Struggle! (Episode 492)\n- Team Formation! Save Chopper (Episode 542)\n- History's Strongest Collaboration vs. Glutton of the Sea (Episode 590)\n- 20th Anniversary! Special Romance Dawn (Episode 907)",
+      "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21-ELSYx3yMPcKM.jpg",
+      "bannerImage": "https://s4.anilist.co/file/anilistcdn/media/anime/banner/21-wf37VakJmZqs.jpg",
+      "poster": {
+        "from": "#e49335",
+        "to": "#0b1524",
+        "glow": "#e49335"
+      },
+      "relations": [
+        {
+          "relation": "SIDE_STORY",
+          "id": "466",
+          "title": "One Piece: Defeat the Pirate Ganzack!",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx466-bVP54I7dCB2F.jpg",
+          "type": "OVA",
+          "year": 1998
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "1094",
+          "title": "One Piece: Umi no Heso no Daibouken-hen",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1094-H3YFJ1TR0ZZi.jpg",
+          "type": "SPECIAL",
+          "year": 2000
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "1237",
+          "title": "One Piece Special: Open Upon the Great Sea! A Father's Huge, HUGE Dream!",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/1237.jpg",
+          "type": "SPECIAL",
+          "year": 2003
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "1238",
+          "title": "One Piece Special: Protect! The Last Great Performance",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx1238-Rf2wqBrCwgvO.jpg",
+          "type": "SPECIAL",
+          "year": 2003
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "2020",
+          "title": "One Piece Special: The Detective Memoirs of Chief Straw Hat Luffy",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/2020.jpg",
+          "type": "SPECIAL",
+          "year": 2005
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "2386",
+          "title": "ONE PIECE: Yume no Soccer Ou!",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/2386-NQQkq1taHJ08.jpg",
+          "type": "SPECIAL",
+          "year": 2002
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "2490",
+          "title": "ONE PIECE: Mezase! Kaizoku Yakyuu Ou",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/2490-AL4WmnCJ5zvE.jpg",
+          "type": "SPECIAL",
+          "year": 2004
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "12001",
+          "title": "ONE PIECE 3D: Gekisou! Trap Coaster",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx12001-XX0NNNfaKZ3e.jpg",
+          "type": "MOVIE",
+          "year": 2011
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "16239",
+          "title": "One Piece: Episode of Luffy - Hand Island Adventure",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b16239-XzoVjd7JK8xJ.png",
+          "type": "SPECIAL",
+          "year": 2012
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "16468",
+          "title": "ONE PIECE FILM: Z - GLORIOUS ISLAND",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b16468-pMKFwfY8lYZX.png",
+          "type": "SPECIAL",
+          "year": 2012
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "15323",
+          "title": "ONE PIECE: Episode of Nami - Koukaishi no Namida to Nakama no Kizuna",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/15323.jpg",
+          "type": "SPECIAL",
+          "year": 2012
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "19123",
+          "title": "One Piece: Episode of Merry - The Tale of One More Friend",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx19123-leET1CrSJknT.jpg",
+          "type": "SPECIAL",
+          "year": 2013
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "20835",
+          "title": "One Piece 3D2Y: Overcome Ace’s Death! Luffy’s Vow to his Friends",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx20835-QVV6LpJlqe1A.jpg",
+          "type": "SPECIAL",
+          "year": 2014
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "21230",
+          "title": "One Piece - Episode of Sabo: Bond of Three Brothers - A Miraculous Reunion and an Inherited Will",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21230-rfoUZud1Jn0L.png",
+          "type": "SPECIAL",
+          "year": 2015
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "21485",
+          "title": "One Piece: Adventure of Nebulandia",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/21485-KR1sv4rYSe6V.jpg",
+          "type": "SPECIAL",
+          "year": 2015
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "21831",
+          "title": "One Piece: Heart of Gold",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx21831-qj5IKYiPOupF.jpg",
+          "type": "SPECIAL",
+          "year": 2016
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "99302",
+          "title": "One Piece: Episode of East Blue",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx99302-b40WIhc5dylo.jpg",
+          "type": "SPECIAL",
+          "year": 2017
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "459",
+          "title": "ONE PIECE: The Movie",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx459-Ivw65mUXackh.png",
+          "type": "MOVIE",
+          "year": 2000
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "460",
+          "title": "One Piece: Clockwork Island Adventure",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx460-p9HObfGUhWn0.jpg",
+          "type": "MOVIE",
+          "year": 2001
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "461",
+          "title": "One Piece: Chopper’s Kingdom on the Island of Strange Animals",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx461-DC9fMDl3AaK1.jpg",
+          "type": "MOVIE",
+          "year": 2002
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "462",
+          "title": "One Piece The Movie: The Dead End Adventure",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx462-Ig8zfdsFWcql.png",
+          "type": "MOVIE",
+          "year": 2003
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "463",
+          "title": "One Piece: The Curse of the Sacred Sword",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx463-QDnETPoHp9oD.jpg",
+          "type": "MOVIE",
+          "year": 2004
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "464",
+          "title": "One Piece: Baron Omatsuri and the Secret Island",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx464-g4wcZPjbhY5j.png",
+          "type": "MOVIE",
+          "year": 2005
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "465",
+          "title": "One Piece: Mega Mecha Soldier of Karakuri Castle",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx465-qSRr0MKYhS0I.jpg",
+          "type": "MOVIE",
+          "year": 2006
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "2107",
+          "title": "One Piece: The Desert Princess and the Pirates, Adventures in Alabasta",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx2107-H8bRuRRbhCIJ.jpg",
+          "type": "MOVIE",
+          "year": 2007
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "3848",
+          "title": "One Piece: Episode Of Chopper +: The Miracle Winter Cherry Blossom",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx3848-SCnYGTn34Llt.jpg",
+          "type": "MOVIE",
+          "year": 2008
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "4155",
+          "title": "One Piece Film: Strong World",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx4155-P5TDf6t6qFwX.png",
+          "type": "MOVIE",
+          "year": 2009
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "9999",
+          "title": "One Piece 3D: Mugiwara Chase",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/9999.jpg",
+          "type": "MOVIE",
+          "year": 2011
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "12859",
+          "title": "One Piece Film: Z",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx12859-uQFENDPzMWz6.jpg",
+          "type": "MOVIE",
+          "year": 2012
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "21335",
+          "title": "One Piece Film: Gold",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx21335-XsXdE0AeOkkZ.jpg",
+          "type": "MOVIE",
+          "year": 2016
+        },
+        {
+          "relation": "ADAPTATION",
+          "id": "96427",
+          "title": "ONE PIECE: Loguetown-hen",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx96427-XiDc44cTlf29.png",
+          "type": "NOVEL",
+          "year": null
+        },
+        {
+          "relation": "ADAPTATION",
+          "id": "30013",
+          "title": "One Piece",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30013-BeslEMqiPhlk.jpg",
+          "type": "MANGA",
+          "year": null
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "101918",
+          "title": "One Piece: Episode of Skypiea",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx101918-3uyCYHw1syki.png",
+          "type": "SPECIAL",
+          "year": 2018
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "8740",
+          "title": "ONE PIECE FILM: STRONG WORLD - EPISODE:0",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b8740-oZajT3brPn7b.jpg",
+          "type": "OVA",
+          "year": 2010
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "105143",
+          "title": "One Piece: Stampede",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx105143-5uBDmhvMr6At.png",
+          "type": "MOVIE",
+          "year": 2019
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "102639",
+          "title": "Nissan SERENA x One Piece: Sennyuu Sauzando Sanii-gou",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx102639-AjxqMLkusd2Y.jpg",
+          "type": "SPECIAL",
+          "year": null
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "106492",
+          "title": "Kyutai Panic Adventure!",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b106492-ciLSI5nTJsV7.png",
+          "type": "SPECIAL",
+          "year": null
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "106572",
+          "title": "ONE PIECE: Episode of Alabasta - Sabaku no Oujo to Kaizoku-tachi",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/n106572-k1gqIsDcqGaV.jpg",
+          "type": "SPECIAL",
+          "year": 2011
+        },
+        {
+          "relation": "OTHER",
+          "id": "107110",
+          "title": "ONE PIECE: Cry heart",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/n107110-pF0sMxDe3aLi.png",
+          "type": "SPECIAL",
+          "year": 2014
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "107256",
+          "title": "Kyutai Panic Adventure Returns!!!",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b107256-Pvgk6VnCmMZq.png",
+          "type": "SPECIAL",
+          "year": null
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "2385",
+          "title": "One Piece: Django's Dance Carnival",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx2385-06iBj9aNIadt.jpg",
+          "type": "SPECIAL",
+          "year": 2001
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "101099",
+          "title": "HUNGRY DAYS: Aoharu ka yo.",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b101099-3AoCbJWTj2cV.jpg",
+          "type": "SPECIAL",
+          "year": null
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "21880",
+          "title": "ONE PIECE FILM: GOLD - episode 0 711ver.",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx21880-uxsZ880LXSdY.jpg",
+          "type": "SPECIAL",
+          "year": 2016
+        },
+        {
+          "relation": "ALTERNATIVE",
+          "id": "5252",
+          "title": "One Piece: Romance Dawn Story",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/5252.jpg",
+          "type": "OVA",
+          "year": 2008
+        },
+        {
+          "relation": "ADAPTATION",
+          "id": "30793",
+          "title": "Wanted! Eiichiro Oda Before One Piece",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx30793-Zca4SIWG5j8e.png",
+          "type": "MANGA",
+          "year": null
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "113308",
+          "title": "Kinen Satsuei",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx113308-u6wWW3d01DSt.jpg",
+          "type": "MUSIC",
+          "year": null
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "114761",
+          "title": "A-RA-SHI : Reborn",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b114761-C2xOMuA44zKY.png",
+          "type": "MUSIC",
+          "year": null
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "10033",
+          "title": "Toriko",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/nx10033-V7xnlgAVtaVR.jpg",
+          "type": "TV",
+          "year": 2011
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "813",
+          "title": "Dragon Ball Z",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx813-ZhnFNOeCU5dQ.png",
+          "type": "TV",
+          "year": 1989
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "126649",
+          "title": "The Great Tongari Island Treasure Hunting Adventure",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b126649-sbuKTAghtsln.jpg",
+          "type": "MOVIE",
+          "year": 2016
+        },
+        {
+          "relation": "ADAPTATION",
+          "id": "134184",
+          "title": "Romance Dawn",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/manga/cover/medium/bx134184-25CEkbRJEzXB.png",
+          "type": "ONE_SHOT",
+          "year": null
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "141902",
+          "title": "One Piece Film: Red",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx141902-fTyoTk8F8qOl.jpg",
+          "type": "MOVIE",
+          "year": 2022
+        },
+        {
+          "relation": "OTHER",
+          "id": "143293",
+          "title": "One Piece: Annecy Festival 60th Anniversary",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx143293-1ngwckHDsK95.jpg",
+          "type": "ONA",
+          "year": null
+        },
+        {
+          "relation": "PREQUEL",
+          "id": "167404",
+          "title": "MONSTERS: 103 Mercies Dragon Damnation",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx167404-QMZJVARntkbv.jpg",
+          "type": "ONA",
+          "year": 2024
+        },
+        {
+          "relation": "ALTERNATIVE",
+          "id": "171630",
+          "title": "THE ONE PIECE",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx171630-CW3kbduXmmUE.jpg",
+          "type": null,
+          "year": 2027
+        },
+        {
+          "relation": "OTHER",
+          "id": "177475",
+          "title": "ONE PIECE×KAWAISOUNI! Kono Boushi wo Omae ni Azukeru",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx177475-8HlvUgopoH0S.png",
+          "type": "ONA",
+          "year": null
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "182469",
+          "title": "ONE PIECE FAN LETTER",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx182469-JQ808NBPxmgn.jpg",
+          "type": "SPECIAL",
+          "year": 2024
+        },
+        {
+          "relation": "SUMMARY",
+          "id": "183423",
+          "title": "One Piece Log: Fish-Man Island Saga",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx183423-6Iiu194UDxD0.jpg",
+          "type": "TV",
+          "year": 2024
+        },
+        {
+          "relation": "CHARACTER",
+          "id": "187225",
+          "title": "LOS ANGELES LAKERS x ONE PIECE",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx187225-H0ppAOkOYMxM.jpg",
+          "type": "SPECIAL",
+          "year": 2025
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "188668",
+          "title": "Koisuru ONE PIECE",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx188668-rOB7rkgOz89w.jpg",
+          "type": "ONA",
+          "year": 2025
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "197178",
+          "title": "ONE PIECE HEROINES",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx197178-Ui8PY9HQbNgu.jpg",
+          "type": "SPECIAL",
+          "year": 2026
+        },
+        {
+          "relation": "SIDE_STORY",
+          "id": "187380",
+          "title": "ONE PIECE: Original Episode/Luffy, Law",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx187380-RZmxpJyB3A6Y.jpg",
+          "type": "SPECIAL",
+          "year": 2025
+        },
+        {
+          "relation": "SPIN_OFF",
+          "id": "204432",
+          "title": "CHOPPER's",
+          "coverImage": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx204432-h8U4bVnSU6bM.png",
+          "type": "TV_SHORT",
+          "year": 2026
+        }
+      ],
+      "characters": [
+        {
+          "role": "MAIN",
+          "name": "Usopp",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b724-GFGgI9AJQkfy.jpg",
+          "actor": {
+            "name": "Kappei Yamaguchi",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95067-hqIpNxMfAuN2.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Zoro Roronoa",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b62-S7oAeA9WInjV.png",
+          "actor": {
+            "name": "Kazuya Nakai",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95123-54LrTiD9kGwY.jpg",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Chopper Tony Tony",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b309-H64NhbJ2ywIQ.jpg",
+          "actor": {
+            "name": "Ikue Ootani",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95128-9YWpE1d2U8Sj.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Nami",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b723-vp5hPptgnNEC.png",
+          "actor": {
+            "name": "Akemi Okamura",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95076-itRGy8F3x5Em.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Robin Nico",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b61-ywXUyyocEEqt.png",
+          "actor": {
+            "name": "Yuriko Yamaguchi",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95130-GoO41ve3YWQw.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Luffy Monkey",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b40-MNypXsxSRb1R.png",
+          "actor": {
+            "name": "Mayumi Tanaka",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95075-1qD4TeW1ON92.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Sanji",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b305-6lisPmHtCnLT.png",
+          "actor": {
+            "name": "Hiroaki Hirata",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95125-NeFFiJupoDVj.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Franky",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/n64-ChX6ZzHHjXqA.png",
+          "actor": {
+            "name": "Kazuki Yao",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95131-TCVTgxb08tfE.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Jinbe",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b18938-yZANEfjsVhW4.png",
+          "actor": {
+            "name": "Daisuke Gouri",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95744-Iu1p0eNvShfN.jpg",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "MAIN",
+          "name": "Brook",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b5627-av8oD3zhKvDl.png",
+          "actor": {
+            "name": "Choo",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95898-XHSESV65G8Jv.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "SUPPORTING",
+          "name": "Scarlett",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b291751-yACYWSWpmrPu.jpg",
+          "actor": {
+            "name": "Wakana Yamazaki",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/n95496-PAwWafRnHtEf.png",
+            "language": "Japanese"
+          }
+        },
+        {
+          "role": "SUPPORTING",
+          "name": "Riku Doldo III",
+          "image": "https://s4.anilist.co/file/anilistcdn/character/large/b233908-uPUtG1szswNZ.png",
+          "actor": {
+            "name": "Masashi Hirose",
+            "image": "https://s4.anilist.co/file/anilistcdn/staff/large/7886.jpg",
+            "language": "Japanese"
+          }
+        }
+      ],
+      "episodes": [
+        {
+          "id": 1,
+          "title": "Episode 1",
+          "views": "100K",
+          "released": "today"
+        }
+      ]
+    }
+  ],
+  "comments": [
+    {
+      "id": "c1",
+      "titleId": "slime-s4",
+      "username": "binchilin",
+      "body": "The build finally feels like a proper browser app now.",
+      "createdAt": "2026-07-11T06:49:01.580Z",
+      "episode": 14,
+      "likes": 69,
+      "replies": 4
+    },
+    {
+      "id": "c2",
+      "titleId": "mushoku-3",
+      "username": "mika",
+      "body": "Need the next episode tab to carry the pace.",
+      "createdAt": "2026-07-11T05:57:01.580Z",
+      "episode": 1,
+      "likes": 41,
+      "replies": 3
+    },
+    {
+      "id": "c3",
+      "titleId": "one-piece",
+      "username": "sora",
+      "body": "Continue watching and library sync is exactly what I was after.",
+      "createdAt": "2026-07-11T03:57:01.580Z",
+      "episode": 1097,
+      "likes": 23,
+      "replies": 1
+    },
+    {
+      "id": "c4",
+      "titleId": "overlord",
+      "username": "tomo",
+      "body": "Switchable server options make the watch page feel real.",
+      "createdAt": "2026-07-09T06:57:01.580Z",
+      "episode": 12,
+      "likes": 19,
+      "replies": 2
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n1",
+      "title": "Daemons of the Shadow Realm",
+      "body": "Episode 13 just got added!",
+      "createdAt": "2026-07-04T06:57:01.607Z"
+    },
+    {
+      "id": "n2",
+      "title": "ONE PIECE",
+      "body": "Episode 1168 just got added!",
+      "createdAt": "2026-06-28T06:57:01.607Z"
+    },
+    {
+      "id": "n3",
+      "title": "The Beginning After the End",
+      "body": "Episode 12 just got added!",
+      "createdAt": "2026-06-25T06:57:01.607Z"
+    }
+  ],
+  "schedule": [
+    {
+      "time": "04:00",
+      "title": "Ninjala the Animation",
+      "episode": "Ep 224"
+    },
+    {
+      "time": "05:00",
+      "title": "Pan no Akachan (TV)",
+      "episode": "Ep 2"
+    },
+    {
+      "time": "07:30",
+      "title": "Soul Land 2: The Peerless Tang Clan",
+      "episode": "Ep 161"
+    },
+    {
+      "time": "14:00",
+      "title": "Ascendance of a Bookworm",
+      "episode": "Ep 13"
+    },
+    {
+      "time": "14:56",
+      "title": "Welcome to Demon School! Iruma-kun",
+      "episode": "Ep 15"
+    }
+  ]
+}

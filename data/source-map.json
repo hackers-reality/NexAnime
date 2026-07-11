@@ -1,0 +1,22 @@
+{
+  "titles": {
+    "slime-s4": {
+      "servers": [
+        {
+          "id": "owned-hls",
+          "label": "Owned HLS",
+          "quality": "1080p",
+          "url": "",
+          "kind": "hls"
+        },
+        {
+          "id": "owned-mp4",
+          "label": "Owned MP4",
+          "quality": "720p",
+          "url": "",
+          "kind": "mp4"
+        }
+      ]
+    }
+  }
+}
