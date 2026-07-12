@@ -1,0 +1,135 @@
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 480px;
+  overflow-y: auto;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Loading / Empty states ──────────────────── */
+.loading,
+.empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+/* ─── Result item ─────────────────────────────── */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--transition-fast);
+  border-bottom: 1px solid var(--border);
+}
+
+.item:last-of-type {
+  border-bottom: none;
+}
+
+.item:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* ─── Thumbnail ───────────────────────────────── */
+.thumb {
+  flex-shrink: 0;
+  width: 40px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background-color: var(--bg-surface-hover);
+}
+
+.thumbImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbPlaceholder {
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-surface-hover);
+}
+
+/* ─── Info ─────────────────────────────────────── */
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge {
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 500;
+  background-color: rgba(161, 161, 170, 0.1);
+  color: var(--text-muted);
+}
+
+.badgeAiring {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: var(--accent-airing);
+}
+
+.seasonLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* ─── View all link ───────────────────────────── */
+.viewAll {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  border-top: 1px solid var(--border);
+  transition: background-color var(--transition-fast);
+}
+
+.viewAll:hover {
+  background-color: var(--bg-surface-hover);
+}

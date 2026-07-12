@@ -1,0 +1,77 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getDb } from '@/lib/db';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { anilistId, episodeNumber, secondsWatched, durationSeconds } = body;
+
+    if (!anilistId || episodeNumber === undefined || secondsWatched === undefined || durationSeconds === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const db = getDb();
+    
+    // Check if progress already exists
+    const existing = await db.execute({
+      sql: 'SELECT id FROM watch_progress WHERE anilist_id = ? AND episode_number = ?',
+      args: [anilistId, episodeNumber]
+    });
+
+    if (existing.rows.length > 0) {
+      // Update
+      await db.execute({
+        sql: `
+          UPDATE watch_progress 
+          SET seconds_watched = ?, duration_seconds = ?, last_watched_at = datetime('now')
+          WHERE anilist_id = ? AND episode_number = ?
+        `,
+        args: [secondsWatched, durationSeconds, anilistId, episodeNumber]
+      });
+    } else {
+      // Insert
+      await db.execute({
+        sql: `
+          INSERT INTO watch_progress (anilist_id, episode_number, seconds_watched, duration_seconds, last_watched_at)
+          VALUES (?, ?, ?, ?, datetime('now'))
+        `,
+        args: [anilistId, episodeNumber, secondsWatched, durationSeconds]
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Failed to update progress:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const anilistId = searchParams.get('anilistId');
+  const episodeNumber = searchParams.get('episodeNumber');
+
+  if (!anilistId || !episodeNumber) {
+    return NextResponse.json({ error: 'Missing anilistId or episodeNumber' }, { status: 400 });
+  }
+
+  try {
+    const db = getDb();
+    const result = await db.execute({
+      sql: 'SELECT seconds_watched, duration_seconds FROM watch_progress WHERE anilist_id = ? AND episode_number = ?',
+      args: [parseInt(anilistId), parseInt(episodeNumber)]
+    });
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ secondsWatched: 0, durationSeconds: 0 });
+    }
+
+    return NextResponse.json({
+      secondsWatched: result.rows[0].seconds_watched,
+      durationSeconds: result.rows[0].duration_seconds
+    });
+  } catch (err) {
+    console.error('Failed to fetch progress:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

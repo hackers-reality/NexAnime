@@ -1,0 +1,177 @@
+.overlay {
+  position: absolute;
+  top: 0;
+  width: 320px;
+  z-index: 50;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: previewFadeIn 0.2s ease forwards;
+}
+
+.overlay.right {
+  left: calc(100% + 8px);
+}
+
+.overlay.left {
+  right: calc(100% + 8px);
+}
+
+@keyframes previewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(0) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* ─── Header ──────────────────────────────────── */
+.header {
+  padding: var(--space-4);
+  padding-bottom: 0;
+}
+
+.title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: var(--space-2);
+}
+
+/* ─── Badges row ──────────────────────────────── */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  background-color: rgba(161, 161, 170, 0.1);
+  color: var(--text-secondary);
+}
+
+.badgePrimary {
+  background-color: var(--primary-muted);
+  color: var(--primary);
+}
+
+/* ─── Score row ────────────────────────────────── */
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.star {
+  color: #fbbf24;
+}
+
+.scoreValue {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.scoreSuffix {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* ─── Synopsis ────────────────────────────────── */
+.synopsis {
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Genres row ──────────────────────────────── */
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.genrePill {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 500;
+  background-color: rgba(161, 161, 170, 0.08);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* ─── Actions footer ──────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+  background-color: rgba(20, 20, 32, 0.5);
+}
+
+.watchBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-full);
+  background-color: var(--primary);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.watchBtn:hover {
+  background-color: var(--primary-hover);
+}
+
+.bookmarkBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: rgba(161, 161, 170, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.bookmarkBtn:hover {
+  background-color: var(--primary-muted);
+  color: var(--primary);
+  border-color: rgba(59, 130, 246, 0.3);
+}

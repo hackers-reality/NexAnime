@@ -1,0 +1,116 @@
+.wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.triggerBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.triggerBtn:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-light);
+}
+
+.triggerBtnActive {
+  background-color: var(--primary-muted);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.triggerBtnActive:hover {
+  background-color: rgba(59, 130, 246, 0.25);
+}
+
+.airingStyle {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border-color: var(--accent-airing) !important;
+  color: var(--accent-airing) !important;
+}
+
+.airingStyle:hover {
+  background-color: rgba(34, 197, 94, 0.2) !important;
+}
+
+.dropdownChevron {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 180px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.item:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.itemActive {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border);
+  margin: var(--space-1) 0;
+}
+
+.editorItem {
+  color: var(--accent-airing);
+}
+
+.editorItem:hover {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: var(--accent-airing);
+}

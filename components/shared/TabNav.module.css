@@ -1,0 +1,120 @@
+.nav {
+  display: flex;
+  gap: 0;
+  position: relative;
+}
+
+/* ─── Underline variant ───────────────────────── */
+.underline {
+  border-bottom: 1px solid var(--border);
+  gap: var(--space-1);
+}
+
+.underline .tab {
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.underline .tab:hover {
+  color: var(--text-primary);
+}
+
+.underline .tab.active {
+  color: var(--primary);
+}
+
+.underline .tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: var(--space-4);
+  right: var(--space-4);
+  height: 2px;
+  background-color: var(--primary);
+  border-radius: 1px 1px 0 0;
+}
+
+/* ─── Pill variant ────────────────────────────── */
+.pill {
+  gap: var(--space-2);
+  padding: var(--space-1);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.pill .tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.pill .tab:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-hover);
+}
+
+.pill .tab.active {
+  color: white;
+  background-color: var(--primary);
+}
+
+/* ─── Default variant ─────────────────────────── */
+.default {
+  gap: var(--space-2);
+}
+
+.default .tab {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.default .tab:hover {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.default .tab.active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background-color: var(--primary-muted);
+}
+
+/* ─── Count badge ─────────────────────────────── */
+.count {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  background-color: rgba(161, 161, 170, 0.15);
+  color: var(--text-muted);
+}
+
+.active .count {
+  background-color: var(--primary-muted);
+  color: var(--primary);
+}

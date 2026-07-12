@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 56" fill="none">
+  <!-- Baked-in dark background -->
+  <rect width="320" height="56" rx="8" fill="#0a0a0f"/>
+  
+  <defs>
+    <linearGradient id="blueGradB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═══ SYMBOL: Angular Play-Chevron with N cutout ═══ -->
+  <path d="M10 10 L42 28 L10 46 Z" fill="url(#blueGradB)"/>
+  <path d="M18 18 L22 18 L22 34 L18 34 Z" fill="#0a0a0f"/>
+  <polygon points="22,18 26,18 34,32 30,32" fill="#0a0a0f"/>
+  <rect x="30" y="18" width="4" height="16" fill="#0a0a0f"/>
+  <path d="M38 26 L42 28 L38 30 Z" fill="#0a0a0f" opacity="0.3"/>
+
+  <!-- ═══ WORDMARK ═══ -->
+  <!-- "NEX" in primary blue -->
+  <path d="M56 42V14h3.2l10.4 19.5V14H73v28h-3.2L59.4 22.5V42H56z" fill="#3b82f6"/>
+  <path d="M78 14h14v3.5H81.5v7.5H90.5v3.5H81.5v10H92V42H78V14z" fill="#3b82f6"/>
+  <path d="M96 14h4l5.5 11L111 14h4l-7.5 14.5L115 42h-4l-5.5-11.5L100 42h-4l7.5-13.5L96 14z" fill="#3b82f6"/>
+  
+  <!-- Vertical separator bar -->
+  <rect x="122" y="16" width="1.5" height="24" rx="0.75" fill="#27272f"/>
+  
+  <!-- "ANIME" in mid-gray -->
+  <path d="M134 42l9-28h4l9 28h-3.8l-2.2-7h-10l-2.2 7H134zm6.2-10.5h7.6L144 19.5l-3.8 12z" fill="#a1a1aa"/>
+  <path d="M160 42V14h3.2l10.4 19.5V14h3.4v28h-3.2l-10.4-19.5V42H160z" fill="#a1a1aa"/>
+  <path d="M182 14h3.5v28H182V14z" fill="#a1a1aa"/>
+  <path d="M192 42V14h4.5l6 17.5 6-17.5h4.5v28h-3.2V20.5l-6 17.5h-2.6l-6-17.5V42H192z" fill="#a1a1aa"/>
+  <path d="M218 14h14v3.5h-10.5v7.5h9v3.5h-9v10h10.5V42H218V14z" fill="#a1a1aa"/>
+
+  <!-- Angular accent underline -->
+  <line x1="56" y1="47" x2="232" y2="47" stroke="#27272f" stroke-width="1"/>
+  <line x1="56" y1="47" x2="100" y2="47" stroke="url(#blueGradB)" stroke-width="2" stroke-linecap="round"/>
+</svg>
