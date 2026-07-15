@@ -50,11 +50,11 @@ export class GogoanimeAdapter implements ScraperAdapter {
   ): Promise<ScraperSource | null> {
     console.log(`[Gogoanime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}`);
     
-    // Fallback stream source (Sintel HLS)
+    // Fallback stream source (Big Buck Bunny VOD HLS)
     const fallbackSource: ScraperSource = {
       adapterId: this.id,
       sourceName: this.name,
-      streamUrl: 'https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8',
+      streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
       subtitleUrl: null,
     };
 
