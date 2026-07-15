@@ -93,97 +93,112 @@ export class GogoanimeAdapter implements ScraperAdapter {
         throw new Error('No title candidates found to search Gogoanime');
       }
 
-      // 2. Try candidates to find working watch page
-      for (const title of titleCandidates) {
-        const slug = slugify(title);
-        // Skip empty or invalid slugs containing only dashes
-        if (!slug || slug === '-' || slug.replace(/-/g, '') === '') continue;
-        
-        const episodeSlug = `${slug}-episode-${episodeNumber}`;
-        const watchUrl = `https://gogoanime.by/${episodeSlug}`;
-        
-        console.log(`[Gogoanime Scraper] Attempting to scrape: ${watchUrl}`);
-        try {
-          const res = await fetch(watchUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'
-            },
-            signal: AbortSignal.timeout(4000) // 4 second timeout per attempt
-          });
+      // 2. Try base domains and candidates to find working watch page
+      const baseDomains = [
+        'https://anitaku.to',
+        'https://gogoanime3.co',
+        'https://gogoanime.pe',
+        'https://gogoanime.by'
+      ];
 
-          if (!res.ok) continue;
+      for (const baseDomain of baseDomains) {
+        console.log(`[Gogoanime Scraper] Trying base domain: ${baseDomain}`);
+        let domainUnreachable = false;
+
+        for (const title of titleCandidates) {
+          const slug = slugify(title);
+          // Skip empty or invalid slugs containing only dashes
+          if (!slug || slug === '-' || slug.replace(/-/g, '') === '') continue;
           
-          const html = await res.text();
-          const match = html.match(/data-video="([^"]+)"/);
-          if (!match) continue;
-
-          let embedUrl = match[1];
-          if (embedUrl.startsWith("//")) embedUrl = "https:" + embedUrl;
-          console.log(`[Gogoanime Scraper] Found embed player URL: ${embedUrl}`);
-
-          // 3. Resolve embed url and decrypt stream sources
-          const urlObj = new URL(embedUrl);
-          const idParam = urlObj.searchParams.get("id");
-          if (!idParam) continue;
-
-          const embedRes = await fetch(embedUrl, {
-            headers: {
-              'Referer': 'https://gogoanime.by/',
-              'User-Agent': 'Mozilla/5.0'
-            },
-            signal: AbortSignal.timeout(4000)
-          });
-
-          if (!embedRes.ok) continue;
-          const embedHtml = await embedRes.text();
-          const dataMatch = embedHtml.match(/<script data-name="episode" data-value="([^"]+)">/);
-          if (!dataMatch) continue;
-
-          const ciphertext = dataMatch[1];
-          const decryptedId = decryptAES(ciphertext, keys.key, keys.iv);
-          if (!decryptedId) continue;
-
-          // Call encrypt-ajax.php to get streams
-          const encryptedId = encryptAES(idParam, keys.key, keys.iv);
-          const ajaxUrl = `https://${urlObj.hostname}/encrypt-ajax.php?id=${encryptedId}&alias=${idParam}`;
+          const episodeSlug = `${slug}-episode-${episodeNumber}`;
+          const watchUrl = `${baseDomain}/${episodeSlug}`;
           
-          const ajaxRes = await fetch(ajaxUrl, {
-            headers: {
-              "X-Requested-With": "XMLHttpRequest",
-              "Referer": embedUrl,
-              "User-Agent": "Mozilla/5.0"
-            },
-            signal: AbortSignal.timeout(4000)
-          });
+          console.log(`[Gogoanime Scraper] Attempting to scrape: ${watchUrl}`);
+          try {
+            const res = await fetch(watchUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'
+              },
+              signal: AbortSignal.timeout(3000) // 3 second timeout per attempt
+            });
 
-          if (!ajaxRes.ok) continue;
-          const ajaxData = await ajaxRes.json() as { data: string };
-          if (!ajaxData || !ajaxData.data) continue;
+            if (!res.ok) continue;
+            
+            const html = await res.text();
+            const match = html.match(/data-video="([^"]+)"/);
+            if (!match) continue;
 
-          const decryptedPayloadStr = decryptAES(ajaxData.data, keys.decKey, keys.iv);
-          if (!decryptedPayloadStr) continue;
+            let embedUrl = match[1];
+            if (embedUrl.startsWith("//")) embedUrl = "https:" + embedUrl;
+            console.log(`[Gogoanime Scraper] Found embed player URL: ${embedUrl}`);
 
-          const decryptedPayload = JSON.parse(decryptedPayloadStr);
-          const hlsSource = (decryptedPayload.source || []).find((src: any) => src.file.endsWith(".m3u8"));
-          
-          if (hlsSource) {
-            console.log(`[Gogoanime Scraper] Successfully resolved direct stream: ${hlsSource.file}`);
-            return {
-              adapterId: this.id,
-              sourceName: this.name,
-              streamUrl: hlsSource.file,
-              subtitleUrl: (decryptedPayload.track || []).find((t: any) => t.label === "English")?.file || null
-            };
-          }
-        } catch (err: any) {
-          console.warn(`[Gogoanime Scraper] Failed to resolve candidate ${slug}: ${err.message}`);
-          // Network block/timeout check to instantly fail-fast and save time
-          const errMsg = (err.message || '').toLowerCase();
-          if (errMsg.includes('timeout') || errMsg.includes('fetch failed') || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
-            console.warn('[Gogoanime Scraper] Network timeout or connection failure detected. Aborting candidates loop.');
-            break;
+            // 3. Resolve embed url and decrypt stream sources
+            const urlObj = new URL(embedUrl);
+            const idParam = urlObj.searchParams.get("id");
+            if (!idParam) continue;
+
+            const embedRes = await fetch(embedUrl, {
+              headers: {
+                'Referer': baseDomain + '/',
+                'User-Agent': 'Mozilla/5.0'
+              },
+              signal: AbortSignal.timeout(3000)
+            });
+
+            if (!embedRes.ok) continue;
+            const embedHtml = await embedRes.text();
+            const dataMatch = embedHtml.match(/<script data-name="episode" data-value="([^"]+)">/);
+            if (!dataMatch) continue;
+
+            const ciphertext = dataMatch[1];
+            const decryptedId = decryptAES(ciphertext, keys.key, keys.iv);
+            if (!decryptedId) continue;
+
+            // Call encrypt-ajax.php to get streams
+            const encryptedId = encryptAES(idParam, keys.key, keys.iv);
+            const ajaxUrl = `https://${urlObj.hostname}/encrypt-ajax.php?id=${encryptedId}&alias=${idParam}`;
+            
+            const ajaxRes = await fetch(ajaxUrl, {
+              headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": embedUrl,
+                "User-Agent": "Mozilla/5.0"
+              },
+              signal: AbortSignal.timeout(3000)
+            });
+
+            if (!ajaxRes.ok) continue;
+            const ajaxData = await ajaxRes.json() as { data: string };
+            if (!ajaxData || !ajaxData.data) continue;
+
+            const decryptedPayloadStr = decryptAES(ajaxData.data, keys.decKey, keys.iv);
+            if (!decryptedPayloadStr) continue;
+
+            const decryptedPayload = JSON.parse(decryptedPayloadStr);
+            const hlsSource = (decryptedPayload.source || []).find((src: any) => src.file.endsWith(".m3u8"));
+            
+            if (hlsSource) {
+              console.log(`[Gogoanime Scraper] Successfully resolved direct stream: ${hlsSource.file}`);
+              return {
+                adapterId: this.id,
+                sourceName: this.name,
+                streamUrl: hlsSource.file,
+                subtitleUrl: (decryptedPayload.track || []).find((t: any) => t.label === "English")?.file || null
+              };
+            }
+          } catch (err: any) {
+            console.warn(`[Gogoanime Scraper] Failed to resolve candidate ${slug} on ${baseDomain}: ${err.message}`);
+            // Network block/timeout check to instantly fail-fast for this domain and save time
+            const errMsg = (err.message || '').toLowerCase();
+            if (errMsg.includes('timeout') || errMsg.includes('fetch failed') || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
+              console.warn(`[Gogoanime Scraper] Base domain ${baseDomain} is unreachable. Skipping remaining candidates for this domain.`);
+              domainUnreachable = true;
+              break;
+            }
           }
         }
+
+        if (domainUnreachable) continue;
       }
     } catch (e: any) {
       console.error(`[Gogoanime Scraper] Error during resolution: ${e.message}`);
