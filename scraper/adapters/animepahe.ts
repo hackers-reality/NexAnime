@@ -55,6 +55,9 @@ export class AnimepaheAdapter implements ScraperAdapter {
 
       // 2. Attempt to resolve on Animepahe
       for (const title of titleCandidates) {
+        // Skip empty or invalid queries containing only dashes/whitespace
+        if (!title || title.trim() === '' || title === '-' || title.replace(/-/g, '') === '') continue;
+
         const searchUrl = `https://animepahe.com/api?m=search&q=${encodeURIComponent(title)}`;
         console.log(`[Animepahe Scraper] Searching Animepahe: ${searchUrl}`);
         
@@ -125,6 +128,12 @@ export class AnimepaheAdapter implements ScraperAdapter {
           }
         } catch (err: any) {
           console.warn(`[Animepahe Scraper] Failed to resolve candidate ${title}: ${err.message}`);
+          // Network block/timeout check to instantly fail-fast and save time
+          const errMsg = (err.message || '').toLowerCase();
+          if (errMsg.includes('timeout') || errMsg.includes('fetch failed') || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
+            console.warn('[Animepahe Scraper] Network timeout or connection failure detected. Aborting candidates loop.');
+            break;
+          }
         }
       }
     } catch (e: any) {

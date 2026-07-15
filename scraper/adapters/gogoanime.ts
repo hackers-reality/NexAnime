@@ -96,6 +96,9 @@ export class GogoanimeAdapter implements ScraperAdapter {
       // 2. Try candidates to find working watch page
       for (const title of titleCandidates) {
         const slug = slugify(title);
+        // Skip empty or invalid slugs containing only dashes
+        if (!slug || slug === '-' || slug.replace(/-/g, '') === '') continue;
+        
         const episodeSlug = `${slug}-episode-${episodeNumber}`;
         const watchUrl = `https://gogoanime.by/${episodeSlug}`;
         
@@ -174,6 +177,12 @@ export class GogoanimeAdapter implements ScraperAdapter {
           }
         } catch (err: any) {
           console.warn(`[Gogoanime Scraper] Failed to resolve candidate ${slug}: ${err.message}`);
+          // Network block/timeout check to instantly fail-fast and save time
+          const errMsg = (err.message || '').toLowerCase();
+          if (errMsg.includes('timeout') || errMsg.includes('fetch failed') || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
+            console.warn('[Gogoanime Scraper] Network timeout or connection failure detected. Aborting candidates loop.');
+            break;
+          }
         }
       }
     } catch (e: any) {
