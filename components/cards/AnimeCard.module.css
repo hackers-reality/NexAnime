@@ -1,7 +1,6 @@
 .card {
   position: relative;
   border-radius: var(--radius-lg);
-  overflow: hidden;
   cursor: pointer;
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   background-color: var(--bg-surface);
@@ -21,6 +20,7 @@
   aspect-ratio: 3 / 4.25;
   overflow: hidden;
   background-color: var(--bg-surface-hover);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .posterImage {

@@ -1,10 +1,10 @@
-import { MockAdapterAlpha } from './mockAlpha';
-import { MockAdapterBeta } from './mockBeta';
+import { GogoanimeAdapter } from './gogoanime';
+import { AnimepaheAdapter } from './animepahe';
 import type { ScraperAdapter } from './adapter';
 
 export * from './adapter';
 
 export const ADAPTERS: ScraperAdapter[] = [
-  new MockAdapterAlpha(),
-  new MockAdapterBeta(),
+  new GogoanimeAdapter(),
+  new AnimepaheAdapter(),
 ];
