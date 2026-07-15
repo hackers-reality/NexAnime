@@ -34,9 +34,9 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
     : 'No description available.';
 
   return (
-    <div className={styles.carousel}>
+    <div className={styles.carousel} suppressHydrationWarning={true}>
       {/* Background Image */}
-      <div className={styles.imageContainer}>
+      <div className={styles.imageContainer} suppressHydrationWarning={true}>
         {bgImage && (
           <Image
             src={bgImage}
@@ -45,6 +45,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             priority
             sizes="100vw"
             className={styles.bgImage}
+            suppressHydrationWarning={true}
           />
         )}
         <div className={styles.gradientOverlay} />
