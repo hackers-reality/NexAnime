@@ -4,4 +4,4 @@
 - `[x]` Implement Animepahe scraper adapter in scraper/adapters/animepahe.ts (Done)
 - `[x]` Update scraper/adapters/index.ts to register Gogoanime and Animepahe adapters (Done)
 - `[x]` Verify changes with running server and output checks (Done)
-- `[ ]` Commit changes and push to GitHub
+- `[x]` Commit changes and push to GitHub (Done)
