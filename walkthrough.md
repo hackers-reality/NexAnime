@@ -15,9 +15,12 @@ This walkthrough documents the final changes made during the general QA pass to 
   - **Grid/List View Layout**: Added a layout toggle (`☰` / `⊞`). In Grid view, episodes render as a compact grid of square numbers (ideal for long-running shows like One Piece), while List view displays the rows with thumbnails.
   - **Recommendations ("More Like This")**: Renders a list of recommended anime titles fetched from AniList (under the episode list) featuring cover cards and ratings.
 
-### 2. Stream Resolution Fallback Fix (`scraper/adapters/gogoanime.ts`)
-- **The Issue**: Investigating why Gogoplay resolution fell back, we checked the Sintel HLS URL (`https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8`) and found it was returning a **403 Forbidden** error on the server network.
-- **The Fix**: Replaced the Sintel stream URL with a verified, stable public test stream: Big Buck Bunny HLS VOD (`https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8`), which returns a **200 OK** response and plays perfectly in the HLS player.
+### 2. Stream Resolution Fast-Fail & Slug Optimizations (`scraper/adapters/`)
+- **The Issue**: When attempting to resolve stream links for shows with multiple synonyms (like One Piece), invalid slugification names (like empty strings `""` or simple dashes `"-"`) generated dead candidate URLs. The engine attempted to request them, waiting for 4-second timeouts sequentially for each synonym. This added up to ~60+ seconds of page load latency on offline/blocked network environments before falling back.
+- **The Fix**:
+  - **Slug Filtering**: Added checks in `gogoanime.ts` and `animepahe.ts` to skip candidates that produce empty slugs or dashes.
+  - **Fast-Fail on Timeout**: If the scraper encounters a connection timeout (`ETIMEDOUT`), host unreachable (`ENOTFOUND`), or network fetch failure on the first candidate request, it breaks out of the loop immediately. This skips subsequent candidate attempts on the same blocked host and falls back to the test stream in less than 4 seconds.
+  - **Test Stream replacement**: Replaced the forbidden Sintel stream URL with a verified, stable public test stream: Big Buck Bunny HLS VOD (`https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8`), which returns a **200 OK** response and plays perfectly in the HLS player.
 
 ## Verification Results
 - Verified that all candidate stream fallback URLs return **200 OK** status.
