@@ -185,6 +185,39 @@ export default function VideoPlayer({
     };
   }, [animeId, episodeNumber, isEmbed, autoSkipIntro]);
 
+  const [isMini, setIsMini] = useState(false);
+  const [dismissedMini, setDismissedMini] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check if mini player is enabled in playback settings
+    const isMiniPlayerEnabled = localStorage.getItem('nexanime_miniplayer') !== 'false';
+    if (!isMiniPlayerEnabled) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsMini(false);
+          setDismissedMini(false); // Reset dismissal when returned to viewport
+        } else {
+          setIsMini(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const container = containerRef.current;
+    if (container) {
+      observer.observe(container);
+    }
+
+    return () => {
+      if (container) {
+        observer.unobserve(container);
+      }
+    };
+  }, [animeId, episodeNumber]);
+
   const handleSkipIntro = () => {
     const video = videoRef.current;
     if (video) {
@@ -194,41 +227,52 @@ export default function VideoPlayer({
   };
 
   return (
-    <div className={styles.playerWrapper}>
-      {error && (
-        <div className={styles.errorOverlay}>
-          <p>{error}</p>
-        </div>
-      )}
-      {!src && !error && (
-        <div className={styles.loadingOverlay}>
-          <div className={styles.spinner} />
-          <p>Loading video source...</p>
-        </div>
-      )}
-      {src && isEmbed ? (
-        <iframe
-          src={src}
-          className={styles.iframe}
-          allowFullScreen
-          allow="autoplay; encrypted-media; picture-in-picture"
-          scrolling="no"
-        />
-      ) : (
-        <>
-          <video
-            ref={videoRef}
-            controls
-            className={styles.video}
-            crossOrigin="anonymous"
+    <div ref={containerRef} className={styles.playerContainer}>
+      <div className={`${styles.playerWrapper} ${isMini && !dismissedMini ? styles.miniPlayer : ''}`}>
+        {isMini && !dismissedMini && (
+          <button 
+            className={styles.closeMiniBtn} 
+            onClick={() => setDismissedMini(true)}
+            title="Close Mini Player"
+          >
+            ✕
+          </button>
+        )}
+        {error && (
+          <div className={styles.errorOverlay}>
+            <p>{error}</p>
+          </div>
+        )}
+        {!src && !error && (
+          <div className={styles.loadingOverlay}>
+            <div className={styles.spinner} />
+            <p>Loading video source...</p>
+          </div>
+        )}
+        {src && isEmbed ? (
+          <iframe
+            src={src}
+            className={styles.iframe}
+            allowFullScreen
+            allow="autoplay; encrypted-media; picture-in-picture"
+            scrolling="no"
           />
-          {showSkipButton && (
-            <button className={styles.skipIntroBtn} onClick={handleSkipIntro}>
-              Skip Intro
-            </button>
-          )}
-        </>
-      )}
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              controls
+              className={styles.video}
+              crossOrigin="anonymous"
+            />
+            {showSkipButton && (
+              <button className={styles.skipIntroBtn} onClick={handleSkipIntro}>
+                Skip Intro
+              </button>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

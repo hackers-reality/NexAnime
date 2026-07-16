@@ -466,7 +466,7 @@ export async function getCharacterById(id: number): Promise<AniListCharacter | n
     const data = await anilistFetch<{ Character: AniListCharacter }>(query, { id });
     return data.Character;
   } catch (err) {
-    console.error(`Failed to fetch character ${id}:`, err);
+    console.warn(`[AniList] Character ID ${id} not found, using default fallback.`);
     return null;
   }
 }
