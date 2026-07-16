@@ -17,6 +17,7 @@ interface ProgressItem {
   title_romaji: string | null;
   title_english: string | null;
   cover_image: string | null;
+  ep_thumbnail: string | null;
 }
 
 interface MediaItem {
@@ -46,48 +47,52 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let active = true;
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-    const trendReq = fetch('/api/anilist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'trending', page: 1, perPage: 15 })
-    }).then(r => r.json());
+    const loadData = async () => {
+      try {
+        setLoading(true);
 
-    const continueReq = fetch('/api/watchlist?continue=true').then(r => r.json()).catch(() => ({ entries: [] }));
+        // 1. Trending (Carousel)
+        const trend = await fetch('/api/anilist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'trending', page: 1, perPage: 15 })
+        }).then(r => r.json()).catch(err => {
+          console.error('Failed to load trending cards:', err);
+          return { media: [] };
+        });
 
-    const upcomingReq = fetch('/api/anilist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'upcoming', page: 1, perPage: 10 })
-    }).then(r => r.json());
-
-    const nowSec = Math.floor(Date.now() / 1000);
-    const sevenDaysSec = 7 * 24 * 60 * 60;
-
-    const recentReq = fetch('/api/anilist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'recentlyUpdated', page: 1, perPage: 10 })
-    }).then(r => r.json());
-
-    const scheduleReq = fetch('/api/anilist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'airingSchedule', startTime: nowSec - 12 * 3600, endTime: nowSec + sevenDaysSec, page: 1, perPage: 100 })
-    }).then(r => r.json());
-
-    Promise.all([trendReq, continueReq, upcomingReq, recentReq, scheduleReq])
-      .then(([trend, cont, up, recent, sched]) => {
+        if (!active) return;
         const trendMedia = trend.media || [];
         setCarouselMedia(trendMedia.slice(0, 5));
         setTrendingCards(trendMedia.slice(5, 15));
         setTabAnime(trendMedia.slice(5, 15));
 
+        // 2. Continue Watching
+        const cont = await fetch('/api/watchlist?continue=true')
+          .then(r => r.json())
+          .catch(() => ({ progress: [] }));
+
+        if (!active) return;
         if (cont.progress) {
           setContinueWatching(cont.progress);
         }
 
+        // 3. Upcoming (Staggered)
+        await delay(150);
+        if (!active) return;
+        const up = await fetch('/api/anilist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'upcoming', page: 1, perPage: 10 })
+        }).then(r => r.json()).catch(err => {
+          console.error('Failed to load upcoming cards:', err);
+          return { media: [] };
+        });
+
+        if (!active) return;
         setUpcomingCards((up.media || []).map((m: any) => ({
           anilistId: m.id,
           titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
@@ -101,9 +106,37 @@ export default function HomePage() {
           genres: m.genres || [],
         })));
 
+        // 4. Recently Updated (Staggered)
+        await delay(150);
+        if (!active) return;
+        const recent = await fetch('/api/anilist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'recentlyUpdated', page: 1, perPage: 10 })
+        }).then(r => r.json()).catch(err => {
+          console.error('Failed to load recently updated:', err);
+          return { schedules: [] };
+        });
+
+        if (!active) return;
         const recentSchedules = recent.schedules || recent || [];
         setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
 
+        // 5. Airing Schedule (Staggered)
+        await delay(150);
+        if (!active) return;
+        const nowSec = Math.floor(Date.now() / 1000);
+        const sevenDaysSec = 7 * 24 * 60 * 60;
+        const sched = await fetch('/api/anilist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'airingSchedule', startTime: nowSec - 12 * 3600, endTime: nowSec + sevenDaysSec, page: 1, perPage: 100 })
+        }).then(r => r.json()).catch(err => {
+          console.error('Failed to load schedule:', err);
+          return { schedules: [] };
+        });
+
+        if (!active) return;
         const schedSchedules = sched.schedules || sched || [];
         setFormattedSchedules((Array.isArray(schedSchedules) ? schedSchedules : []).map((item: any) => ({
           id: item.id,
@@ -114,12 +147,19 @@ export default function HomePage() {
           coverImage: item.media?.coverImage?.large || null,
         })));
 
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load home data:', err);
-        setLoading(false);
-      });
+      } catch (err) {
+        console.error('Failed staggered load:', err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadData();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleTrendTabChange = async (tab: 'trending' | 'popular' | 'topRated') => {
@@ -183,9 +223,9 @@ export default function HomePage() {
                         className={styles.continueCard}
                       >
                         <div className={styles.thumbWrapper}>
-                          {item.cover_image && (
+                          {(item.ep_thumbnail || item.cover_image) && (
                             <Image
-                              src={item.cover_image}
+                              src={item.ep_thumbnail || item.cover_image!}
                               alt={title}
                               fill
                               sizes="180px"

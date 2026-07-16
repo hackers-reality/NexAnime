@@ -20,12 +20,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const anilistId = searchParams.get('anilistId');
     const continueMode = searchParams.get('continue') === 'true';
-
     if (continueMode) {
-      // Return continue watching progress data
       const progress = await query<any>(
         `SELECT wp.anilist_id, wp.episode_number, wp.seconds_watched, wp.duration_seconds,
-                c.title_romaji, c.title_english, c.cover_image
+                c.title_romaji, c.title_english, c.cover_image,
+                (SELECT thumbnail FROM episode_sources WHERE anilist_id = wp.anilist_id AND episode_number = wp.episode_number AND thumbnail IS NOT NULL LIMIT 1) as ep_thumbnail
          FROM watch_progress wp
          LEFT JOIN anime_cache c ON wp.anilist_id = c.anilist_id
          WHERE wp.seconds_watched < wp.duration_seconds - 15

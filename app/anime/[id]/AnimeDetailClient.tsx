@@ -132,6 +132,21 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 </span>
               </div>
             )}
+            {(() => {
+              const tvRelations = media.relations?.edges?.filter(
+                (edge) => (edge.relationType === 'PREQUEL' || edge.relationType === 'SEQUEL') && edge.node.format === 'TV'
+              ) || [];
+              const totalSeasons = tvRelations.length + 1;
+              if (totalSeasons > 1) {
+                return (
+                  <div className={styles.metaItem}>
+                    <span className={styles.metaLabel}>Seasons</span>
+                    <span className={styles.metaValue}>{totalSeasons} Seasons</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {media.episodes && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Episodes</span>

@@ -1,7 +1,7 @@
 .widget {
-  background-color: var(--bg-surface);
+  background-color: #121217;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -10,8 +10,9 @@
 .tabs {
   display: flex;
   overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-  background-color: rgba(10, 10, 15, 0.4);
+  background-color: #121217;
+  padding: 12px;
+  gap: 8px;
   scrollbar-width: none; /* Hide scrollbar for clean visual */
 }
 
@@ -20,119 +21,110 @@
 }
 
 .tab {
-  flex: 1;
-  min-width: 60px;
-  background: none;
-  border: none;
-  padding: 12px 6px;
+  flex: 0 0 auto;
+  background-color: #1c1c24;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  color: var(--text-secondary);
+  justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  min-width: 68px;
+  transition: all 0.2s ease;
 }
 
 .tab:hover {
-  background-color: var(--bg-surface-hover);
-  color: var(--text-primary);
+  background-color: #24242e;
 }
 
-.activeTab {
-  background-color: var(--bg-surface-hover);
-  color: var(--primary);
-  border-bottom: 2px solid var(--primary);
+.tabDayName {
+  font-size: 11px;
+  color: #8f8f9e;
+  text-transform: uppercase;
   font-weight: 600;
 }
 
-.tabLabel {
-  font-size: 13px;
+.tabDayNum {
+  font-size: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 2px;
 }
 
-.todayIndicator {
-  font-size: 9px;
-  text-transform: uppercase;
-  color: var(--accent-airing);
-  font-weight: 700;
+.activeTab {
+  background-color: #ffffff;
+  border-color: #ffffff;
+}
+
+.activeTab .tabDayName {
+  color: #8f8f9e;
+}
+
+.activeTab .tabDayNum {
+  color: #121217;
 }
 
 .list {
-  padding: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 400px;
+  gap: 8px;
+  background-color: #121217;
+  max-height: 480px;
   overflow-y: auto;
 }
 
 .empty {
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   text-align: center;
   padding: 24px;
 }
 
 .item {
   display: flex;
-  gap: 12px;
   align-items: center;
   text-decoration: none;
-  padding: 8px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
+  padding: 10px 12px;
+  background-color: #1c1c24;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  gap: 12px;
 }
 
 .item:hover {
-  background-color: var(--bg-surface-hover);
+  background-color: #24242e;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
-.imgContainer {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  border-radius: 4px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.coverImg {
-  object-fit: cover;
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.title {
-  font-size: 13px;
+.itemTime {
+  font-size: 12px;
+  color: #8f8f9e;
   font-weight: 600;
-  color: var(--text-primary);
+  white-space: nowrap;
+  width: 44px;
+}
+
+.itemTitle {
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin: 0;
+  flex: 1;
+  text-align: left;
 }
 
-.badgeRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.episodeBadge {
-  font-size: 10px;
-  background-color: rgba(59, 130, 246, 0.15);
-  color: var(--primary);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 700;
-}
-
-.timeLabel {
+.itemBadge {
   font-size: 11px;
-  color: var(--text-secondary);
+  color: #8f8f9e;
+  background-color: #2a2a35;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  white-space: nowrap;
 }

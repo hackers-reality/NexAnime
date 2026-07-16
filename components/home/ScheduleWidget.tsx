@@ -16,7 +16,10 @@ interface ScheduleEntry {
 
 interface GroupedSchedules {
   [dayKey: string]: {
-    label: string; // e.g. "Mon 13"
+    dayName: string;
+    dayNum: number;
+    monthName: string;
+    label: string;
     entries: ScheduleEntry[];
   };
 }
@@ -27,37 +30,37 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
   const [activeDay, setActiveDay] = useState<string>('');
 
   useEffect(() => {
-    // Generate 7 days headers starting from today in system local time
     const localGrouped: GroupedSchedules = {};
     const keys: string[] = [];
 
-    // Initialize 7 days
     for (let i = 0; i < 7; i++) {
       const date = new Date();
       date.setDate(date.getDate() + i);
       
-      const dayKey = date.toDateString(); // unique key for grouping (local date)
-      const dayName = date.toLocaleDateString(undefined, { weekday: 'short' });
+      const dayKey = date.toDateString();
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
       const dayNum = date.getDate();
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
       
       localGrouped[dayKey] = {
-        label: `${dayName} ${dayNum}`,
+        dayName,
+        dayNum,
+        monthName,
+        label: `${dayName} ${monthName} ${dayNum}`,
         entries: []
       };
       keys.push(dayKey);
     }
 
-    // Group schedules based on local timezone date conversion
     schedules.forEach((entry) => {
       const airingDate = new Date(entry.airingAt * 1000);
-      const airingKey = airingDate.toDateString(); // maps to the local day key
+      const airingKey = airingDate.toDateString();
 
       if (localGrouped[airingKey]) {
         localGrouped[airingKey].entries.push(entry);
       }
     });
 
-    // Sort entries on each day by local airing time
     keys.forEach((key) => {
       localGrouped[key].entries.sort((a, b) => a.airingAt - b.airingAt);
     });
@@ -73,11 +76,10 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
   const activeEntries = currentGroup?.entries || [];
 
   const formatLocalTime = (airingAt: number) => {
-    return new Date(airingAt * 1000).toLocaleTimeString(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    const date = new Date(airingAt * 1000);
+    const hrs = String(date.getHours()).padStart(2, '0');
+    const mins = String(date.getMinutes()).padStart(2, '0');
+    return `${hrs}:${mins}`;
   };
 
   return (
@@ -85,15 +87,15 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
       {/* Day Tabs */}
       <div className={styles.tabs}>
         {dayKeys.map((key) => {
-          const isToday = key === new Date().toDateString();
+          const item = grouped[key];
           return (
             <button
               key={key}
               className={`${styles.tab} ${activeDay === key ? styles.activeTab : ''}`}
               onClick={() => setActiveDay(key)}
             >
-              <span className={styles.tabLabel}>{grouped[key].label}</span>
-              {isToday && <span className={styles.todayIndicator}>Today</span>}
+              <span className={styles.tabDayName}>{item.dayName}</span>
+              <span className={styles.tabDayNum}>{item.monthName} {item.dayNum}</span>
             </button>
           );
         })}
@@ -110,24 +112,9 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
               href={`/anime/${entry.mediaId}`}
               className={styles.item}
             >
-              <div className={styles.imgContainer}>
-                {entry.coverImage && (
-                  <Image
-                    src={entry.coverImage}
-                    alt={entry.title}
-                    fill
-                    sizes="48px"
-                    className={styles.coverImg}
-                  />
-                )}
-              </div>
-              <div className={styles.info}>
-                <h4 className={styles.title}>{entry.title}</h4>
-                <div className={styles.badgeRow}>
-                  <span className={styles.episodeBadge}>Ep {entry.episode}</span>
-                  <span className={styles.timeLabel}>🕗 {formatLocalTime(entry.airingAt)}</span>
-                </div>
-              </div>
+              <span className={styles.itemTime}>{formatLocalTime(entry.airingAt)}</span>
+              <span className={styles.itemTitle}>{entry.title}</span>
+              <span className={styles.itemBadge}>Ep {entry.episode}</span>
             </Link>
           ))
         )}

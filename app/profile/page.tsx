@@ -30,6 +30,7 @@ interface WatchHistoryItem {
   title_romaji: string | null;
   title_english: string | null;
   cover_image: string | null;
+  ep_thumbnail: string | null;
 }
 
 export default async function ProfilePage() {
@@ -64,7 +65,8 @@ export default async function ProfilePage() {
 
   // 4. History (last watched items)
   const history = await query<WatchHistoryItem>(`
-    SELECT wp.*, c.title_romaji, c.title_english, c.cover_image 
+    SELECT wp.*, c.title_romaji, c.title_english, c.cover_image,
+           (SELECT thumbnail FROM episode_sources WHERE anilist_id = wp.anilist_id AND episode_number = wp.episode_number AND thumbnail IS NOT NULL LIMIT 1) as ep_thumbnail
     FROM watch_progress wp
     LEFT JOIN anime_cache c ON wp.anilist_id = c.anilist_id
     ORDER BY wp.last_watched_at DESC
@@ -143,9 +145,9 @@ export default async function ProfilePage() {
                         className={styles.historyCard}
                       >
                         <div className={styles.thumbWrapper}>
-                          {item.cover_image && (
+                          {(item.ep_thumbnail || item.cover_image) && (
                             <Image
-                              src={item.cover_image}
+                              src={item.ep_thumbnail || item.cover_image!}
                               alt={title}
                               fill
                               sizes="180px"

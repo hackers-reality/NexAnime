@@ -17,7 +17,9 @@ export default function Header() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchProfile = async () => {
     try {
@@ -26,20 +28,18 @@ export default function Header() {
       if (data.profile) {
         setDisplayName(data.profile.display_name);
         if (data.profile.avatar_char_id) {
-          // Look up character image from AniList character API
+          // Look up character image by ID directly
           const charRes = await fetch('/api/anilist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: 'searchCharacters',
-              search: '', // Default query fetches character details or we fetch specifically
+              action: 'getCharacterById',
+              id: data.profile.avatar_char_id,
             })
           });
           const charData = await charRes.json();
-          // Find matching char in search or default to placeholder
-          const char = charData.characters?.find((c: any) => c.id === data.profile.avatar_char_id);
-          if (char) {
-            setAvatarUrl(char.image.large);
+          if (charData.character) {
+            setAvatarUrl(charData.character.image?.large || '/avatars/default.png');
           }
         }
       }
@@ -66,11 +66,14 @@ export default function Header() {
     fetchNotificationCount();
   }, []);
 
-  // Close notifications dropdown on click outside
+  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setShowProfileDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -160,16 +163,54 @@ export default function Header() {
           )}
         </div>
 
-        {/* Profile avatar */}
-        <Link href="/profile" className={styles.avatarLink}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="Profile" className={styles.avatarImage} />
-          ) : (
-            <div className={styles.avatarPlaceholder}>
-              {displayName ? displayName[0].toUpperCase() : 'U'}
+        {/* Profile avatar & dropdown */}
+        <div className={styles.avatarWrapper} ref={profileDropdownRef}>
+          <button 
+            className={styles.avatarBtn}
+            onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+            title="Profile & Settings"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Profile" className={styles.avatarImage} />
+            ) : (
+              <div className={styles.avatarPlaceholder}>
+                {displayName ? displayName[0].toUpperCase() : 'U'}
+              </div>
+            )}
+          </button>
+
+          {showProfileDropdown && (
+            <div className={styles.profileDropdown}>
+              <div className={styles.profileDropdownHeader}>
+                <span className={styles.userName}>{displayName || 'Anonymous User'}</span>
+              </div>
+              <div className={styles.profileDropdownDivider} />
+              <Link href="/profile" className={styles.dropdownItem} onClick={() => setShowProfileDropdown(false)}>
+                👤 Public Profile
+              </Link>
+              <Link href="/settings/account" className={styles.dropdownItem} onClick={() => setShowProfileDropdown(false)}>
+                ✏️ Edit Profile
+              </Link>
+              <Link href="/settings/playback" className={styles.dropdownItem} onClick={() => setShowProfileDropdown(false)}>
+                ⚙️ Settings
+              </Link>
+              <div className={styles.profileDropdownDivider} />
+              <button 
+                className={`${styles.dropdownItem} ${styles.signOutBtn}`} 
+                onClick={async () => {
+                  setShowProfileDropdown(false);
+                  const confirmReset = window.confirm('Are you sure you want to sign out and reset all data?');
+                  if (confirmReset) {
+                    await fetch('/api/profile', { method: 'DELETE' });
+                    window.location.href = '/onboarding';
+                  }
+                }}
+              >
+                🚪 Sign Out &amp; Reset
+              </button>
             </div>
           )}
-        </Link>
+        </div>
       </div>
     </header>
   );

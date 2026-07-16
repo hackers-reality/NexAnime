@@ -15,6 +15,7 @@ import {
   getAiringSchedule,
   quickSearch,
   searchCharacters,
+  getCharacterById,
   fetchUserList,
   anilistMediaToAnime,
 } from '@/lib/anilist';
@@ -139,6 +140,11 @@ export async function POST(request: NextRequest) {
           params.perPage
         );
         return NextResponse.json(result);
+      }
+
+      case 'getCharacterById': {
+        const character = await getCharacterById(params.id);
+        return NextResponse.json({ character });
       }
 
       case 'importUserList': {
