@@ -171,7 +171,14 @@ export default function Header() {
             title="Profile & Settings"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Profile" className={styles.avatarImage} />
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className={styles.avatarImage}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/avatars/default.svg';
+                }}
+              />
             ) : (
               <div className={styles.avatarPlaceholder}>
                 {displayName ? displayName[0].toUpperCase() : 'U'}

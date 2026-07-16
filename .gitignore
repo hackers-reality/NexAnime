@@ -33,6 +33,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# reference materials
+/refrence/
+test-*.js
+verify-*
+pasted.txt
+task.md
+walkthrough.md
+implementation_plan.md
+NexAnime-Build-Prompt.md
+
 # env files (can opt-in for committing if needed)
 .env*
 

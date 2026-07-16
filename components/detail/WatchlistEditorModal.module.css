@@ -154,3 +154,34 @@
   border-top: 1px solid var(--border);
   padding-top: var(--space-4);
 }
+
+.inputWithSuffix {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding-right: var(--space-3);
+  transition: border-color var(--transition-fast);
+  width: 100%;
+}
+
+.inputWithSuffix:focus-within {
+  border-color: var(--primary);
+}
+
+.inputWithSuffix input {
+  border: none !important;
+  background: none !important;
+  outline: none !important;
+  flex: 1;
+  padding-right: 0 !important;
+}
+
+.suffix {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  user-select: none;
+  font-weight: 500;
+}

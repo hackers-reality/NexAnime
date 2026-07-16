@@ -1,7 +1,0 @@
-- `[x]` Configure next.config.ts for whitelisting image host domains (Done)
-- `[x]` Fix card hover preview clipping in AnimeCard.module.css (Done)
-- `[x]` Implement Gogoanime scraper adapter in scraper/adapters/gogoanime.ts (Done)
-- `[x]` Implement Animepahe scraper adapter in scraper/adapters/animepahe.ts (Done)
-- `[x]` Update scraper/adapters/index.ts to register Gogoanime and Animepahe adapters (Done)
-- `[x]` Verify changes with running server and output checks (Done)
-- `[x]` Commit changes and push to GitHub (Done)

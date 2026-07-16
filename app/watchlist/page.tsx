@@ -21,6 +21,8 @@ interface WatchlistEntry {
     seasonYear: number;
     averageScore: number;
     status: string;
+    synopsis: string | null;
+    genres: string[];
   };
 }
 
@@ -160,6 +162,8 @@ export default function WatchlistPage() {
                             year={entry.anime?.seasonYear || null}
                             score={entry.score || entry.anime?.averageScore}
                             status={entry.anime?.status as any}
+                            synopsis={entry.anime?.synopsis}
+                            genres={entry.anime?.genres || []}
                           />
                         </div>
                       ))}
@@ -184,6 +188,8 @@ export default function WatchlistPage() {
                       year={entry.anime?.seasonYear || null}
                       score={entry.score || entry.anime?.averageScore}
                       status={entry.anime?.status as any}
+                      synopsis={entry.anime?.synopsis}
+                      genres={entry.anime?.genres || []}
                     />
                   </div>
                 ))}

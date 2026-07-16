@@ -151,6 +151,7 @@ export interface Subscription {
 
 export interface AniListMedia {
   id: number;
+  idMal?: number | null;
   title: {
     romaji: string | null;
     english: string | null;

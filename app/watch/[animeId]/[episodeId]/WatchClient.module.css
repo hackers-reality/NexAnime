@@ -859,3 +859,30 @@
   color: var(--text-secondary);
 }
 
+/* ─── Horizontal card scroll for recommendations ─── */
+.horizontalCardScroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+}
+
+.horizontalCardScroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.horizontalCardScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.horizontalCardScroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.recCardWrapper {
+  flex: 0 0 150px;
+  scroll-snap-align: start;
+}
+

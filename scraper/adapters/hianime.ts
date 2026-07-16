@@ -17,12 +17,12 @@ async function getMalId(anilistId: number): Promise<number | null> {
     const json = await res.json();
     return json.data?.Media?.idMal || null;
   } catch (err) {
-    console.error('[Hianime Scraper] Failed to fetch MAL ID from AniList:', err);
+    console.error('[NexStream] Failed to fetch MAL ID from AniList:', err);
     return null;
   }
 }
 
-export class HianimeAdapter implements ScraperAdapter {
+export class NovaAdapter implements ScraperAdapter {
   id = 'nova';
   name = 'Nova';
 
@@ -31,18 +31,18 @@ export class HianimeAdapter implements ScraperAdapter {
     episodeNumber: number,
     isDub?: boolean
   ): Promise<ScraperSource | null> {
-    console.log(`[Hianime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
+    console.log(`[NexStream] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
 
     try {
       const malId = await getMalId(anilistId);
       if (!malId) {
-        console.log(`[Hianime Scraper] Could not find MAL ID mapping for AniList ID ${anilistId}`);
+        console.log(`[NexStream] Could not find MAL ID mapping for AniList ID ${anilistId}`);
         return null;
       }
 
       const type = isDub ? 'dub' : 'sub';
       const embedUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
-      console.log(`[Hianime Scraper] Verifying stream embed: ${embedUrl}`);
+      console.log(`[NexStream] Verifying stream embed: ${embedUrl}`);
 
       const res = await fetch(embedUrl, {
         method: 'HEAD',
@@ -56,7 +56,7 @@ export class HianimeAdapter implements ScraperAdapter {
         throw new Error(`Episode embed not available (HTTP ${res.status})`);
       }
 
-      console.log(`[Hianime Scraper] Successfully verified embed URL: ${embedUrl}`);
+      console.log(`[NexStream] Successfully verified embed URL: ${embedUrl}`);
 
       return {
         adapterId: this.id,
@@ -65,7 +65,7 @@ export class HianimeAdapter implements ScraperAdapter {
         subtitleUrl: null, // Subtitles are rendered natively inside the ZokoAnime player iframe
       };
     } catch (err: any) {
-      console.error(`[Hianime Scraper] Failed to resolve stream:`, err.message);
+      console.error(`[NexStream] Failed to resolve stream:`, err.message);
       return null;
     }
   }

@@ -7,6 +7,7 @@ import styles from './AnimeCardHoverPreview.module.css';
 export interface AnimeCardHoverPreviewProps {
   id: number;
   title: string;
+  poster: string | null;
   synopsis: string | null;
   runtime: string | null;
   airDate: string | null;
@@ -20,6 +21,7 @@ export interface AnimeCardHoverPreviewProps {
 export default function AnimeCardHoverPreview({
   id,
   title,
+  poster,
   synopsis,
   runtime,
   airDate,
@@ -49,6 +51,9 @@ export default function AnimeCardHoverPreview({
       className={`${styles.overlay} ${side === 'left' ? styles.left : styles.right}`}
       onMouseEnter={(e) => e.stopPropagation()}
     >
+      {poster && (
+        <img src={poster} alt="" className={styles.bgImage} aria-hidden="true" />
+      )}
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.title}>{title}</div>

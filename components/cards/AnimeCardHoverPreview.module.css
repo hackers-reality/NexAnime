@@ -3,12 +3,26 @@
   top: 0;
   width: 320px;
   z-index: 50;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: rgba(12, 12, 20, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   animation: previewFadeIn 0.2s ease forwards;
+}
+
+.overlay .bgImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(30px) brightness(0.4) saturate(1.5);
+  transform: scale(1.2);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .overlay.right {
@@ -32,6 +46,8 @@
 
 /* ─── Header ──────────────────────────────────── */
 .header {
+  position: relative;
+  z-index: 1;
   padding: var(--space-4);
   padding-bottom: 0;
 }
@@ -94,6 +110,8 @@
 
 /* ─── Synopsis ────────────────────────────────── */
 .synopsis {
+  position: relative;
+  z-index: 1;
   padding: 0 var(--space-4);
   margin-bottom: var(--space-3);
   font-size: var(--text-xs);
@@ -107,6 +125,8 @@
 
 /* ─── Genres row ──────────────────────────────── */
 .genres {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -126,12 +146,16 @@
 
 /* ─── Actions footer ──────────────────────────── */
 .actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--border);
-  background-color: rgba(20, 20, 32, 0.5);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(12, 12, 20, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .watchBtn {

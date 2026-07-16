@@ -71,3 +71,31 @@
   padding: 28px;
   min-width: 0;
 }
+
+.navBtn {
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.signOutBtn {
+  color: #ef4444 !important;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+}
+
+.signOutBtn:hover {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.activeLink {
+  background-color: var(--bg-surface-hover) !important;
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}

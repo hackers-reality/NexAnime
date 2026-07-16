@@ -67,39 +67,48 @@ export async function GET(request: NextRequest) {
       SELECT w.*, 
              c.title_romaji, c.title_english, c.title_native,
              c.cover_image, c.format, c.episode_count, c.season_year,
-             c.average_score, c.status
+             c.average_score, c.status, c.synopsis, c.genres
       FROM watchlist w
       LEFT JOIN anime_cache c ON w.anilist_id = c.anilist_id
       ORDER BY w.updated_at DESC
     `);
     
-    const formattedEntries = entries.map((entry) => ({
-      id: entry.id,
-      anilistId: entry.anilist_id,
-      listStatus: entry.list_status,
-      startDate: entry.start_date,
-      endDate: entry.end_date,
-      score: entry.score,
-      episodeWatched: entry.episode_watched,
-      totalRewatches: entry.total_rewatches,
-      notes: entry.notes,
-      updatedAt: entry.updated_at,
-      anime: {
-        title: {
-          romaji: entry.title_romaji,
-          english: entry.title_english,
-          native: entry.title_native,
-        },
-        coverImage: {
-          extraLarge: entry.cover_image,
-        },
-        format: entry.format,
-        episodes: entry.episode_count,
-        seasonYear: entry.season_year,
-        averageScore: entry.average_score,
-        status: entry.status,
-      }
-    }));
+    const formattedEntries = entries.map((entry) => {
+      let parsedGenres: string[] = [];
+      try {
+        if (entry.genres) parsedGenres = JSON.parse(entry.genres);
+      } catch {}
+
+      return {
+        id: entry.id,
+        anilistId: entry.anilist_id,
+        listStatus: entry.list_status,
+        startDate: entry.start_date,
+        endDate: entry.end_date,
+        score: entry.score,
+        episodeWatched: entry.episode_watched,
+        totalRewatches: entry.total_rewatches,
+        notes: entry.notes,
+        updatedAt: entry.updated_at,
+        anime: {
+          title: {
+            romaji: entry.title_romaji,
+            english: entry.title_english,
+            native: entry.title_native,
+          },
+          coverImage: {
+            extraLarge: entry.cover_image,
+          },
+          format: entry.format,
+          episodes: entry.episode_count,
+          seasonYear: entry.season_year,
+          averageScore: entry.average_score,
+          status: entry.status,
+          synopsis: entry.synopsis || null,
+          genres: parsedGenres,
+        }
+      };
+    });
 
     return NextResponse.json({ entries: formattedEntries });
   } catch (error) {

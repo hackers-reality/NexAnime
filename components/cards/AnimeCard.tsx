@@ -133,6 +133,7 @@ export default function AnimeCard({
         <AnimeCardHoverPreview
           id={id}
           title={title}
+          poster={poster}
           synopsis={synopsis}
           runtime={runtime ?? null}
           airDate={airDate ?? null}

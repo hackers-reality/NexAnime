@@ -6,6 +6,7 @@ import VideoPlayer from '@/components/player/VideoPlayer';
 import ServerPicker from '@/components/player/ServerPicker';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
+import AnimeCard from '@/components/cards/AnimeCard';
 import styles from './WatchClient.module.css';
 
 interface ServerSource {
@@ -29,7 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   rewatching: 'Rewatching',
 };
 
-function getEpisodeTitle(media: any, epNum: number): string {
+function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = []): string {
   if (media.streamingEpisodes?.length) {
     // Try exact match first: "Episode N: Title" or "Ep N - Title"
     const ep = media.streamingEpisodes.find((e: any) => {
@@ -42,6 +43,15 @@ function getEpisodeTitle(media: any, epNum: number): string {
       if (cleaned.length > 0) return cleaned;
     }
   }
+
+  // Fallback to Jikan (MAL) episodes list titles if available
+  if (jikanEpisodes?.length) {
+    const jEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+    if (jEp?.title) {
+      return jEp.title_english || jEp.title || `Episode ${epNum}`;
+    }
+  }
+
   return `Episode ${epNum}`;
 }
 
@@ -94,6 +104,24 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [showWarning, setShowWarning] = useState(true);
   const [clientAutoPlay, setClientAutoPlay] = useState(true);
   const [clientAutoSkip, setClientAutoSkip] = useState(false);
+  const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!media.idMal) return;
+    if (media.streamingEpisodes && media.streamingEpisodes.length > 5) return;
+
+    fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Jikan API rate limit');
+        return res.json();
+      })
+      .then((data) => {
+        if (data.data) {
+          setJikanEpisodes(data.data);
+        }
+      })
+      .catch((err) => console.warn('[Jikan] Fallback episode titles unavailable:', err));
+  }, [media.idMal, media.streamingEpisodes]);
 
   useEffect(() => {
     setClientAutoPlay(localStorage.getItem('nexanime_autoplay') !== 'false');
@@ -164,7 +192,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
   const filteredEpisodes = rawEpisodes.filter(epNum =>
     epNum.toString().includes(searchQuery) ||
-    getEpisodeTitle(media, epNum).toLowerCase().includes(searchQuery.toLowerCase())
+    getEpisodeTitle(media, epNum, jikanEpisodes).toLowerCase().includes(searchQuery.toLowerCase())
   );
   const sortedEpisodes = sortOrder === 'asc' ? filteredEpisodes : [...filteredEpisodes].reverse();
 
@@ -190,7 +218,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <span className={styles.separator}>›</span>
           <Link href={`/anime/${media.id}`}>{media.title.romaji || media.title.english}</Link>
           <span className={styles.separator}>›</span>
-          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber)}</span>
+          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber, jikanEpisodes)}</span>
         </div>
 
         <div className={styles.playerSection}>
@@ -304,7 +332,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         <div className={styles.detailsSection}>
           <div className={styles.episodeHeaderRow}>
             <h1 className={styles.episodeTitle}>
-              {getEpisodeTitle(media, episodeNumber)}
+              {getEpisodeTitle(media, episodeNumber, jikanEpisodes)}
             </h1>
             {watchlistStatus && (
               <span className={`${styles.statusPill} ${styles[watchlistStatus]}`}>
@@ -379,7 +407,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       <aside className={styles.rightRail}>
         <div className={styles.upNextHeader}>
           <div>
-            <h2>Up Next - {getEpisodeTitle(media, episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber)}</h2>
+            <h2>Up Next - {getEpisodeTitle(media, episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber, jikanEpisodes)}</h2>
             <p className={styles.upNextSub}>Playing - Episode {episodeNumber} - {media.title.english || media.title.romaji}</p>
           </div>
           <div className={styles.headerIcons}>
@@ -430,7 +458,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             {sortedEpisodes.map((epNum) => {
               const isCurrent = epNum === episodeNumber;
               const thumb = getEpisodeThumb(media, epNum);
-              const title = getEpisodeTitle(media, epNum);
+              const title = getEpisodeTitle(media, epNum, jikanEpisodes);
 
               return (
                 <Link
@@ -478,6 +506,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                     key={relMedia.id}
                     href={`/anime/${relMedia.id}`}
                     className={styles.relRow}
+                    style={{ position: 'relative' }}
                   >
                     {relMedia.coverImage?.medium && (
                       <div className={styles.relThumbContainer} suppressHydrationWarning>
@@ -509,39 +538,24 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         {media.recommendations?.nodes?.length > 0 && (
           <div className={styles.recommendationsSection}>
             <h3 className={styles.recsHeader}>More Like This</h3>
-            <div className={styles.recsList}>
-              {media.recommendations.nodes.slice(0, 6).map((rec: any) => {
+            <div className={styles.horizontalCardScroll}>
+              {media.recommendations.nodes.slice(0, 10).map((rec: any) => {
                 const recMedia = rec.mediaRecommendation;
                 if (!recMedia) return null;
-                const recTitle = recMedia.title.english || recMedia.title.romaji;
-
                 return (
-                  <Link
-                    key={recMedia.id}
-                    href={`/anime/${recMedia.id}`}
-                    className={styles.recRow}
-                  >
-                    {recMedia.coverImage?.large && (
-                      <div className={styles.recThumbContainer} suppressHydrationWarning>
-                        <img
-                          src={recMedia.coverImage.large}
-                          alt={recTitle}
-                          width={48}
-                          height={68}
-                          className={styles.recThumb}
-                          suppressHydrationWarning
-                        />
-                      </div>
-                    )}
-                    <div className={styles.recInfo}>
-                      <div className={styles.recTitle}>{recTitle}</div>
-                      <div className={styles.recMeta}>
-                        {recMedia.averageScore && <span>★ {recMedia.averageScore}%</span>}
-                        <span>{recMedia.format?.replace('_', ' ')}</span>
-                        <span>{recMedia.season} {recMedia.seasonYear}</span>
-                      </div>
-                    </div>
-                  </Link>
+                  <div key={recMedia.id} className={styles.recCardWrapper}>
+                    <AnimeCard
+                      id={recMedia.id}
+                      poster={recMedia.coverImage?.extraLarge || recMedia.coverImage?.large || null}
+                      title={recMedia.title?.english || recMedia.title?.romaji || 'Untitled'}
+                      format={recMedia.format}
+                      year={recMedia.seasonYear}
+                      status={recMedia.status}
+                      score={recMedia.averageScore}
+                      synopsis={recMedia.description}
+                      genres={recMedia.genres || []}
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -556,6 +570,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           animeId={media.id}
           animeTitle={media.title.english || media.title.romaji}
           posterUrl={media.coverImage?.extraLarge || null}
+          totalEpisodes={media.episodes}
         />
       )}
     </main>

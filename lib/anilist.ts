@@ -77,6 +77,7 @@ async function anilistFetch<T>(
 const MEDIA_FRAGMENT = `
   fragment MediaFields on Media {
     id
+    idMal
     title {
       romaji
       english

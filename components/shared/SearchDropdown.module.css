@@ -5,8 +5,10 @@
   right: 0;
   max-height: 480px;
   overflow-y: auto;
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: rgba(12, 12, 20, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   z-index: 200;

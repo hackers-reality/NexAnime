@@ -94,8 +94,8 @@ export default function HomePage() {
           setContinueWatching(cont.progress);
         }
 
-        // 3. Upcoming (Staggered)
-        await delay(150);
+        // 3. Upcoming (Staggered to avoid rate limit)
+        await delay(350);
         if (!active) return;
         const up = await fetch('/api/anilist', {
           method: 'POST',
@@ -121,7 +121,7 @@ export default function HomePage() {
         })));
 
         // 4. Recently Updated (Staggered)
-        await delay(150);
+        await delay(350);
         if (!active) return;
         const recent = await fetch('/api/anilist', {
           method: 'POST',
@@ -137,7 +137,7 @@ export default function HomePage() {
         setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
 
         // 5. Airing Schedule (Staggered)
-        await delay(150);
+        await delay(350);
         if (!active) return;
         const nowSec = Math.floor(Date.now() / 1000);
         const sevenDaysSec = 7 * 24 * 60 * 60;
@@ -316,34 +316,24 @@ export default function HomePage() {
               <div className={styles.leftCol}>
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>Recently Updated</h2>
-                  <div className={styles.recentList}>
+                  <div className={styles.horizontalScroll}>
                     {recentlyUpdatedCards.map((item: any) => {
                       const anime = item.media;
+                      if (!anime?.id) return null;
                       return (
-                        <Link
-                          key={`${anime?.id || item.id}-${item.episode}`}
-                          href={`/anime/${anime?.id || item.id}`}
-                          className={styles.recentItem}
-                        >
-                          <div className={styles.recentImgContainer}>
-                            {anime?.coverImage?.medium && (
-                              <Image
-                                src={anime.coverImage.medium}
-                                alt={anime?.title?.romaji || 'Cover'}
-                                fill
-                                sizes="60px"
-                                className={styles.recentImg}
-                              />
-                            )}
-                            <span className={styles.recentEpBadge}>Ep {item.episode}</span>
-                          </div>
-                          <div className={styles.recentInfo}>
-                            <h4 className={styles.recentTitle}>
-                              {anime?.title?.english || anime?.title?.romaji || 'Unknown'}
-                            </h4>
-                            <span className={styles.recentSub}>Episode {item.episode} just aired</span>
-                          </div>
-                        </Link>
+                        <div key={`${anime.id}-${item.episode}`} className={styles.cardWrapper}>
+                          <AnimeCard
+                            id={anime.id}
+                            poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}
+                            title={anime.title?.english || anime.title?.romaji || 'Unknown'}
+                            format={anime.format}
+                            year={anime.seasonYear}
+                            status={anime.status}
+                            score={anime.averageScore}
+                            synopsis={anime.description}
+                            genres={anime.genres || []}
+                          />
+                        </div>
                       );
                     })}
                   </div>

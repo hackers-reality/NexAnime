@@ -10,6 +10,7 @@ interface WatchlistEditorModalProps {
   animeId: number;
   animeTitle: string;
   posterUrl: string | null;
+  totalEpisodes?: number | null;
   onSaveSuccess?: () => void;
 }
 
@@ -19,6 +20,7 @@ export default function WatchlistEditorModal({
   animeId,
   animeTitle,
   posterUrl,
+  totalEpisodes,
   onSaveSuccess,
 }: WatchlistEditorModalProps) {
   const [loading, setLoading] = useState(true);
@@ -202,13 +204,17 @@ export default function WatchlistEditorModal({
                 {/* Episode Progress */}
                 <div className={styles.field}>
                   <label className={styles.label}>Episodes Watched</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    min="0"
-                    value={episodeWatched}
-                    onChange={(e) => setEpisodeWatched(Math.max(0, parseInt(e.target.value) || 0))}
-                  />
+                  <div className={styles.inputWithSuffix}>
+                    <input
+                      type="number"
+                      className={styles.input}
+                      min="0"
+                      max={totalEpisodes || undefined}
+                      value={episodeWatched}
+                      onChange={(e) => setEpisodeWatched(Math.max(0, parseInt(e.target.value) || 0))}
+                    />
+                    <span className={styles.suffix}>/ {totalEpisodes || '?'}</span>
+                  </div>
                 </div>
 
                 {/* Rewatches */}

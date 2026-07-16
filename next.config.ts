@@ -20,7 +20,25 @@ const nextConfig: NextConfig = {
         hostname: 'media.kitsu.io',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.zakoanime.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gogocdn.net',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'anilist.co',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

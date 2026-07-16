@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import TabNav, { type Tab } from '@/components/shared/TabNav';
 import AnimeCard from '@/components/cards/AnimeCard';
@@ -25,6 +25,24 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
   const [activeTab, setActiveTab] = useState('episodes');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
+  const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!media.idMal) return;
+    if (media.streamingEpisodes && media.streamingEpisodes.length > 5) return;
+
+    fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Jikan API rate limit');
+        return res.json();
+      })
+      .then((data) => {
+        if (data.data) {
+          setJikanEpisodes(data.data);
+        }
+      })
+      .catch((err) => console.warn('[Jikan] Fallback episodes list unavailable:', err));
+  }, [media.idMal, media.streamingEpisodes]);
 
   const anime = anilistMediaToAnime(media);
 
@@ -256,10 +274,14 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                   {Array.from({ length: media.episodes || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || media.streamingEpisodes?.length || 12 }, (_, i) => {
                     const epNum = i + 1;
                     const streamingEp = media.streamingEpisodes?.find((ep: any) => {
-                      const match = ep.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+                      const match = ep.title?.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
                       return match && parseInt(match[1]) === epNum;
                     });
-                    const epTitle = streamingEp?.title?.replace(/^(Episode|Ep)\s*\d+[:\s-]*/i, '').trim() || `Episode ${epNum}`;
+                    const epTitle = streamingEp?.title
+                      ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
+                      : (jikanEpisodes.length
+                          ? (jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title_english || jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title || `Episode ${epNum}`)
+                          : `Episode ${epNum}`);
                     const epThumb = streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
 
                     return (
@@ -363,6 +385,8 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                               year={rel.seasonYear}
                               status={rel.status}
                               score={rel.averageScore}
+                              synopsis={rel.description}
+                              genres={[]}
                             />
                           </div>
                         );
@@ -393,6 +417,8 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                             year={rec.seasonYear}
                             status={rec.status}
                             score={rec.averageScore}
+                            synopsis={rec.description}
+                            genres={rec.genres || []}
                           />
                         );
                       })}
@@ -413,6 +439,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
         animeId={media.id}
         animeTitle={anime.titleEnglish || anime.titleRomaji || ''}
         posterUrl={media.coverImage?.large}
+        totalEpisodes={media.episodes}
         onSaveSuccess={handleWatchlistUpdate}
       />
     </div>
