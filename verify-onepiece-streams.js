@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { HianimeAdapter } = require('./scraper/adapters/hianime');
 const { GogoanimeAdapter } = require('./scraper/adapters/gogoanime');
 const { AnimepaheAdapter } = require('./scraper/adapters/animepahe');
 
@@ -45,10 +46,13 @@ async function main() {
   console.log(`Title: ${title}`);
   console.log(`Latest Episode: ${latestEpisode}`);
 
+  const hianime = new HianimeAdapter();
   const gogo = new GogoanimeAdapter();
   const pahe = new AnimepaheAdapter();
 
   const results = {
+    hianimeEp1: null,
+    hianimeEpLast: null,
     gogoEp1: null,
     gogoEpLast: null,
     paheEp1: null,
@@ -57,6 +61,12 @@ async function main() {
 
   // Resolve Episode 1
   console.log('\n--- Resolving Episode 1 ---');
+  try {
+    console.log('[HiAnime] Resolving Episode 1...');
+    results.hianimeEp1 = await hianime.resolveEpisodeSource(21, 1);
+  } catch (e) {
+    console.error('HiAnime Ep 1 resolution failed:', e.message);
+  }
   try {
     console.log('[Gogoanime] Resolving Episode 1...');
     results.gogoEp1 = await gogo.resolveEpisodeSource(21, 1);
@@ -72,6 +82,12 @@ async function main() {
 
   // Resolve Latest Episode
   console.log(`\n--- Resolving Latest Episode (${latestEpisode}) ---`);
+  try {
+    console.log(`[HiAnime] Resolving Episode ${latestEpisode}...`);
+    results.hianimeEpLast = await hianime.resolveEpisodeSource(21, latestEpisode);
+  } catch (e) {
+    console.error(`HiAnime Ep ${latestEpisode} resolution failed:`, e.message);
+  }
   try {
     console.log(`[Gogoanime] Resolving Episode ${latestEpisode}...`);
     results.gogoEpLast = await gogo.resolveEpisodeSource(21, latestEpisode);
@@ -114,7 +130,7 @@ async function main() {
       padding: 24px;
     }
     .container {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
     }
     h1 {
@@ -128,9 +144,14 @@ async function main() {
     }
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
       margin-bottom: 32px;
+    }
+    @media (max-width: 992px) {
+      .grid {
+        grid-template-columns: 1fr 1fr;
+      }
     }
     @media (max-width: 768px) {
       .grid {
@@ -141,10 +162,13 @@ async function main() {
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
     .card-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       margin-top: 0;
       margin-bottom: 16px;
@@ -153,7 +177,7 @@ async function main() {
       align-items: center;
     }
     .status-badge {
-      font-size: 12px;
+      font-size: 11px;
       padding: 4px 8px;
       border-radius: 4px;
       font-weight: 600;
@@ -170,13 +194,15 @@ async function main() {
     .url-box {
       background: #0f172a;
       border: 1px solid var(--border);
-      padding: 12px;
+      padding: 10px;
       border-radius: 6px;
       font-family: monospace;
-      font-size: 13px;
+      font-size: 12px;
       word-break: break-all;
       margin-bottom: 16px;
       color: var(--text-secondary);
+      height: 48px;
+      overflow-y: auto;
     }
     video {
       width: 100%;
@@ -187,19 +213,21 @@ async function main() {
     }
     .btn-group {
       display: flex;
-      gap: 12px;
+      gap: 8px;
     }
     .btn {
       background: var(--primary);
       color: white;
       border: none;
-      padding: 10px 16px;
+      padding: 8px 12px;
       border-radius: 6px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       text-align: center;
       transition: opacity 0.2s;
+      font-size: 13px;
+      flex: 1;
     }
     .btn:hover {
       opacity: 0.9;
@@ -218,11 +246,6 @@ async function main() {
       margin-top: 0;
       color: var(--primary);
     }
-    .help-section ol {
-      padding-left: 20px;
-      margin-bottom: 0;
-      line-height: 1.6;
-    }
   </style>
 </head>
 <body>
@@ -232,6 +255,24 @@ async function main() {
 
     <h2>Episode 1</h2>
     <div class="grid">
+      <!-- HiAnime Ep 1 -->
+      <div class="card">
+        <div class="card-title">
+          HiAnime
+          <span class="status-badge ${results.hianimeEp1 ? 'real' : 'fallback'}">
+            ${results.hianimeEp1 ? 'Real Stream' : 'Failed'}
+          </span>
+        </div>
+        <div class="url-box">
+          ${results.hianimeEp1?.streamUrl || 'Failed to resolve stream URL'}
+        </div>
+        <video id="hianime1" controls></video>
+        <div class="btn-group">
+          <button class="btn" onclick="playVideo('hianime1', '${results.hianimeEp1?.streamUrl}')">Play Stream</button>
+          <a href="https://hianimes.se/watch/one-piece-episode-1-1m0d92-733" target="_blank" class="btn btn-secondary">Open HiAnime</a>
+        </div>
+      </div>
+
       <!-- Gogoanime Ep 1 -->
       <div class="card">
         <div class="card-title">
@@ -246,7 +287,7 @@ async function main() {
         <video id="gogo1" controls></video>
         <div class="btn-group">
           <button class="btn" onclick="playVideo('gogo1', '${results.gogoEp1?.streamUrl}')">Play Stream</button>
-          <a href="https://anitaku.pe/one-piece-episode-1" target="_blank" class="btn btn-secondary">Open Gogoanime Page</a>
+          <a href="https://anitaku.pe/one-piece-episode-1" target="_blank" class="btn btn-secondary">Open Gogoanime</a>
         </div>
       </div>
 
@@ -264,13 +305,31 @@ async function main() {
         <video id="pahe1" controls></video>
         <div class="btn-group">
           <button class="btn" onclick="playVideo('pahe1', '${results.paheEp1?.streamUrl}')">Play Stream</button>
-          <a href="https://animepahe.ru/" target="_blank" class="btn btn-secondary">Open Animepahe Page</a>
+          <a href="https://animepahe.ru/" target="_blank" class="btn btn-secondary">Open Animepahe</a>
         </div>
       </div>
     </div>
 
     <h2>Latest Episode (Episode ${latestEpisode})</h2>
     <div class="grid">
+      <!-- HiAnime Ep Last -->
+      <div class="card">
+        <div class="card-title">
+          HiAnime
+          <span class="status-badge ${results.hianimeEpLast ? 'real' : 'fallback'}">
+            ${results.hianimeEpLast ? 'Real Stream' : 'Failed'}
+          </span>
+        </div>
+        <div class="url-box">
+          ${results.hianimeEpLast?.streamUrl || 'Failed to resolve stream URL'}
+        </div>
+        <video id="hianimeLast" controls></video>
+        <div class="btn-group">
+          <button class="btn" onclick="playVideo('hianimeLast', '${results.hianimeEpLast?.streamUrl}')">Play Stream</button>
+          <a href="https://hianimes.se/watch/one-piece-episode-${latestEpisode}-1m0d92-733" target="_blank" class="btn btn-secondary">Open HiAnime</a>
+        </div>
+      </div>
+
       <!-- Gogoanime Ep Last -->
       <div class="card">
         <div class="card-title">
@@ -285,7 +344,7 @@ async function main() {
         <video id="gogoLast" controls></video>
         <div class="btn-group">
           <button class="btn" onclick="playVideo('gogoLast', '${results.gogoEpLast?.streamUrl}')">Play Stream</button>
-          <a href="https://anitaku.pe/one-piece-episode-${latestEpisode}" target="_blank" class="btn btn-secondary">Open Gogoanime Page</a>
+          <a href="https://anitaku.pe/one-piece-episode-${latestEpisode}" target="_blank" class="btn btn-secondary">Open Gogoanime</a>
         </div>
       </div>
 
@@ -303,20 +362,9 @@ async function main() {
         <video id="paheLast" controls></video>
         <div class="btn-group">
           <button class="btn" onclick="playVideo('paheLast', '${results.paheEpLast?.streamUrl}')">Play Stream</button>
-          <a href="https://animepahe.ru/" target="_blank" class="btn btn-secondary">Open Animepahe Page</a>
+          <a href="https://animepahe.ru/" target="_blank" class="btn btn-secondary">Open Animepahe</a>
         </div>
       </div>
-    </div>
-
-    <div class="help-section">
-      <h3>💡 How to verify the actual streams manually in your Browser:</h3>
-      <ol>
-        <li>Click the <strong>Open Gogoanime Page</strong> or <strong>Open Animepahe Page</strong> button to load the mirror site directly.</li>
-        <li>Once loaded, open your browser's Developer Tools (press <code>F12</code> or <code>Ctrl+Shift+I</code>) and select the <strong>Network</strong> tab.</li>
-        <li>Filter the requests by typing <code>m3u8</code> or <code>kwik</code> or <code>gogoplay</code>.</li>
-        <li>Play the episode in the browser. You will see a <code>.m3u8</code> playlist link load in the network requests (this is the direct stream link!).</li>
-        <li>Copy that link and paste it into the URL box of this page or into VLC Media Player to test and verify the content.</li>
-      </ol>
     </div>
   </div>
 
@@ -351,7 +399,6 @@ async function main() {
   console.log(`✅ Success! Created stream verification file:`);
   console.log(`file:///${htmlPath.replace(/\\/g, '/')}`);
   console.log(`==================================================\n`);
-  console.log('You can open the file in your browser to verify the streams!');
 }
 
 main();
