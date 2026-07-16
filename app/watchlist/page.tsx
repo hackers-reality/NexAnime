@@ -24,60 +24,68 @@ interface WatchlistEntry {
   };
 }
 
-const CATEGORIES: { status: ListStatus; label: string; icon: string }[] = [
+const CATEGORIES: { status: ListStatus | 'all'; label: string; icon: string }[] = [
+  { status: 'all', label: 'All', icon: '☰' },
+  { status: 'planning', label: 'Planning', icon: '📋' },
   { status: 'watching', label: 'Watching', icon: '▶' },
-  { status: 'planning', label: 'Plan to Watch', icon: '📋' },
-  { status: 'finished', label: 'Completed', icon: '✓' },
-  { status: 'on_hold', label: 'On Hold', icon: '⏸' },
-  { status: 'dropped', label: 'Dropped', icon: '🗑' },
+  { status: 'on_hold', label: 'On hold', icon: '⏸' },
+  { status: 'dropped', label: 'Dropped', icon: '⊘' },
+  { status: 'finished', label: 'Finished', icon: '✓' },
   { status: 'rewatching', label: 'Rewatching', icon: '🔄' },
 ];
+
+const FORMAT_OPTIONS = ['TV Show', 'MOVIE', 'ONA', 'SPECIAL'];
+const STATUS_OPTIONS = ['RELEASING', 'FINISHED', 'NOT_YET_RELEASED'];
 
 export default function WatchlistPage() {
   const [entries, setEntries] = useState<WatchlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>('all'); // 'all' or specific status
+  const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [formatFilter, setFormatFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/watchlist')
       .then((res) => res.json())
       .then((data) => {
-        if (data.entries) {
-          setEntries(data.entries);
-        }
+        setEntries(data.entries || []);
         setLoading(false);
       })
-      .catch((err) => {
-        console.error('Failed to load watchlist:', err);
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, []);
 
-  // Filter entries by activeTab and searchQuery
-  const filteredEntries = entries.filter((entry) => {
-    const statusMatch = activeTab === 'all' || entry.listStatus === activeTab;
-    const title = (entry.anime?.title?.english || entry.anime?.title?.romaji || '').toLowerCase();
-    const queryMatch = !searchQuery || title.includes(searchQuery.toLowerCase());
-    return statusMatch && queryMatch;
-  });
-
-  // Calculate counts for categories sidebar
   const getCategoryCount = (status: string) => {
     if (status === 'all') return entries.length;
     return entries.filter((e) => e.listStatus === status).length;
   };
 
+  const getFormatCount = (format: string) => {
+    return entries.filter((e) => e.anime?.format?.replace('_', ' ') === format).length;
+  };
+
+  const getStatusCount = (animeStatus: string) => {
+    return entries.filter((e) => e.anime?.status === animeStatus).length;
+  };
+
+  const filteredEntries = entries.filter((entry) => {
+    const statusMatch = activeTab === 'all' || entry.listStatus === activeTab;
+    const title = (entry.anime?.title?.english || entry.anime?.title?.romaji || '').toLowerCase();
+    const queryMatch = !searchQuery || title.includes(searchQuery.toLowerCase());
+    const formatMatch = !formatFilter || entry.anime?.format?.replace('_', ' ') === formatFilter;
+    const animeStatusMatch = !statusFilter || entry.anime?.status === statusFilter;
+    return statusMatch && queryMatch && formatMatch && animeStatusMatch;
+  });
+
   return (
     <div className={styles.container}>
       <Header />
       <div className={styles.wrapper}>
-        {/* Sidebar */}
         <aside className={styles.sidebar}>
           <div className={styles.searchBox}>
             <input
               type="text"
-              placeholder="Search watchlist..."
+              placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -85,13 +93,6 @@ export default function WatchlistPage() {
 
           <h3 className={styles.sidebarTitle}>Lists</h3>
           <nav className={styles.nav}>
-            <button
-              className={`${styles.navItem} ${activeTab === 'all' ? styles.activeNavItem : ''}`}
-              onClick={() => setActiveTab('all')}
-            >
-              <span>📂 All Anime</span>
-              <span className={styles.badge}>{getCategoryCount('all')}</span>
-            </button>
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.status}
@@ -103,26 +104,51 @@ export default function WatchlistPage() {
               </button>
             ))}
           </nav>
+
+          <h3 className={styles.sidebarTitle} style={{ marginTop: 24 }}>Filters</h3>
+
+          <div className={styles.filterSection}>
+            <h4 className={styles.filterTitle}>Format</h4>
+            {FORMAT_OPTIONS.map((f) => (
+              <button
+                key={f}
+                className={`${styles.filterItem} ${formatFilter === f ? styles.activeFilter : ''}`}
+                onClick={() => setFormatFilter(formatFilter === f ? null : f)}
+              >
+                <span>{f}</span>
+                <span className={styles.filterCount}>{getFormatCount(f)}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className={styles.filterSection}>
+            <h4 className={styles.filterTitle}>Status</h4>
+            {STATUS_OPTIONS.map((s) => (
+              <button
+                key={s}
+                className={`${styles.filterItem} ${statusFilter === s ? styles.activeFilter : ''}`}
+                onClick={() => setStatusFilter(statusFilter === s ? null : s)}
+              >
+                <span>{s === 'RELEASING' ? 'AIRING' : s === 'FINISHED' ? 'FINISHED' : 'UPCOMING'}</span>
+                <span className={styles.filterCount}>{getStatusCount(s)}</span>
+              </button>
+            ))}
+          </div>
         </aside>
 
-        {/* Main Content */}
         <main className={styles.mainContent}>
           {loading ? (
             <div className={styles.loading}>Loading watchlist...</div>
           ) : filteredEntries.length === 0 ? (
             <div className={styles.emptyState}>Your watchlist is empty.</div>
           ) : activeTab === 'all' ? (
-            // Group by Status in Categories rows
             <div className={styles.categoriesList}>
-              {CATEGORIES.map((cat) => {
+              {CATEGORIES.filter(c => c.status !== 'all').map((cat) => {
                 const catEntries = filteredEntries.filter((e) => e.listStatus === cat.status);
                 if (catEntries.length === 0) return null;
-
                 return (
                   <section key={cat.status} className={styles.categoryRow}>
-                    <h3 className={styles.categoryHeader}>
-                      {cat.icon} {cat.label} ({catEntries.length})
-                    </h3>
+                    <h3 className={styles.categoryHeader}>{cat.label}</h3>
                     <div className={styles.horizontalScroll}>
                       {catEntries.map((entry) => (
                         <div key={entry.id} className={styles.cardContainer}>
@@ -135,9 +161,6 @@ export default function WatchlistPage() {
                             score={entry.score || entry.anime?.averageScore}
                             status={entry.anime?.status as any}
                           />
-                          <div className={styles.progressLabel}>
-                            Progress: {entry.episodeWatched} / {entry.anime?.episodes || '?'}
-                          </div>
                         </div>
                       ))}
                     </div>
@@ -146,7 +169,6 @@ export default function WatchlistPage() {
               })}
             </div>
           ) : (
-            // Single Grid of Active Category
             <div className={styles.singleGridSection}>
               <h3 className={styles.gridHeader}>
                 {CATEGORIES.find((c) => c.status === activeTab)?.label} ({filteredEntries.length})
@@ -163,9 +185,6 @@ export default function WatchlistPage() {
                       score={entry.score || entry.anime?.averageScore}
                       status={entry.anime?.status as any}
                     />
-                    <div className={styles.progressLabel}>
-                      Progress: {entry.episodeWatched} / {entry.anime?.episodes || '?'}
-                    </div>
                   </div>
                 ))}
               </div>

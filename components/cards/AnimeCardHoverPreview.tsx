@@ -117,7 +117,18 @@ export default function AnimeCardHoverPreview({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Bookmark action will be wired in Phase 4
+            fetch('/api/watchlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                anilistId: id,
+                listStatus: 'planning',
+                title: title,
+              }),
+            }).then(() => {
+              (e.target as HTMLElement).textContent = '♥';
+              (e.target as HTMLElement).style.color = 'var(--primary)';
+            }).catch(console.error);
           }}
           title="Add to watchlist"
         >

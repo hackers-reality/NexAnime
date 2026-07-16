@@ -23,8 +23,8 @@ async function getMalId(anilistId: number): Promise<number | null> {
 }
 
 export class HianimeAdapter implements ScraperAdapter {
-  id = 'hianime';
-  name = 'HiAnime (High Quality)';
+  id = 'nova';
+  name = 'Nova';
 
   async resolveEpisodeSource(
     anilistId: number,

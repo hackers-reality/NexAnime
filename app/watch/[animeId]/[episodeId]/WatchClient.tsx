@@ -10,6 +10,7 @@ import styles from './WatchClient.module.css';
 
 interface ServerSource {
   adapterId: string;
+  sourceName: string;
   streamUrl: string;
   subtitleUrl?: string;
 }
@@ -28,6 +29,52 @@ const STATUS_LABELS: Record<string, string> = {
   rewatching: 'Rewatching',
 };
 
+function getEpisodeTitle(media: any, epNum: number): string {
+  if (media.streamingEpisodes?.length) {
+    const ep = media.streamingEpisodes.find((e: any) => {
+      const match = e.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+      return match && parseInt(match[1]) === epNum;
+    });
+    if (ep?.title) {
+      const cleaned = ep.title.replace(/^(Episode|Ep)\s*\d+[:\s-]*/i, '').trim();
+      return cleaned || `Episode ${epNum}`;
+    }
+  }
+  return `Episode ${epNum}`;
+}
+
+function getEpisodeThumb(media: any, epNum: number): string | null {
+  if (media.streamingEpisodes?.length) {
+    const ep = media.streamingEpisodes.find((e: any) => {
+      const match = e.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+      return match && parseInt(match[1]) === epNum;
+    });
+    if (ep?.thumbnail) return ep.thumbnail;
+  }
+  return media.coverImage?.medium || media.coverImage?.extraLarge || null;
+}
+
+function getRelationByType(media: any, type: string): any[] {
+  if (!media.relations?.nodes) return [];
+  return media.relations.nodes
+    .filter((r: any) => r.relationType === type)
+    .map((r: any) => r.media)
+    .filter(Boolean);
+}
+
+function formatRelativeTime(dateStr: string): string {
+  if (!dateStr) return '';
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
 export default function WatchClient({ media, episodeNumber }: WatchClientProps) {
   const [sources, setSources] = useState<ServerSource[]>([]);
   const [activeServerId, setActiveServerId] = useState<string | null>(null);
@@ -35,7 +82,6 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [error, setError] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
 
-  // New features state
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
   const [isDub, setIsDub] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,23 +93,16 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [clientAutoSkip, setClientAutoSkip] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setClientAutoPlay(localStorage.getItem('nexanime_autoplay') !== 'false');
-      setClientAutoSkip(localStorage.getItem('nexanime_autoskip') === 'true');
-    }
+    setClientAutoPlay(localStorage.getItem('nexanime_autoplay') !== 'false');
+    setClientAutoSkip(localStorage.getItem('nexanime_autoskip') === 'true');
   }, []);
 
-  // Fetch watchlist status
   const fetchWatchlistStatus = async () => {
     try {
       const res = await fetch(`/api/watchlist?anilistId=${media.id}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.entry) {
-          setWatchlistStatus(data.entry.listStatus);
-        } else {
-          setWatchlistStatus(null);
-        }
+        setWatchlistStatus(data.entry?.listStatus || null);
       }
     } catch (err) {
       console.error('Failed to fetch watchlist status:', err);
@@ -73,7 +112,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
-    
+
     fetch(`/api/stream/${media.id}/${episodeNumber}?dub=${isDub}`)
       .then(res => res.json())
       .then(data => {
@@ -95,13 +134,11 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       });
 
     fetchWatchlistStatus();
-
     return () => { isMounted = false; };
   }, [media.id, episodeNumber, isDub]);
 
   const activeSource = sources.find(s => s.adapterId === activeServerId);
 
-  // Airing countdown calculation (timezone correct using browser local system time)
   const nextAiring = media.nextAiringEpisode;
   let countdownText = '';
   if (media.status === 'RELEASING' && nextAiring) {
@@ -111,32 +148,23 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       const days = Math.floor(secondsLeft / (24 * 3600));
       const hours = Math.floor((secondsLeft % (24 * 3600)) / 3600);
       const minutes = Math.floor((secondsLeft % 3600) / 60);
-      
       const parts: string[] = [];
       if (days > 0) parts.push(`${days}d`);
       if (hours > 0) parts.push(`${hours}h`);
       if (minutes > 0) parts.push(`${minutes}m`);
-      
-      countdownText = `Episode {nextAiring.episode} airs in ${parts.join(' ')}`;
+      countdownText = `Episode ${nextAiring.episode} airs in ${parts.join(' ')}`;
     }
   }
 
-  // Derive episode title if available from streamingEpisodes, or default
-  const episodeObj = media.streamingEpisodes?.find((ep: any) => {
-    return ep.title.includes(`Episode ${episodeNumber}`) || ep.title.startsWith(`Ep ${episodeNumber}`);
-  });
-  const episodeTitle = episodeObj ? episodeObj.title : `Episode ${episodeNumber}`;
-
-  // Filter and sort episode numbers
   const nextEpisode = media.nextAiringEpisode?.episode;
   const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 12;
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
-  const filteredEpisodes = rawEpisodes.filter(epNum => 
-    epNum.toString().includes(searchQuery) || `Episode ${epNum}`.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEpisodes = rawEpisodes.filter(epNum =>
+    epNum.toString().includes(searchQuery) ||
+    getEpisodeTitle(media, epNum).toLowerCase().includes(searchQuery.toLowerCase())
   );
   const sortedEpisodes = sortOrder === 'asc' ? filteredEpisodes : [...filteredEpisodes].reverse();
 
-  // Strip html description tags helper
   const stripHtml = (htmlStr: string) => {
     if (!htmlStr) return '';
     return htmlStr.replace(/<[^>]*>/g, '');
@@ -147,6 +175,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     ? animeSynopsis
     : `${animeSynopsis.slice(0, 250)}...`;
 
+  const prequels = getRelationByType(media, 'PREQUEL');
+  const sequels = getRelationByType(media, 'SEQUEL');
+  const hasRelations = prequels.length > 0 || sequels.length > 0;
+
   return (
     <main className={styles.container}>
       <div className={styles.leftCol}>
@@ -155,7 +187,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <span className={styles.separator}>›</span>
           <Link href={`/anime/${media.id}`}>{media.title.romaji || media.title.english}</Link>
           <span className={styles.separator}>›</span>
-          <span className={styles.currentCrumb}>Episode {episodeNumber}</span>
+          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber)}</span>
         </div>
 
         <div className={styles.playerSection}>
@@ -170,9 +202,9 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             </div>
           ) : (
             <>
-              <VideoPlayer 
-                src={activeSource?.streamUrl || null} 
-                animeId={media.id} 
+              <VideoPlayer
+                src={activeSource?.streamUrl || null}
+                animeId={media.id}
                 episodeNumber={episodeNumber}
                 autoPlayNext={clientAutoPlay}
                 autoSkipIntro={clientAutoSkip}
@@ -194,7 +226,6 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                     Next Ep ⏭
                   </Link>
                 </div>
-                
                 <div className={styles.playSettingsGroup}>
                   <label className={styles.settingToggle}>
                     <input
@@ -240,12 +271,12 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
         <div className={styles.controlsRow}>
           <div className={styles.serverPickerWrapper}>
-            <ServerPicker 
+            <ServerPicker
               servers={sources}
               activeServerId={activeServerId}
               onSelectServer={setActiveServerId}
             />
-            <button 
+            <button
               className={`${styles.dubSubBtn} ${isDub ? styles.dubActive : ''}`}
               onClick={() => setIsDub(!isDub)}
             >
@@ -267,41 +298,29 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           </div>
         </div>
 
-        {/* Dynamic Episode Details Section */}
         <div className={styles.detailsSection}>
-          <h1 className={styles.episodeTitle}>
-            {episodeTitle}
+          <div className={styles.episodeHeaderRow}>
+            <h1 className={styles.episodeTitle}>
+              {getEpisodeTitle(media, episodeNumber)}
+            </h1>
             {watchlistStatus && (
               <span className={`${styles.statusPill} ${styles[watchlistStatus]}`}>
                 {STATUS_LABELS[watchlistStatus]}
               </span>
             )}
-          </h1>
-          
-          <p className={styles.synopsis}>
-            {episodeObj?.description ? (
-              <span dangerouslySetInnerHTML={{ __html: episodeObj.description }} />
-            ) : (
-              'No episode synopsis available.'
-            )}
-          </p>
-
-          <div className={styles.metadataCard}>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Studio</span>
-              <span className={styles.metaValue}>{media.studios?.nodes?.[0]?.name || 'Unknown'}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Status</span>
-              <span className={styles.metaValue}>{media.status}</span>
-            </div>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Aired</span>
-              <span className={styles.metaValue}>
-                {media.startDate?.year ? `${media.startDate.year}-${media.startDate.month}-${media.startDate.day}` : '?'}
-              </span>
-            </div>
           </div>
+
+          <div className={styles.episodeMeta}>
+            <span className={styles.epNumber}>Ep {episodeNumber}</span>
+            <span className={styles.epDot}>·</span>
+            <span>{media.format?.replace('_', ' ') || 'TV Show'}</span>
+            <span className={styles.epDot}>·</span>
+            <span>{media.title.english || media.title.romaji}</span>
+          </div>
+
+          <p className={styles.synopsis}>
+            {stripHtml(media.description || '') || 'No episode synopsis available.'}
+          </p>
 
           <div className={styles.genreList}>
             {media.genres?.map((g: string) => (
@@ -310,14 +329,13 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           </div>
         </div>
 
-        {/* NEW: Anime Information Section */}
         <div className={styles.animeInfoCard}>
           {media.coverImage?.extraLarge && (
             <div className={styles.animeCover} suppressHydrationWarning>
-              <img 
-                src={media.coverImage.extraLarge} 
-                alt={media.title.romaji || 'Cover'} 
-                width={120} 
+              <img
+                src={media.coverImage.extraLarge}
+                alt={media.title.romaji || 'Cover'}
+                width={120}
                 height={170}
                 className={styles.animeCoverImg}
                 suppressHydrationWarning
@@ -335,16 +353,16 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             </h2>
             <div className={styles.animeMetaPills}>
               <span>{media.season} {media.seasonYear}</span>
-              <span>•</span>
-              <span>{media.format}</span>
-              <span>•</span>
+              <span>·</span>
+              <span>{media.format?.replace('_', ' ')}</span>
+              <span>·</span>
               <span>{media.episodes ? `${media.episodes} Episodes` : 'Ongoing'}</span>
             </div>
             <p className={styles.animeSynopsisText}>
               {displaySynopsis}
               {animeSynopsis.length > 250 && (
-                <button 
-                  className={styles.showMoreBtn} 
+                <button
+                  className={styles.showMoreBtn}
                   onClick={() => setShowFullSynopsis(!showFullSynopsis)}
                 >
                   {showFullSynopsis ? 'Show less' : 'Show more'}
@@ -357,17 +375,20 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
       <aside className={styles.rightRail}>
         <div className={styles.upNextHeader}>
-          <h2>Up Next</h2>
+          <div>
+            <h2>Up Next - {getEpisodeTitle(media, episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber)}</h2>
+            <p className={styles.upNextSub}>Playing - Episode {episodeNumber} - {media.title.english || media.title.romaji}</p>
+          </div>
           <div className={styles.headerIcons}>
-            <button 
-              className={`${styles.iconBtn} ${isGridView ? styles.iconBtnActive : ''}`} 
+            <button
+              className={`${styles.iconBtn} ${isGridView ? styles.iconBtnActive : ''}`}
               onClick={() => setIsGridView(!isGridView)}
               title={isGridView ? "List View" : "Grid View"}
             >
               {isGridView ? '☰' : '⊞'}
             </button>
-            <button 
-              className={styles.iconBtn} 
+            <button
+              className={styles.iconBtn}
               onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
               title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}
             >
@@ -377,15 +398,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         </div>
 
         <div className={styles.searchBarRow}>
-          <input 
-            type="text" 
-            placeholder="Search episode..." 
+          <input
+            type="text"
+            placeholder="Search Episode"
             className={styles.searchInput}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
+
         {isGridView ? (
           <div className={styles.episodeGrid}>
             {sortedEpisodes.map((epNum) => {
@@ -405,28 +426,29 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <div className={styles.episodeList}>
             {sortedEpisodes.map((epNum) => {
               const isCurrent = epNum === episodeNumber;
-              const fallbackThumb = media.bannerImage || media.coverImage?.extraLarge;
-              
+              const thumb = getEpisodeThumb(media, epNum);
+              const title = getEpisodeTitle(media, epNum);
+
               return (
-                <Link 
-                  key={epNum} 
+                <Link
+                  key={epNum}
                   href={`/watch/${media.id}/${epNum}`}
                   className={`${styles.epRow} ${isCurrent ? styles.activeEpRow : ''}`}
                 >
                   <div className={styles.epThumbContainer} suppressHydrationWarning>
-                    {fallbackThumb && (
-                      <img 
-                        src={fallbackThumb} 
-                        alt={`Episode ${epNum}`} 
+                    {thumb && (
+                      <img
+                        src={thumb}
+                        alt={title}
                         className={styles.epThumb}
                         suppressHydrationWarning
                       />
                     )}
-                    <div className={styles.epNumOverlay}>E{epNum}</div>
+                    <div className={styles.epNumOverlay}>Ep {epNum}</div>
                   </div>
                   <div className={styles.epInfo}>
-                    <div className={styles.epTitle}>Episode {epNum}</div>
-                    <div className={styles.epSub}>Recently Added</div>
+                    <div className={styles.epTitle}>{title}</div>
+                    <div className={styles.epSub}>{media.format?.replace('_', ' ') || 'TV Show'}</div>
                   </div>
                 </Link>
               );
@@ -441,28 +463,67 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           </div>
         )}
 
-        {/* NEW: More Like This Recommendations Section */}
+        {hasRelations && (
+          <div className={styles.relationsSection}>
+            <h3 className={styles.relationsHeader}>Sequels & Prequels</h3>
+            <div className={styles.relationsList}>
+              {[...prequels, ...sequels].map((relMedia: any) => {
+                const relTitle = relMedia.title?.english || relMedia.title?.romaji || 'Unknown';
+                const relType = prequels.includes(relMedia) ? 'PREQUEL' : 'SEQUEL';
+                return (
+                  <Link
+                    key={relMedia.id}
+                    href={`/anime/${relMedia.id}`}
+                    className={styles.relRow}
+                  >
+                    {relMedia.coverImage?.medium && (
+                      <div className={styles.relThumbContainer} suppressHydrationWarning>
+                        <img
+                          src={relMedia.coverImage.medium}
+                          alt={relTitle}
+                          width={48}
+                          height={68}
+                          className={styles.relThumb}
+                          suppressHydrationWarning
+                        />
+                        <span className={styles.relTypeBadge}>{relType}</span>
+                      </div>
+                    )}
+                    <div className={styles.relInfo}>
+                      <div className={styles.relTitle}>{relTitle}</div>
+                      <div className={styles.relMeta}>
+                        <span>{relMedia.format?.replace('_', ' ')}</span>
+                        {relMedia.season && <span>{relMedia.season} {relMedia.seasonYear}</span>}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {media.recommendations?.nodes?.length > 0 && (
           <div className={styles.recommendationsSection}>
             <h3 className={styles.recsHeader}>More Like This</h3>
             <div className={styles.recsList}>
-              {media.recommendations.nodes.slice(0, 4).map((rec: any) => {
+              {media.recommendations.nodes.slice(0, 6).map((rec: any) => {
                 const recMedia = rec.mediaRecommendation;
                 if (!recMedia) return null;
                 const recTitle = recMedia.title.english || recMedia.title.romaji;
-                
+
                 return (
-                  <Link 
-                    key={recMedia.id} 
+                  <Link
+                    key={recMedia.id}
                     href={`/anime/${recMedia.id}`}
                     className={styles.recRow}
                   >
                     {recMedia.coverImage?.large && (
                       <div className={styles.recThumbContainer} suppressHydrationWarning>
-                        <img 
-                          src={recMedia.coverImage.large} 
-                          alt={recTitle} 
-                          width={48} 
+                        <img
+                          src={recMedia.coverImage.large}
+                          alt={recTitle}
+                          width={48}
                           height={68}
                           className={styles.recThumb}
                           suppressHydrationWarning
@@ -473,7 +534,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                       <div className={styles.recTitle}>{recTitle}</div>
                       <div className={styles.recMeta}>
                         {recMedia.averageScore && <span>★ {recMedia.averageScore}%</span>}
-                        <span>{recMedia.format}</span>
+                        <span>{recMedia.format?.replace('_', ' ')}</span>
+                        <span>{recMedia.season} {recMedia.seasonYear}</span>
                       </div>
                     </div>
                   </Link>

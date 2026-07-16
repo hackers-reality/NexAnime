@@ -1,16 +1,11 @@
-import { query, queryOne } from '@/lib/db';
-import { 
-  getTrending, 
-  getUpcoming, 
-  getRecentlyUpdated, 
-  getAiringSchedule,
-  anilistMediaToAnime 
-} from '@/lib/anilist';
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
 import HomeCarousel from '@/components/home/HomeCarousel';
 import ScheduleWidget from '@/components/home/ScheduleWidget';
-import Link from 'next/link';
 import Image from 'next/image';
 import styles from './page.module.css';
 
@@ -24,190 +19,318 @@ interface ProgressItem {
   cover_image: string | null;
 }
 
-export default async function HomePage() {
-  // 1. Fetch Carousel (Trending Top 5)
-  const trendingData = await getTrending(1, 15);
-  const carouselMedia = trendingData.media.slice(0, 5);
-  const trendingCards = trendingData.media.slice(5, 15).map(anilistMediaToAnime);
+interface MediaItem {
+  id: number;
+  title: { romaji: string; english: string; native: string };
+  coverImage: { extraLarge: string; large: string; medium: string };
+  bannerImage: string | null;
+  format: string;
+  season: string;
+  seasonYear: number;
+  status: string;
+  averageScore: number;
+  description: string;
+  genres: string[];
+  episodes: number | null;
+}
 
-  // 2. Fetch Dive Back In (Continue Watching)
-  const continueWatching = await query<ProgressItem>(`
-    SELECT wp.*, c.title_romaji, c.title_english, c.cover_image 
-    FROM watch_progress wp
-    LEFT JOIN anime_cache c ON wp.anilist_id = c.anilist_id
-    WHERE wp.seconds_watched < wp.duration_seconds - 15
-    ORDER BY wp.last_watched_at DESC
-    LIMIT 6
-  `);
+export default function HomePage() {
+  const [carouselMedia, setCarouselMedia] = useState<any[]>([]);
+  const [trendingCards, setTrendingCards] = useState<any[]>([]);
+  const [continueWatching, setContinueWatching] = useState<ProgressItem[]>([]);
+  const [upcomingCards, setUpcomingCards] = useState<any[]>([]);
+  const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<any[]>([]);
+  const [formattedSchedules, setFormattedSchedules] = useState<any[]>([]);
+  const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'popular' | 'topRated'>('trending');
+  const [tabAnime, setTabAnime] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 3. Fetch Top Upcoming
-  const upcomingData = await getUpcoming(1, 10);
-  const upcomingCards = upcomingData.media.map(anilistMediaToAnime);
+  useEffect(() => {
+    setLoading(true);
 
-  // 4. Fetch Recently Updated Airing Episodes
-  const recentlyUpdatedData = await getRecentlyUpdated(1, 10);
-  const recentlyUpdatedCards = recentlyUpdatedData.map(item => ({
-    episode: item.episode,
-    airingAt: item.airingAt,
-    anime: anilistMediaToAnime(item.media)
-  }));
+    const trendReq = fetch('/api/anilist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'trending', page: 1, perPage: 15 })
+    }).then(r => r.json());
 
-  // 5. Fetch 7 Days Airing Schedule for the widget
-  const nowSec = Math.floor(Date.now() / 1000);
-  const sevenDaysSec = 7 * 24 * 60 * 60;
-  const scheduleData = await getAiringSchedule(nowSec - 12 * 3600, nowSec + sevenDaysSec, 1, 100);
+    const continueReq = fetch('/api/watchlist?continue=true').then(r => r.json()).catch(() => ({ entries: [] }));
 
-  const formattedSchedules = scheduleData.map(item => ({
-    id: item.id,
-    airingAt: item.airingAt, // UTC timestamp
-    episode: item.episode,
-    mediaId: item.mediaId,
-    title: item.media.title.english || item.media.title.romaji || 'Unknown Anime',
-    coverImage: item.media.coverImage?.large || null
-  }));
+    const upcomingReq = fetch('/api/anilist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'upcoming', page: 1, perPage: 10 })
+    }).then(r => r.json());
+
+    const recentReq = fetch('/api/anilist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'recentlyUpdated' })
+    }).then(r => r.json());
+
+    const scheduleReq = fetch('/api/anilist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'airingSchedule' })
+    }).then(r => r.json());
+
+    Promise.all([trendReq, continueReq, upcomingReq, recentReq, scheduleReq])
+      .then(([trend, cont, up, recent, sched]) => {
+        const trendMedia = trend.media || [];
+        setCarouselMedia(trendMedia.slice(0, 5));
+        setTrendingCards(trendMedia.slice(5, 15));
+        setTabAnime(trendMedia.slice(5, 15));
+
+        if (cont.progress) {
+          setContinueWatching(cont.progress);
+        }
+
+        setUpcomingCards((up.media || []).map((m: any) => ({
+          anilistId: m.id,
+          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
+          titleEnglish: m.title?.english,
+          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
+          format: m.format,
+          seasonYear: m.seasonYear,
+          status: m.status,
+          averageScore: m.averageScore,
+          synopsis: m.description,
+          genres: m.genres || [],
+        })));
+
+        const recentSchedules = recent.schedules || recent || [];
+        setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
+
+        const nowSec = Math.floor(Date.now() / 1000);
+        const sevenDaysSec = 7 * 24 * 60 * 60;
+        const schedSchedules = sched.schedules || sched || [];
+        setFormattedSchedules((Array.isArray(schedSchedules) ? schedSchedules : []).map((item: any) => ({
+          id: item.id,
+          airingAt: item.airingAt,
+          episode: item.episode,
+          mediaId: item.mediaId,
+          title: item.media?.title?.english || item.media?.title?.romaji || 'Unknown',
+          coverImage: item.media?.coverImage?.large || null,
+        })));
+
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load home data:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleTrendTabChange = async (tab: 'trending' | 'popular' | 'topRated') => {
+    setActiveTrendTab(tab);
+    try {
+      const res = await fetch('/api/anilist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: tab === 'trending' ? 'trending' : tab === 'popular' ? 'popular' : 'topRated', page: 1, perPage: 15 })
+      });
+      const data = await res.json();
+      const media = (data.media || []).slice(5, 15);
+      setTabAnime(media.map((m: any) => ({
+        anilistId: m.id,
+        titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
+        titleEnglish: m.title?.english,
+        coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
+        format: m.format,
+        seasonYear: m.seasonYear,
+        status: m.status,
+        averageScore: m.averageScore,
+        synopsis: m.description,
+        genres: m.genres || [],
+      })));
+    } catch (err) {
+      console.error('Failed to load tab data:', err);
+    }
+  };
 
   return (
     <div className={styles.container}>
       <Header />
-      
-      {/* 1. Hero Carousel */}
-      <HomeCarousel items={carouselMedia as any} />
 
-      <main className={styles.main}>
-        {/* 2. Dive Back In (Continue Watching) */}
-        {continueWatching.length > 0 && (
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Dive Back In</h2>
-            <div className={styles.continueGrid}>
-              {continueWatching.map((item) => {
-                const percent = Math.min(
-                  100,
-                  Math.round((item.seconds_watched / (item.duration_seconds || 1)) * 100)
-                );
-                const title = item.title_romaji || item.title_english || 'Anime';
-                return (
-                  <Link
-                    key={`${item.anilist_id}-${item.episode_number}`}
-                    href={`/watch/${item.anilist_id}/${item.episode_number}`}
-                    className={styles.continueCard}
-                  >
-                    <div className={styles.thumbWrapper}>
-                      {item.cover_image && (
-                        <Image
-                          src={item.cover_image}
-                          alt={title}
-                          fill
-                          sizes="180px"
-                          className={styles.thumbImage}
-                        />
-                      )}
-                      <div className={styles.epOverlay}>E{item.episode_number}</div>
-                      <div className={styles.progressBar}>
-                        <div className={styles.progressFill} style={{ width: `${percent}%` }} />
-                      </div>
-                    </div>
-                    <div className={styles.continueInfo}>
-                      <h4 className={styles.continueTitle}>{title}</h4>
-                      <p className={styles.continueSubtitle}>Episode {item.episode_number} • {percent}%</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+      {loading ? (
+        <div className={styles.loadingState}>
+          <div className={styles.spinner} />
+          <p>Loading...</p>
+        </div>
+      ) : (
+        <>
+          {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}
 
-        {/* 3. Trending Now row */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Trending Now</h2>
-          <div className={styles.horizontalScroll}>
-            {trendingCards.map((anime) => (
-              <div key={anime.anilistId} className={styles.cardWrapper}>
-                <AnimeCard
-                  id={anime.anilistId}
-                  poster={anime.coverImage}
-                  title={anime.titleRomaji || anime.titleEnglish || 'Unknown'}
-                  format={anime.format as any}
-                  year={anime.seasonYear}
-                  status={anime.status as any}
-                  score={anime.averageScore}
-                  synopsis={anime.synopsis}
-                  genres={anime.genres}
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+          <main className={styles.main}>
+            {continueWatching.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Dive Back In</h2>
+                <div className={styles.continueGrid}>
+                  {continueWatching.map((item) => {
+                    const percent = Math.min(
+                      100,
+                      Math.round((item.seconds_watched / (item.duration_seconds || 1)) * 100)
+                    );
+                    const title = item.title_romaji || item.title_english || 'Anime';
+                    const remaining = item.duration_seconds
+                      ? Math.floor((item.duration_seconds - item.seconds_watched) / 60)
+                      : null;
+                    return (
+                      <Link
+                        key={`${item.anilist_id}-${item.episode_number}`}
+                        href={`/watch/${item.anilist_id}/${item.episode_number}`}
+                        className={styles.continueCard}
+                      >
+                        <div className={styles.thumbWrapper}>
+                          {item.cover_image && (
+                            <Image
+                              src={item.cover_image}
+                              alt={title}
+                              fill
+                              sizes="180px"
+                              className={styles.thumbImage}
+                            />
+                          )}
+                          {remaining != null && (
+                            <div className={styles.durationBadge}>{remaining}m left</div>
+                          )}
+                          <div className={styles.progressBar}>
+                            <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                        <div className={styles.continueInfo}>
+                          <h4 className={styles.continueTitle}>{title}</h4>
+                          <p className={styles.continueSubtitle}>
+                            Episode {item.episode_number} · {percent}% watched
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-        {/* 4. Double column: Recently Updated vs Airing Schedule */}
-        <div className={styles.splitGrid}>
-          <div className={styles.leftCol}>
-            {/* Recently Updated */}
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Recently Updated</h2>
-              <div className={styles.recentList}>
-                {recentlyUpdatedCards.map((item) => (
-                  <Link
-                    key={`${item.anime.anilistId}-${item.episode}`}
-                    href={`/anime/${item.anime.anilistId}`}
-                    className={styles.recentItem}
-                  >
-                    <div className={styles.recentImgContainer}>
-                      {item.anime.coverImage && (
-                        <Image
-                          src={item.anime.coverImage}
-                          alt={item.anime.titleRomaji || 'Cover'}
-                          fill
-                          sizes="60px"
-                          className={styles.recentImg}
-                        />
-                      )}
-                    </div>
-                    <div className={styles.recentInfo}>
-                      <h4 className={styles.recentTitle}>
-                        {item.anime.titleRomaji || item.anime.titleEnglish}
-                      </h4>
-                      <span className={styles.recentEpBadge}>
-                        Episode {item.episode}
-                      </span>
-                    </div>
-                  </Link>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Trending Now</h2>
+                <Link href="/browse?sort=POPULARITY_DESC" className={styles.viewAllLink}>
+                  →
+                </Link>
+              </div>
+              <div className={styles.trendTabs}>
+                <button
+                  className={`${styles.trendTab} ${activeTrendTab === 'trending' ? styles.activeTab : ''}`}
+                  onClick={() => handleTrendTabChange('trending')}
+                >
+                  🔥 Trending
+                </button>
+                <button
+                  className={`${styles.trendTab} ${activeTrendTab === 'popular' ? styles.activeTab : ''}`}
+                  onClick={() => handleTrendTabChange('popular')}
+                >
+                  🏆 All Time Popular
+                </button>
+                <button
+                  className={`${styles.trendTab} ${activeTrendTab === 'topRated' ? styles.activeTab : ''}`}
+                  onClick={() => handleTrendTabChange('topRated')}
+                >
+                  ⭐ Top Rated
+                </button>
+              </div>
+              <div className={styles.horizontalScroll}>
+                {tabAnime.map((anime: any) => (
+                  <div key={anime.anilistId} className={styles.cardWrapper}>
+                    <AnimeCard
+                      id={anime.anilistId}
+                      poster={anime.coverImage}
+                      title={anime.titleRomaji}
+                      format={anime.format as any}
+                      year={anime.seasonYear}
+                      status={anime.status as any}
+                      score={anime.averageScore}
+                      synopsis={anime.synopsis}
+                      genres={anime.genres}
+                    />
+                  </div>
                 ))}
               </div>
             </section>
-          </div>
 
-          <div className={styles.rightCol}>
-            {/* Airing Schedule Widget */}
-            <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Airing Schedule</h2>
-              <ScheduleWidget schedules={formattedSchedules} />
-            </section>
-          </div>
-        </div>
-
-        {/* 5. Top Upcoming row */}
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Top Upcoming</h2>
-          <div className={styles.horizontalScroll}>
-            {upcomingCards.map((anime) => (
-              <div key={anime.anilistId} className={styles.cardWrapper}>
-                <AnimeCard
-                  id={anime.anilistId}
-                  poster={anime.coverImage}
-                  title={anime.titleRomaji || anime.titleEnglish || 'Unknown'}
-                  format={anime.format as any}
-                  year={anime.seasonYear}
-                  status={anime.status as any}
-                  score={anime.averageScore}
-                  synopsis={anime.synopsis}
-                  genres={anime.genres}
-                />
+            <div className={styles.splitGrid}>
+              <div className={styles.leftCol}>
+                <section className={styles.section}>
+                  <h2 className={styles.sectionTitle}>Recently Updated</h2>
+                  <div className={styles.recentList}>
+                    {recentlyUpdatedCards.map((item: any) => {
+                      const anime = item.media;
+                      return (
+                        <Link
+                          key={`${anime?.id || item.id}-${item.episode}`}
+                          href={`/anime/${anime?.id || item.id}`}
+                          className={styles.recentItem}
+                        >
+                          <div className={styles.recentImgContainer}>
+                            {anime?.coverImage?.medium && (
+                              <Image
+                                src={anime.coverImage.medium}
+                                alt={anime?.title?.romaji || 'Cover'}
+                                fill
+                                sizes="60px"
+                                className={styles.recentImg}
+                              />
+                            )}
+                            <span className={styles.recentEpBadge}>Ep {item.episode}</span>
+                          </div>
+                          <div className={styles.recentInfo}>
+                            <h4 className={styles.recentTitle}>
+                              {anime?.title?.english || anime?.title?.romaji || 'Unknown'}
+                            </h4>
+                            <span className={styles.recentSub}>Episode {item.episode} just aired</span>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
               </div>
-            ))}
-          </div>
-        </section>
-      </main>
+
+              <div className={styles.rightCol}>
+                <section className={styles.section}>
+                  <h2 className={styles.sectionTitle}>Airing Schedule</h2>
+                  <ScheduleWidget schedules={formattedSchedules} />
+                </section>
+              </div>
+            </div>
+
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionTitle}>Top Upcoming</h2>
+                <Link href="/browse?status=NOT_YET_RELEASED&sort=POPULARITY_DESC" className={styles.viewAllLink}>
+                  →
+                </Link>
+              </div>
+              <div className={styles.horizontalScroll}>
+                {upcomingCards.map((anime: any) => (
+                  <div key={anime.anilistId} className={styles.cardWrapper}>
+                    <AnimeCard
+                      id={anime.anilistId}
+                      poster={anime.coverImage}
+                      title={anime.titleRomaji}
+                      format={anime.format as any}
+                      year={anime.seasonYear}
+                      status={anime.status as any}
+                      score={anime.averageScore}
+                      synopsis={anime.synopsis}
+                      genres={anime.genres}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          </main>
+        </>
+      )}
     </div>
   );
 }

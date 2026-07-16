@@ -19,6 +19,21 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const anilistId = searchParams.get('anilistId');
+    const continueMode = searchParams.get('continue') === 'true';
+
+    if (continueMode) {
+      // Return continue watching progress data
+      const progress = await query<any>(
+        `SELECT wp.anilist_id, wp.episode_number, wp.seconds_watched, wp.duration_seconds,
+                c.title_romaji, c.title_english, c.cover_image
+         FROM watch_progress wp
+         LEFT JOIN anime_cache c ON wp.anilist_id = c.anilist_id
+         WHERE wp.seconds_watched < wp.duration_seconds - 15
+         ORDER BY wp.last_watched_at DESC
+         LIMIT 6`
+      );
+      return NextResponse.json({ progress });
+    }
 
     if (anilistId) {
       // Get a single watchlist entry

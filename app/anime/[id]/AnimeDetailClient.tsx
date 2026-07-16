@@ -240,6 +240,13 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 <div className={styles.episodesGrid}>
                   {Array.from({ length: media.episodes || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || media.streamingEpisodes?.length || 12 }, (_, i) => {
                     const epNum = i + 1;
+                    const streamingEp = media.streamingEpisodes?.find((ep: any) => {
+                      const match = ep.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+                      return match && parseInt(match[1]) === epNum;
+                    });
+                    const epTitle = streamingEp?.title?.replace(/^(Episode|Ep)\s*\d+[:\s-]*/i, '').trim() || `Episode ${epNum}`;
+                    const epThumb = streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
+
                     return (
                       <Link
                         key={epNum}
@@ -248,17 +255,16 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                       >
                         <div className={styles.epThumbWrap}>
                           <img
-                            src={media.bannerImage || media.coverImage?.large || ''}
+                            src={epThumb}
                             alt=""
                             className={styles.epThumb}
                             loading="lazy"
+                            suppressHydrationWarning
                           />
-                          <span className={styles.epBadge}>Episode {epNum}</span>
+                          <span className={styles.epBadge}>Ep {epNum}</span>
                         </div>
                         <div className={styles.epInfo}>
-                          <div className={styles.epTitle}>
-                            Episode {epNum}
-                          </div>
+                          <div className={styles.epTitle}>{epTitle}</div>
                         </div>
                       </Link>
                     );
@@ -313,14 +319,27 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 {media.relations?.edges && media.relations.edges.length > 0 ? (
                   <div className={styles.relationsGrid}>
                     {media.relations.edges
-                      .filter((edge) => edge.node.format === 'TV' || edge.node.format === 'MOVIE' || edge.node.format === 'OVA')
+                      .filter((edge) => {
+                        const fmt = edge.node.format as string;
+                        return ['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'].includes(fmt);
+                      })
                       .map((edge, index) => {
                         const rel = edge.node;
+                        const relType = edge.relationType.replace('_', ' ');
+                        const isPrequel = edge.relationType === 'PREQUEL';
+                        const isSequel = edge.relationType === 'SEQUEL';
                         return (
                           <div key={`${rel.id}-${index}`} className={styles.relationCard}>
-                            <span className={styles.relationTypeBadge}>
-                              {edge.relationType.replace('_', ' ')}
-                            </span>
+                            {(isPrequel || isSequel) && (
+                              <span className={`${styles.relationTypeBadge} ${isPrequel ? styles.prequelBadge : styles.sequelBadge}`}>
+                                {relType}
+                              </span>
+                            )}
+                            {!isPrequel && !isSequel && (
+                              <span className={styles.relationTypeBadge}>
+                                {relType}
+                              </span>
+                            )}
                             <AnimeCard
                               id={rel.id}
                               poster={rel.coverImage?.extraLarge || rel.coverImage?.large}

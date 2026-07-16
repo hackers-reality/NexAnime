@@ -437,6 +437,16 @@
   letter-spacing: 0.5px;
 }
 
+.prequelBadge {
+  background-color: rgba(234, 179, 8, 0.9);
+  color: #000;
+}
+
+.sequelBadge {
+  background-color: rgba(34, 197, 94, 0.9);
+  color: #000;
+}
+
 /* Loading/Error states */
 .loadingContainer {
   min-height: 400px;

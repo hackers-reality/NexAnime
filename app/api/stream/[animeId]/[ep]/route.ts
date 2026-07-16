@@ -18,34 +18,51 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const isDub = request.nextUrl.searchParams.get('dub') === 'true';
 
-    // Call all adapters in parallel to resolve stream sources
-    const resolvePromises = ADAPTERS.map(async (adapter) => {
+    // Resolve Nova (primary) first for fastest response
+    const primaryAdapter = ADAPTERS.find(a => a.id === 'nova');
+    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'nova');
+
+    const sources: { adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[] = [];
+
+    // Try primary adapter first
+    if (primaryAdapter) {
       try {
-        const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
+        const source = await primaryAdapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
         if (source) {
-          // Log resolved stream source to local SQLite table for records
+          sources.push(source);
           await execute(
-            `INSERT INTO episode_sources (
-              anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at
-            ) VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-            [
-              anilistId,
-              episodeNumber,
-              source.adapterId,
-              source.streamUrl,
-              source.subtitleUrl,
-            ]
+            `INSERT INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
+             VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+            [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
           );
         }
-        return source;
       } catch (err) {
-        console.error(`Adapter ${adapter.id} failed to resolve:`, err);
-        return null;
+        console.error(`Primary adapter ${primaryAdapter.id} failed:`, err);
       }
-    });
+    }
 
-    const resolved = await Promise.all(resolvePromises);
-    const sources = resolved.filter((s): s is NonNullable<typeof s> => s !== null);
+    // If primary failed or we want all sources, try fallbacks in parallel
+    if (sources.length === 0 || request.nextUrl.searchParams.get('all') === 'true') {
+      const fallbackResults = await Promise.allSettled(
+        fallbackAdapters.map(async (adapter) => {
+          const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
+          if (source) {
+            await execute(
+              `INSERT INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
+               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+              [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
+            );
+          }
+          return source;
+        })
+      );
+
+      for (const result of fallbackResults) {
+        if (result.status === 'fulfilled' && result.value) {
+          sources.push(result.value);
+        }
+      }
+    }
 
     return NextResponse.json({ sources });
   } catch (error) {
