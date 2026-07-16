@@ -173,6 +173,7 @@ export interface AniListMedia {
   coverImage: {
     extraLarge: string | null;
     large: string | null;
+    medium: string | null;
   };
   bannerImage: string | null;
   episodes: number | null;

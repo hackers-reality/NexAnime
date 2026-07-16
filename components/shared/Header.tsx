@@ -39,7 +39,7 @@ export default function Header() {
           });
           const charData = await charRes.json();
           if (charData.character) {
-            setAvatarUrl(charData.character.image?.large || '/avatars/default.png');
+            setAvatarUrl(charData.character.image?.large || '/avatars/default.svg');
           }
         }
       }

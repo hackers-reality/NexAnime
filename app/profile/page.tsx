@@ -38,12 +38,12 @@ export default async function ProfilePage() {
   const profile = await queryOne<DbProfile>('SELECT * FROM profile WHERE id = 1');
   
   // 2. Fetch avatar character details from AniList if ID exists
-  let avatarUrl: string = '/avatars/default.png'; // default fallback image
+  let avatarUrl: string = '/avatars/default.svg'; // default fallback image
   let avatarName = 'User';
   if (profile?.avatar_char_id) {
     const char = await getCharacterById(profile.avatar_char_id);
     if (char) {
-      avatarUrl = char.image.large || '/avatars/default.png';
+      avatarUrl = char.image.large || '/avatars/default.svg';
       avatarName = char.name.full;
     }
   }

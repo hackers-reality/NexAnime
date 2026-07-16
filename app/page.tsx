@@ -67,8 +67,22 @@ export default function HomePage() {
         if (!active) return;
         const trendMedia = trend.media || [];
         setCarouselMedia(trendMedia.slice(0, 5));
-        setTrendingCards(trendMedia.slice(5, 15));
-        setTabAnime(trendMedia.slice(5, 15));
+        
+        const mappedTrending = trendMedia.map((m: any) => ({
+          anilistId: m.id,
+          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
+          titleEnglish: m.title?.english,
+          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
+          format: m.format,
+          seasonYear: m.seasonYear,
+          status: m.status,
+          averageScore: m.averageScore,
+          synopsis: m.description,
+          genres: m.genres || [],
+        }));
+
+        setTrendingCards(mappedTrending.slice(5, 15));
+        setTabAnime(mappedTrending.slice(5, 15));
 
         // 2. Continue Watching
         const cont = await fetch('/api/watchlist?continue=true')
