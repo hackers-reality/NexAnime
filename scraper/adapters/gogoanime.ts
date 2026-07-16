@@ -46,9 +46,10 @@ export class GogoanimeAdapter implements ScraperAdapter {
 
   async resolveEpisodeSource(
     anilistId: number,
-    episodeNumber: number
+    episodeNumber: number,
+    isDub?: boolean
   ): Promise<ScraperSource | null> {
-    console.log(`[Gogoanime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}`);
+    console.log(`[Gogoanime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
     
     // Fallback stream source (Big Buck Bunny VOD HLS)
     const fallbackSource: ScraperSource = {

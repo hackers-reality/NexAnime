@@ -36,27 +36,40 @@ async function waitForRateLimit(): Promise<void> {
 
 async function anilistFetch<T>(
   query: string,
-  variables: Record<string, unknown> = {}
+  variables: Record<string, unknown> = {},
+  retries = 3
 ): Promise<T> {
-  await waitForRateLimit();
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    await waitForRateLimit();
 
-  const response = await fetch(ANILIST_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ query, variables }),
-  });
+    const response = await fetch(ANILIST_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ query, variables }),
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`AniList API error ${response.status}: ${text}`);
+    if (response.status === 429) {
+      const retryAfter = parseInt(response.headers.get('Retry-After') || '5');
+      const waitMs = (retryAfter || 5) * 1000 * (attempt + 1);
+      console.log(`AniList rate limited, waiting ${waitMs}ms before retry ${attempt + 1}/${retries}`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      continue;
+    }
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`AniList API error ${response.status}: ${text}`);
+    }
+
+    const json = await response.json();
+    if (json.errors) {
+      throw new Error(`AniList GraphQL error: ${JSON.stringify(json.errors)}`);
+    }
+
+    return json.data as T;
   }
 
-  const json = await response.json();
-  if (json.errors) {
-    throw new Error(`AniList GraphQL error: ${JSON.stringify(json.errors)}`);
-  }
-
-  return json.data as T;
+  throw new Error('AniList API: max retries exceeded');
 }
 
 // ─── GraphQL fragments ──────────────────────────────────
@@ -93,12 +106,18 @@ const MEDIA_FRAGMENT = `
     coverImage {
       extraLarge
       large
+      medium
     }
     bannerImage
     episodes
     nextAiringEpisode {
       airingAt
       episode
+    }
+    streamingEpisodes {
+      title
+      thumbnail
+      site
     }
     trailer {
       id

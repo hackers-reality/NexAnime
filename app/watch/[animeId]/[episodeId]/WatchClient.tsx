@@ -31,13 +31,15 @@ const STATUS_LABELS: Record<string, string> = {
 
 function getEpisodeTitle(media: any, epNum: number): string {
   if (media.streamingEpisodes?.length) {
+    // Try exact match first: "Episode N: Title" or "Ep N - Title"
     const ep = media.streamingEpisodes.find((e: any) => {
-      const match = e.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+      const t = e.title || '';
+      const match = t.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
       return match && parseInt(match[1]) === epNum;
     });
     if (ep?.title) {
-      const cleaned = ep.title.replace(/^(Episode|Ep)\s*\d+[:\s-]*/i, '').trim();
-      return cleaned || `Episode ${epNum}`;
+      const cleaned = ep.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim();
+      if (cleaned.length > 0) return cleaned;
     }
   }
   return `Episode ${epNum}`;
@@ -46,7 +48,8 @@ function getEpisodeTitle(media: any, epNum: number): string {
 function getEpisodeThumb(media: any, epNum: number): string | null {
   if (media.streamingEpisodes?.length) {
     const ep = media.streamingEpisodes.find((e: any) => {
-      const match = e.title?.match(/(?:Episode|Ep)\s*(\d+)/i);
+      const t = e.title || '';
+      const match = t.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
       return match && parseInt(match[1]) === epNum;
     });
     if (ep?.thumbnail) return ep.thumbnail;
@@ -55,10 +58,10 @@ function getEpisodeThumb(media: any, epNum: number): string | null {
 }
 
 function getRelationByType(media: any, type: string): any[] {
-  if (!media.relations?.nodes) return [];
-  return media.relations.nodes
+  if (!media.relations?.edges) return [];
+  return media.relations.edges
     .filter((r: any) => r.relationType === type)
-    .map((r: any) => r.media)
+    .map((r: any) => r.node)
     .filter(Boolean);
 }
 

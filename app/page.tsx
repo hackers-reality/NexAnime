@@ -62,16 +62,19 @@ export default function HomePage() {
       body: JSON.stringify({ action: 'upcoming', page: 1, perPage: 10 })
     }).then(r => r.json());
 
+    const nowSec = Math.floor(Date.now() / 1000);
+    const sevenDaysSec = 7 * 24 * 60 * 60;
+
     const recentReq = fetch('/api/anilist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'recentlyUpdated' })
+      body: JSON.stringify({ action: 'recentlyUpdated', page: 1, perPage: 10 })
     }).then(r => r.json());
 
     const scheduleReq = fetch('/api/anilist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'airingSchedule' })
+      body: JSON.stringify({ action: 'airingSchedule', startTime: nowSec - 12 * 3600, endTime: nowSec + sevenDaysSec, page: 1, perPage: 100 })
     }).then(r => r.json());
 
     Promise.all([trendReq, continueReq, upcomingReq, recentReq, scheduleReq])
@@ -101,8 +104,6 @@ export default function HomePage() {
         const recentSchedules = recent.schedules || recent || [];
         setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
 
-        const nowSec = Math.floor(Date.now() / 1000);
-        const sevenDaysSec = 7 * 24 * 60 * 60;
         const schedSchedules = sched.schedules || sched || [];
         setFormattedSchedules((Array.isArray(schedSchedules) ? schedSchedules : []).map((item: any) => ({
           id: item.id,

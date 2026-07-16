@@ -8,9 +8,10 @@ export class AnimepaheAdapter implements ScraperAdapter {
 
   async resolveEpisodeSource(
     anilistId: number,
-    episodeNumber: number
+    episodeNumber: number,
+    isDub?: boolean
   ): Promise<ScraperSource | null> {
-    console.log(`[Animepahe Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}`);
+    console.log(`[Animepahe Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
     
     // Fallback stream source (Tears of Steel HLS)
     const fallbackSource: ScraperSource = {
