@@ -16,10 +16,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
+    const isDub = request.nextUrl.searchParams.get('dub') === 'true';
+
     // Call all adapters in parallel to resolve stream sources
     const resolvePromises = ADAPTERS.map(async (adapter) => {
       try {
-        const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber);
+        const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
         if (source) {
           // Log resolved stream source to local SQLite table for records
           await execute(

@@ -17,7 +17,17 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
   const [error, setError] = useState<string | null>(null);
   const lastSyncRef = useRef<number>(0);
 
+  const isEmbed = src ? (
+    src.includes('zokoanime.video/stream') ||
+    src.includes('megaplay.buzz/stream') ||
+    src.includes('embed') ||
+    src.includes('iframe') ||
+    (!src.endsWith('.m3u8') && !src.endsWith('.mp4') && !src.endsWith('.mkv') && !src.includes('.m3u8?') && !src.includes('.mp4?'))
+  ) : false;
+
   useEffect(() => {
+    if (isEmbed) return;
+
     const video = videoRef.current;
     if (!video || !src) return;
 
@@ -86,10 +96,12 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
         hlsRef.current = null;
       }
     };
-  }, [src, autoPlay]);
+  }, [src, autoPlay, isEmbed]);
 
   // Handle Progress tracking
   useEffect(() => {
+    if (isEmbed) return;
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -131,7 +143,7 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [animeId, episodeNumber]);
+  }, [animeId, episodeNumber, isEmbed]);
 
   return (
     <div className={styles.playerWrapper}>
@@ -142,16 +154,26 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
       )}
       {!src && !error && (
         <div className={styles.loadingOverlay}>
-          <div className={styles.spinner}></div>
+          <div className={styles.spinner} />
           <p>Loading video source...</p>
         </div>
       )}
-      <video
-        ref={videoRef}
-        controls
-        className={styles.video}
-        crossOrigin="anonymous"
-      />
+      {src && isEmbed ? (
+        <iframe
+          src={src}
+          className={styles.iframe}
+          allowFullScreen
+          allow="autoplay; encrypted-media; picture-in-picture"
+          scrolling="no"
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          controls
+          className={styles.video}
+          crossOrigin="anonymous"
+        />
+      )}
     </div>
   );
 }

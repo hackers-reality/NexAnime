@@ -1,21 +1,5 @@
 import type { ScraperAdapter, ScraperSource } from './adapter';
 
-const OBF_KEY = 'otaku-embed-v1';
-
-function xor(str: string): string {
-  let out = '';
-  for (let i = 0; i < str.length; i++) {
-    out += String.fromCharCode(str.charCodeAt(i) ^ OBF_KEY.charCodeAt(i % OBF_KEY.length));
-  }
-  return out;
-}
-
-function deobfuscate(blob: string): any {
-  const binary = Buffer.from(blob, 'base64').toString('binary');
-  const xored = xor(binary);
-  return JSON.parse(decodeURIComponent(escape(xored)));
-}
-
 async function getMalId(anilistId: number): Promise<number | null> {
   const query = `
     query ($id: Int) {
@@ -44,9 +28,10 @@ export class HianimeAdapter implements ScraperAdapter {
 
   async resolveEpisodeSource(
     anilistId: number,
-    episodeNumber: number
+    episodeNumber: number,
+    isDub?: boolean
   ): Promise<ScraperSource | null> {
-    console.log(`[Hianime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}`);
+    console.log(`[Hianime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
 
     try {
       const malId = await getMalId(anilistId);
@@ -55,49 +40,29 @@ export class HianimeAdapter implements ScraperAdapter {
         return null;
       }
 
-      const url = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/sub?color=35d5bf`;
-      console.log(`[Hianime Scraper] Fetching stream embed: ${url}`);
+      const type = isDub ? 'dub' : 'sub';
+      const embedUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
+      console.log(`[Hianime Scraper] Verifying stream embed: ${embedUrl}`);
 
-      const res = await fetch(url, {
+      const res = await fetch(embedUrl, {
+        method: 'HEAD',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
           'Referer': 'https://hianimes.se/'
         }
       });
 
-      if (!res.ok) {
-        throw new Error(`zokoanime.video returned HTTP ${res.status}`);
+      if (res.status !== 200) {
+        throw new Error(`Episode embed not available (HTTP ${res.status})`);
       }
 
-      const text = await res.text();
-      const match = text.match(/window\.__P\s*=\s*"([^"]+)"/);
-      if (!match) {
-        throw new Error('Could not extract window.__P from stream player page');
-      }
-
-      const decrypted = deobfuscate(match[1]);
-      if (!decrypted || !decrypted.src) {
-        throw new Error('Decrypted player options did not contain a valid source URL');
-      }
-
-      console.log(`[Hianime Scraper] Successfully decrypted stream URL: ${decrypted.src}`);
-
-      let subtitleUrl: string | null = null;
-      if (decrypted.subtitles && Array.isArray(decrypted.subtitles)) {
-        const enSub = decrypted.subtitles.find((sub: any) => 
-          sub.lang?.toLowerCase() === 'en' || 
-          sub.label?.toLowerCase()?.includes('english')
-        );
-        if (enSub) {
-          subtitleUrl = enSub.src;
-        }
-      }
+      console.log(`[Hianime Scraper] Successfully verified embed URL: ${embedUrl}`);
 
       return {
         adapterId: this.id,
         sourceName: this.name,
-        streamUrl: decrypted.src,
-        subtitleUrl: subtitleUrl,
+        streamUrl: embedUrl,
+        subtitleUrl: null, // Subtitles are rendered natively inside the ZokoAnime player iframe
       };
     } catch (err: any) {
       console.error(`[Hianime Scraper] Failed to resolve stream:`, err.message);

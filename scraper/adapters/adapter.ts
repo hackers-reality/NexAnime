@@ -20,6 +20,7 @@ export interface ScraperAdapter {
    */
   resolveEpisodeSource(
     anilistId: number,
-    episodeNumber: number
+    episodeNumber: number,
+    isDub?: boolean
   ): Promise<ScraperSource | null>;
 }

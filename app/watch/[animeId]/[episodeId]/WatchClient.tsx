@@ -66,7 +66,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     let isMounted = true;
     setLoading(true);
     
-    fetch(`/api/stream/${media.id}/${episodeNumber}`)
+    fetch(`/api/stream/${media.id}/${episodeNumber}?dub=${isDub}`)
       .then(res => res.json())
       .then(data => {
         if (!isMounted) return;
@@ -89,7 +89,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     fetchWatchlistStatus();
 
     return () => { isMounted = false; };
-  }, [media.id, episodeNumber]);
+  }, [media.id, episodeNumber, isDub]);
 
   const activeSource = sources.find(s => s.adapterId === activeServerId);
 
