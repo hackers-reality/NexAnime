@@ -55,7 +55,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
       {/* Hero Banner Section */}
       <div className={styles.bannerWrap}>
         {media.bannerImage ? (
-          <img src={media.bannerImage} alt="" className={styles.bannerImage} />
+          <img src={media.bannerImage} alt="" className={styles.bannerImage} suppressHydrationWarning />
         ) : (
           <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg-surface)' }} />
         )}
@@ -72,6 +72,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 src={media.coverImage.extraLarge || media.coverImage.large || ''}
                 alt={anime.titleEnglish || anime.titleRomaji || ''}
                 className={styles.posterImage}
+                suppressHydrationWarning
               />
             ) : (
               <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg-surface-hover)' }} />
@@ -237,7 +238,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 </div>
                 
                 <div className={styles.episodesGrid}>
-                  {Array.from({ length: media.episodes || 12 }, (_, i) => {
+                  {Array.from({ length: media.episodes || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || media.streamingEpisodes?.length || 12 }, (_, i) => {
                     const epNum = i + 1;
                     return (
                       <Link

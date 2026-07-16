@@ -1,6 +1,5 @@
-'use client';
-
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Hls from 'hls.js';
 import styles from './VideoPlayer.module.css';
 
@@ -9,14 +8,24 @@ interface VideoPlayerProps {
   animeId: number;
   episodeNumber: number;
   autoPlay?: boolean;
+  autoPlayNext?: boolean;
+  autoSkipIntro?: boolean;
 }
 
-export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = true }: VideoPlayerProps) {
+export default function VideoPlayer({ 
+  src, 
+  animeId, 
+  episodeNumber, 
+  autoPlay = true,
+  autoPlayNext = true,
+  autoSkipIntro = false
+}: VideoPlayerProps) {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSkipButton, setShowSkipButton] = useState(false);
   const lastSyncRef = useRef<number>(0);
-
   const isEmbed = src ? (
     src.includes('zokoanime.video/stream') ||
     src.includes('megaplay.buzz/stream') ||
@@ -98,7 +107,25 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
     };
   }, [src, autoPlay, isEmbed]);
 
-  // Handle Progress tracking
+  // Handle video ended for autoplay next
+  useEffect(() => {
+    if (isEmbed) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleEnded = () => {
+      if (autoPlayNext) {
+        router.push(`/watch/${animeId}/${episodeNumber + 1}`);
+      }
+    };
+
+    video.addEventListener('ended', handleEnded);
+    return () => {
+      video.removeEventListener('ended', handleEnded);
+    };
+  }, [animeId, episodeNumber, autoPlayNext, isEmbed, router]);
+
+  // Handle Progress tracking & Skip Intro triggers
   useEffect(() => {
     if (isEmbed) return;
 
@@ -120,6 +147,19 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
       const duration = video.duration;
 
       if (!duration || isNaN(duration)) return;
+
+      // Skip button overlay logic (show from 5s to 85s)
+      if (currentTime >= 5 && currentTime <= 85) {
+        setShowSkipButton(true);
+      } else {
+        setShowSkipButton(false);
+      }
+
+      // Auto skip intro logic
+      if (autoSkipIntro && currentTime >= 5 && currentTime < 85) {
+        video.currentTime = 85;
+        setShowSkipButton(false);
+      }
 
       // Sync progress every 10 seconds
       if (currentTime - lastSyncRef.current > 10 || currentTime === duration) {
@@ -143,7 +183,15 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [animeId, episodeNumber, isEmbed]);
+  }, [animeId, episodeNumber, isEmbed, autoSkipIntro]);
+
+  const handleSkipIntro = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = 85;
+      setShowSkipButton(false);
+    }
+  };
 
   return (
     <div className={styles.playerWrapper}>
@@ -167,12 +215,19 @@ export default function VideoPlayer({ src, animeId, episodeNumber, autoPlay = tr
           scrolling="no"
         />
       ) : (
-        <video
-          ref={videoRef}
-          controls
-          className={styles.video}
-          crossOrigin="anonymous"
-        />
+        <>
+          <video
+            ref={videoRef}
+            controls
+            className={styles.video}
+            crossOrigin="anonymous"
+          />
+          {showSkipButton && (
+            <button className={styles.skipIntroBtn} onClick={handleSkipIntro}>
+              Skip Intro
+            </button>
+          )}
+        </>
       )}
     </div>
   );

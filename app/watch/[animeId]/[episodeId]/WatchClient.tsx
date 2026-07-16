@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import VideoPlayer from '@/components/player/VideoPlayer';
 import ServerPicker from '@/components/player/ServerPicker';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
@@ -44,6 +43,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [isGridView, setIsGridView] = useState(false);
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
   const [showWarning, setShowWarning] = useState(true);
+  const [clientAutoPlay, setClientAutoPlay] = useState(true);
+  const [clientAutoSkip, setClientAutoSkip] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setClientAutoPlay(localStorage.getItem('nexanime_autoplay') !== 'false');
+      setClientAutoSkip(localStorage.getItem('nexanime_autoskip') === 'true');
+    }
+  }, []);
 
   // Fetch watchlist status
   const fetchWatchlistStatus = async () => {
@@ -120,7 +128,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const episodeTitle = episodeObj ? episodeObj.title : `Episode ${episodeNumber}`;
 
   // Filter and sort episode numbers
-  const totalEpisodes = media.episodes || 12;
+  const nextEpisode = media.nextAiringEpisode?.episode;
+  const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 12;
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
   const filteredEpisodes = rawEpisodes.filter(epNum => 
     epNum.toString().includes(searchQuery) || `Episode ${epNum}`.toLowerCase().includes(searchQuery.toLowerCase())
@@ -160,11 +169,58 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
               <p>{error}</p>
             </div>
           ) : (
-            <VideoPlayer 
-              src={activeSource?.streamUrl || null} 
-              animeId={media.id} 
-              episodeNumber={episodeNumber} 
-            />
+            <>
+              <VideoPlayer 
+                src={activeSource?.streamUrl || null} 
+                animeId={media.id} 
+                episodeNumber={episodeNumber}
+                autoPlayNext={clientAutoPlay}
+                autoSkipIntro={clientAutoSkip}
+              />
+              <div className={styles.playerControlsBar}>
+                <div className={styles.playNavGroup}>
+                  <Link
+                    href={`/watch/${media.id}/${episodeNumber - 1}`}
+                    className={`${styles.navControlBtn} ${episodeNumber <= 1 ? styles.disabledBtn : ''}`}
+                    onClick={(e) => episodeNumber <= 1 && e.preventDefault()}
+                  >
+                    ⏮ Prev Ep
+                  </Link>
+                  <Link
+                    href={`/watch/${media.id}/${episodeNumber + 1}`}
+                    className={`${styles.navControlBtn} ${episodeNumber >= totalEpisodes ? styles.disabledBtn : ''}`}
+                    onClick={(e) => episodeNumber >= totalEpisodes && e.preventDefault()}
+                  >
+                    Next Ep ⏭
+                  </Link>
+                </div>
+                
+                <div className={styles.playSettingsGroup}>
+                  <label className={styles.settingToggle}>
+                    <input
+                      type="checkbox"
+                      checked={clientAutoPlay}
+                      onChange={(e) => {
+                        setClientAutoPlay(e.target.checked);
+                        localStorage.setItem('nexanime_autoplay', e.target.checked ? 'true' : 'false');
+                      }}
+                    />
+                    <span>Auto Play</span>
+                  </label>
+                  <label className={styles.settingToggle}>
+                    <input
+                      type="checkbox"
+                      checked={clientAutoSkip}
+                      onChange={(e) => {
+                        setClientAutoSkip(e.target.checked);
+                        localStorage.setItem('nexanime_autoskip', e.target.checked ? 'true' : 'false');
+                      }}
+                    />
+                    <span>Auto Skip Intro</span>
+                  </label>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -257,13 +313,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         {/* NEW: Anime Information Section */}
         <div className={styles.animeInfoCard}>
           {media.coverImage?.extraLarge && (
-            <div className={styles.animeCover}>
-              <Image 
+            <div className={styles.animeCover} suppressHydrationWarning>
+              <img 
                 src={media.coverImage.extraLarge} 
                 alt={media.title.romaji || 'Cover'} 
                 width={120} 
                 height={170}
                 className={styles.animeCoverImg}
+                suppressHydrationWarning
               />
             </div>
           )}
@@ -356,14 +413,13 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                   href={`/watch/${media.id}/${epNum}`}
                   className={`${styles.epRow} ${isCurrent ? styles.activeEpRow : ''}`}
                 >
-                  <div className={styles.epThumbContainer}>
+                  <div className={styles.epThumbContainer} suppressHydrationWarning>
                     {fallbackThumb && (
-                      <Image 
+                      <img 
                         src={fallbackThumb} 
                         alt={`Episode ${epNum}`} 
-                        fill
                         className={styles.epThumb}
-                        sizes="120px"
+                        suppressHydrationWarning
                       />
                     )}
                     <div className={styles.epNumOverlay}>E{epNum}</div>
@@ -402,13 +458,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                     className={styles.recRow}
                   >
                     {recMedia.coverImage?.large && (
-                      <div className={styles.recThumbContainer}>
-                        <Image 
+                      <div className={styles.recThumbContainer} suppressHydrationWarning>
+                        <img 
                           src={recMedia.coverImage.large} 
                           alt={recTitle} 
                           width={48} 
                           height={68}
                           className={styles.recThumb}
+                          suppressHydrationWarning
                         />
                       </div>
                     )}

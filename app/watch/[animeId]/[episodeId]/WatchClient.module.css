@@ -667,3 +667,72 @@
   color: var(--text-secondary);
 }
 
+.playerControlsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #161616;
+  padding: 12px 16px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+}
+
+.playNavGroup {
+  display: flex;
+  gap: 12px;
+}
+
+.navControlBtn {
+  background-color: #202020;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.navControlBtn:hover:not(.disabledBtn) {
+  background-color: var(--primary);
+  color: #000;
+  border-color: var(--primary);
+}
+
+.disabledBtn {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.playSettingsGroup {
+  display: flex;
+  gap: 20px;
+}
+
+.settingToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.settingToggle:hover {
+  color: var(--text-primary);
+}
+
+.settingToggle input {
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+

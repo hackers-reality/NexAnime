@@ -176,6 +176,7 @@ export interface AniListMedia {
   };
   bannerImage: string | null;
   episodes: number | null;
+  streamingEpisodes?: Array<{ title: string; thumbnail?: string; url?: string; site?: string }> | null;
   nextAiringEpisode: {
     airingAt: number;
     episode: number;
