@@ -34,19 +34,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     if (cachedSources.length > 0) {
-      return NextResponse.json({
-        sources: cachedSources.map(s => ({
-          adapterId: s.source_adapter,
-          sourceName: s.source_adapter,
-          streamUrl: s.stream_url,
-          subtitleUrl: s.subtitle_url,
-        })),
-      });
+    return NextResponse.json({
+      sources: cachedSources.map(s => ({
+        adapterId: s.source_adapter,
+        sourceName: s.source_adapter,
+        streamUrl: s.stream_url.startsWith('/') ? `${request.nextUrl.origin}${s.stream_url}` : s.stream_url,
+        subtitleUrl: s.subtitle_url,
+      })),
+    });
     }
 
-    // Resolve Nova (primary) first for fastest response
-    const primaryAdapter = ADAPTERS.find(a => a.id === 'nova');
-    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'nova');
+    // Resolve Animetsu (primary — no AniList rate limits) first
+    const primaryAdapter = ADAPTERS.find(a => a.id === 'animetsu');
+    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'animetsu');
 
     const sources: { adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[] = [];
 
@@ -90,7 +90,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    return NextResponse.json({ sources });
+    return NextResponse.json({
+      sources: sources.map(s => ({
+        ...s,
+        streamUrl: s.streamUrl.startsWith('/') ? `${request.nextUrl.origin}${s.streamUrl}` : s.streamUrl,
+      })),
+    });
   } catch (error) {
     console.error('Stream resolution API error:', error);
     return NextResponse.json(

@@ -137,6 +137,13 @@ const SCHEMA_STATEMENTS: string[] = [
     subscribed_at DATETIME DEFAULT (datetime('now'))
   )`,
 
+  // Animetsu ID mapping cache — bridges AniList IDs to animetsu MongoDB IDs
+  `CREATE TABLE IF NOT EXISTS animetsu_id_cache (
+    anilist_id INTEGER PRIMARY KEY,
+    animetsu_id TEXT NOT NULL,
+    cached_at DATETIME DEFAULT (datetime('now'))
+  )`,
+
   // Schema version tracking
   `CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at DATETIME DEFAULT (datetime('now')))`,
   `INSERT OR IGNORE INTO schema_version (version) VALUES (1)`,
@@ -149,6 +156,7 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)`,
   `CREATE INDEX IF NOT EXISTS idx_anime_cache_status ON anime_cache(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_animetsu_cache_anilist ON animetsu_id_cache(anilist_id)`,
 
   // Seed default profile row if empty
   `INSERT OR IGNORE INTO profile (id) VALUES (1)`,
