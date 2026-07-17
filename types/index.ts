@@ -187,6 +187,11 @@ export interface AniListMedia {
     id: string;
     site: string;
   } | null;
+  popularity: number | null;
+  favourites: number | null;
+  stats: {
+    scoreDistribution: Array<{ score: number; amount: number }> | null;
+  } | null;
   relations: {
     edges: Array<{
       relationType: string;

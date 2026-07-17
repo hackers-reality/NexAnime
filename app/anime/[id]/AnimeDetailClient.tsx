@@ -17,6 +17,7 @@ interface AnimeDetailClientProps {
 const DETAIL_TABS: Tab[] = [
   { key: 'episodes', label: 'Episodes' },
   { key: 'characters', label: 'Characters' },
+  { key: 'stats', label: 'Stats' },
   { key: 'related', label: 'Related' },
   { key: 'recommendations', label: 'More Like This' },
 ];
@@ -348,6 +349,62 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 ) : (
                   <p style={{ color: 'var(--text-muted)' }}>No character data available.</p>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'stats' && (
+              <div>
+                <h3 className={styles.sectionTitle}>Statistics</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16, marginBottom: 24 }}>
+                  {media.averageScore && (
+                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Average Score</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--primary)', marginTop: 4 }}>{media.averageScore}%</div>
+                    </div>
+                  )}
+                  {media.meanScore && (
+                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mean Score</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--accent-airing)', marginTop: 4 }}>{media.meanScore}%</div>
+                    </div>
+                  )}
+                  {media.popularity && (
+                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Popularity</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', marginTop: 4 }}>#{media.popularity.toLocaleString()}</div>
+                    </div>
+                  )}
+                  {media.favourites != null && (
+                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-color)' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Favourites</div>
+                      <div style={{ fontSize: 28, fontWeight: 700, color: '#f43f5e', marginTop: 4 }}>{media.favourites.toLocaleString()}</div>
+                    </div>
+                  )}
+                </div>
+
+                {media.stats?.scoreDistribution && media.stats.scoreDistribution.length > 0 && (() => {
+                  const dist = media.stats.scoreDistribution!;
+                  const maxAmount = dist.length > 0 ? Math.max(...dist.map((d) => d.amount)) : 0;
+                  return (
+                  <div>
+                    <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12 }}>Score Distribution</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {dist.map((s) => {
+                        const pct = maxAmount > 0 ? (s.amount / maxAmount) * 100 : 0;
+                        return (
+                          <div key={s.score} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ width: 24, fontSize: 12, color: 'var(--text-muted)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{s.score}</span>
+                            <div style={{ flex: 1, height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: 'var(--primary)', borderRadius: 4, transition: 'width 0.5s' }} />
+                            </div>
+                            <span style={{ width: 40, fontSize: 11, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{s.amount}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  );
+                })()}
               </div>
             )}
 

@@ -124,6 +124,14 @@ const MEDIA_FRAGMENT = `
       id
       site
     }
+    popularity
+    favourites
+    stats {
+      scoreDistribution {
+        score
+        amount
+      }
+    }
   }
 `;
 
