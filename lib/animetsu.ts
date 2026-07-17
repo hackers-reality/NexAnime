@@ -101,10 +101,22 @@ interface AnimetsuInfoResponse extends AnimetsuSearchResult {
     id: string;
     relation_type: string;
     title: AnimetsuTitle;
+    anilist_id?: number;
+    poster?: AnimetsuCover | string;
+    format?: string;
+    status?: string;
+    year?: number;
+    average_score?: number;
   }>;
   recommendations: Array<{
     id: string;
     title: AnimetsuTitle;
+    anilist_id?: number;
+    poster?: AnimetsuCover | string;
+    format?: string;
+    status?: string;
+    year?: number;
+    average_score?: number;
   }>;
 }
 
@@ -187,6 +199,16 @@ function mapSeason(s: string): AnimeSeason {
   return map[s] ?? 'FALL';
 }
 
+function parseScore(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === 'number') return Math.round(v);
+  if (typeof v === 'string') {
+    const n = parseInt(v.replace('%', ''), 10);
+    return isNaN(n) ? null : n;
+  }
+  return null;
+}
+
 function parseGenres(genres: string): string[] {
   return genres ? genres.split(/\s+/).filter(Boolean) : [];
 }
@@ -247,8 +269,8 @@ function searchResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
     status: mapStatus(r.status),
     season: mapSeason(r.season),
     seasonYear: r.year,
-    averageScore: r.average_score,
-    meanScore: r.mean_score ?? r.average_score,
+    averageScore: parseScore(r.average_score),
+    meanScore: parseScore(r.mean_score) ?? parseScore(r.average_score),
     studios: { nodes: [] },
     genres: parseGenres(r.genres),
     tags: [],
@@ -329,7 +351,7 @@ export async function animetsuTrending(page = 1, limit = 15) {
 }
 
 export async function animetsuPopular(page = 1, limit = 15) {
-  return animetsuBrowse({ sort: 'popularity', page, limit });
+  return animetsuBrowse({ sort: 'popular', page, limit });
 }
 
 export async function animetsuTopRated(page = 1, limit = 15) {
@@ -337,11 +359,11 @@ export async function animetsuTopRated(page = 1, limit = 15) {
 }
 
 export async function animetsuSeason(season: string, year: number, page = 1, limit = 15) {
-  return animetsuBrowse({ season, year, sort: 'popularity', page, limit });
+  return animetsuBrowse({ season, year, sort: 'popular', page, limit });
 }
 
 export async function animetsuUpcoming(page = 1, limit = 15) {
-  return animetsuBrowse({ status: 'NOT_YET_RELEASED', sort: 'popularity', page, limit });
+  return animetsuBrowse({ status: 'NOT_YET_RELEASED', sort: 'popular', page, limit });
 }
 
 // ─── Public API: Anime Detail (full info) ────────────────────
@@ -372,8 +394,8 @@ export function animetsuInfoToMedia(r: AnimetsuInfoResponse): AniListMedia | nul
     status: mapStatus(r.status),
     season: mapSeason(r.season),
     seasonYear: r.year,
-    averageScore: r.average_score,
-    meanScore: r.mean_score ?? r.average_score,
+    averageScore: parseScore(r.average_score),
+    meanScore: parseScore(r.mean_score) ?? parseScore(r.average_score),
     popularity: r.popularity ?? null,
     favourites: r.favourites ?? null,
     studios: { nodes: (r.studios || []).map(s => ({ name: s.name, isMain: s.is_main })) },
@@ -392,27 +414,41 @@ export function animetsuInfoToMedia(r: AnimetsuInfoResponse): AniListMedia | nul
     streamingEpisodes: [],
     trailer: r.trailer ? { id: r.trailer, site: 'youtube' } : null,
     relations: {
-      edges: (r.relations || []).map(rel => ({
-        relationType: rel.relation_type,
-        node: {
-          id: 0,
-          title: (() => { const t = getTitle(rel.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
-          coverImage: { extraLarge: null, large: null, medium: null },
-          format: null, status: null, season: null, seasonYear: null,
-          averageScore: null, meanScore: null, episodes: null,
-        } as unknown as AniListMedia,
-      })),
+      edges: (r.relations || []).map(rel => {
+        const relId = rel.anilist_id ?? extractAniListId(rel.poster ?? null);
+        const relCover = getCoverUrl(rel.poster ?? null);
+        return {
+          relationType: rel.relation_type,
+          node: {
+            id: relId ?? 0,
+            title: (() => { const t = getTitle(rel.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
+            coverImage: { extraLarge: relCover, large: relCover, medium: relCover },
+            format: mapFormat(rel.format!) || null,
+            status: mapStatus(rel.status!) || null,
+            season: null, seasonYear: rel.year ?? null,
+            averageScore: parseScore(rel.average_score),
+            meanScore: null, episodes: null,
+          } as unknown as AniListMedia,
+        };
+      }),
     },
     recommendations: {
-      nodes: (r.recommendations || []).map(rec => ({
-        mediaRecommendation: {
-          id: 0,
-          title: (() => { const t = getTitle(rec.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
-          coverImage: { extraLarge: null, large: null, medium: null },
-          format: null, status: null, season: null, seasonYear: null,
-          averageScore: null, meanScore: null, episodes: null,
-        } as unknown as AniListMedia,
-      })),
+      nodes: (r.recommendations || []).map(rec => {
+        const recId = rec.anilist_id ?? extractAniListId(rec.poster ?? null);
+        const recCover = getCoverUrl(rec.poster ?? null);
+        return {
+          mediaRecommendation: {
+            id: recId ?? 0,
+            title: (() => { const t = getTitle(rec.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
+            coverImage: { extraLarge: recCover, large: recCover, medium: recCover },
+            format: mapFormat(rec.format!) || null,
+            status: mapStatus(rec.status!) || null,
+            season: null, seasonYear: rec.year ?? null,
+            averageScore: parseScore(rec.average_score),
+            meanScore: null, episodes: null,
+          } as unknown as AniListMedia,
+        };
+      }),
     },
     characters: {
       edges: (r.characters || []).map(char => ({
@@ -442,8 +478,6 @@ export function animetsuInfoToMedia(r: AnimetsuInfoResponse): AniListMedia | nul
     },
   } as unknown as AniListMedia;
 }
-
-// Relations/recommendations from animetsu provide Mongo IDs — no AniList ID lookup possible
 
 // ─── Public API: Episodes ────────────────────────────────────
 
