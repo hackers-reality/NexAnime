@@ -131,6 +131,12 @@ export default function Header() {
         >
           Schedule
         </Link>
+        <Link
+          href="/history"
+          className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`}
+        >
+          History
+        </Link>
         <button
           className={styles.randomBtn}
           onClick={async () => {
