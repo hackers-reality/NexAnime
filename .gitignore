@@ -33,6 +33,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# opencode
+opencode.json
+
 # reference materials
 /refrence/
 test-*.js

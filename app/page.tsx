@@ -67,8 +67,15 @@ export default function HomePage() {
         if (!active) return;
 
         if (homeData) {
-          const allTrending = homeData.trending || [];
-          setCarouselMedia(allTrending.slice(0, 5));
+          const allTrending = (homeData.trending || []);
+          setCarouselMedia(allTrending.slice(0, 5).map((m: any) => ({
+            id: m.anilistId,
+            title: { english: m.titleEnglish, romaji: m.titleRomaji },
+            coverImage: { extraLarge: m.coverImage },
+            bannerImage: null,
+            description: m.synopsis,
+            genres: m.genres,
+          })));
           setTrendingCards(allTrending.slice(5, 15));
           setTabAnime(allTrending.slice(5, 15));
           setThisSeasonCards(homeData.thisSeason || []);

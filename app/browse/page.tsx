@@ -52,9 +52,11 @@ function BrowseContent() {
   }, [searchParams]);
 
   const SORT_MAP: Record<string, string> = {
-    POPULARITY_DESC: 'popularity',
+    POPULARITY_DESC: 'popular',
     TRENDING_DESC: 'trending',
     SCORE_DESC: 'score',
+    START_DATE_DESC: 'newest',
+    START_DATE: 'oldest',
   };
 
   const buildBrowseUrl = (f: BrowseFilters, pg: number) => {
