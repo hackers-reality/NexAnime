@@ -47,6 +47,8 @@ interface AnimetsuSearchResult {
   mean_score?: number;
   trailer: string | null;
   season: string;
+  anilist_id?: number;
+  mal_id?: number;
 }
 
 interface AnimetsuSearchResponse {
@@ -237,7 +239,7 @@ async function animetsuFetch<T>(path: string): Promise<T | null> {
 // ─── Background ID cache ─────────────────────────────────────
 
 function cacheIdMapping(r: AnimetsuSearchResult): void {
-  const anilistId = extractAniListId(r.cover_image);
+  const anilistId = r.anilist_id ?? extractAniListId(r.cover_image);
   if (anilistId && r.id) {
     execute(
       "INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at) VALUES (?, ?, datetime('now'))",
@@ -252,7 +254,7 @@ function searchResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
   if (!r) return null;
   cacheIdMapping(r);
   const titles = getTitle(r.title);
-  const anilistId = extractAniListId(r.cover_image);
+  const anilistId = r.anilist_id ?? extractAniListId(r.cover_image);
   if (!anilistId) return null; // skip results without AniList ID (can't link to them)
   const coverUrl = getCoverUrl(r.cover_image);
 
