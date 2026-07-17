@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLocalCommitSha, GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH } from '@/lib/version';
 import { execSync, spawn } from 'child_process';
+import { readFileSync } from 'fs';
 import path from 'path';
 
 const GITHUB_API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/commits/${GITHUB_BRANCH}`;
@@ -53,7 +54,7 @@ export async function GET() {
       remoteDate: data.commit.author.date,
       remoteAuthor: data.commit.author.name,
       commitUrl: data.html_url,
-      currentVersion: require(/* turbopackIgnore: true */ '../../../package.json').version,
+      currentVersion: JSON.parse(readFileSync(/* turbopackIgnore: true */ path.resolve(process.cwd(), 'package.json'), 'utf-8')).version,
     });
   } catch (error) {
     return NextResponse.json(

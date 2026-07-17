@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "opencode-zen": {
+      "models": {
+        "deepseek-v4-flash-free": {
+          "capabilities": ["text", "image"]
+        }
+      }
+    }
+  }
+}
