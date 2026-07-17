@@ -63,10 +63,21 @@ export default function Header() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
-    const initial = saved || 'dark';
-    setTheme(initial);
-    document.documentElement.setAttribute('data-theme', initial);
+    // Load theme from settings API, fallback to localStorage, fallback to dark
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        const saved = data.settings?.theme as 'dark' | 'light' | null;
+        const initial = saved || (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+        setTheme(initial);
+        document.documentElement.setAttribute('data-theme', initial);
+      })
+      .catch(() => {
+        const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
+        const initial = saved || 'dark';
+        setTheme(initial);
+        document.documentElement.setAttribute('data-theme', initial);
+      });
   }, []);
 
   useEffect(() => {
@@ -178,6 +189,12 @@ export default function Header() {
             setTheme(next);
             document.documentElement.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
+            // Persist to settings API
+            fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ theme: next }),
+            }).catch(() => {});
           }}
         >
           {theme === 'dark' ? '☀️' : '🌙'}

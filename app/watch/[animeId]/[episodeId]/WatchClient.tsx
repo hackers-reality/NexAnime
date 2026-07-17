@@ -7,6 +7,7 @@ import ServerPicker from '@/components/player/ServerPicker';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
 import AnimeCard from '@/components/cards/AnimeCard';
+import EpisodeGrid from '@/components/watch/EpisodeGrid';
 import styles from './WatchClient.module.css';
 
 interface ServerSource {
@@ -415,6 +416,12 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             </p>
           </div>
         </div>
+
+        <EpisodeGrid
+          animeId={media.id}
+          totalEpisodes={totalEpisodes}
+          currentEpisode={episodeNumber}
+        />
       </div>
 
       <aside className={styles.rightRail}>

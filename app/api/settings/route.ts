@@ -4,7 +4,7 @@ import { getDb, execute, queryOne } from '@/lib/db';
 export async function GET() {
   try {
     const settings = await queryOne(
-      'SELECT title_language, hide_adult_content, autoplay_trailers, video_quality, auto_play, auto_next, auto_skip_intro_outro, mini_player, ambient_mode, pause_history FROM settings WHERE id = 1'
+      'SELECT title_language, hide_adult_content, autoplay_trailers, video_quality, auto_play, auto_next, auto_skip_intro_outro, mini_player, ambient_mode, pause_history, theme FROM settings WHERE id = 1'
     );
     return NextResponse.json({ settings });
   } catch (err) {
@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
       autoSkipIntroOutro,
       miniPlayer,
       ambientMode,
-      pauseHistory
+      pauseHistory,
+      theme
     } = body;
 
     // Build SQLite update command
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
            auto_skip_intro_outro = COALESCE(?, auto_skip_intro_outro),
            mini_player = COALESCE(?, mini_player),
            ambient_mode = COALESCE(?, ambient_mode),
-           pause_history = COALESCE(?, pause_history)
+           pause_history = COALESCE(?, pause_history),
+           theme = COALESCE(?, theme)
        WHERE id = 1`,
       [
         titleLanguage ?? null,
@@ -53,7 +55,8 @@ export async function POST(req: NextRequest) {
         autoSkipIntroOutro !== undefined ? (autoSkipIntroOutro ? 1 : 0) : null,
         miniPlayer !== undefined ? (miniPlayer ? 1 : 0) : null,
         ambientMode !== undefined ? (ambientMode ? 1 : 0) : null,
-        pauseHistory !== undefined ? (pauseHistory ? 1 : 0) : null
+        pauseHistory !== undefined ? (pauseHistory ? 1 : 0) : null,
+        theme ?? null
       ]
     );
 

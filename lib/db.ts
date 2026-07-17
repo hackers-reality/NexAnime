@@ -44,7 +44,8 @@ const SCHEMA_STATEMENTS: string[] = [
     auto_skip_intro_outro INTEGER DEFAULT 0,
     mini_player INTEGER DEFAULT 0,
     ambient_mode INTEGER DEFAULT 0,
-    pause_history INTEGER DEFAULT 0
+    pause_history INTEGER DEFAULT 0,
+    theme TEXT DEFAULT 'dark'
   )`,
 
   // Cached anime metadata from AniList
@@ -163,6 +164,13 @@ export async function initializeDb(): Promise<void> {
   const db = getDb();
   const statements: InStatement[] = SCHEMA_STATEMENTS.map((sql) => ({ sql, args: [] }));
   await db.batch(statements, 'write');
+
+  // Run migrations that may fail if column already exists
+  try {
+    await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark\'');
+  } catch {
+    // Column already exists — ignore
+  }
 }
 
 // ─── Query helpers ──────────────────────────────────────

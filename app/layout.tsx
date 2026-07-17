@@ -4,6 +4,7 @@ import { initializeDb, queryOne } from '@/lib/db';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UpdateBanner from '@/components/shared/UpdateBanner';
+import ShortcutsOverlay from '@/components/shared/ShortcutsOverlay';
 
 export const metadata: Metadata = {
   title: 'NexAnime — Your Anime, Your Way',
@@ -49,10 +50,16 @@ export default async function RootLayout({
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icon-512.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}})()`,
+          }}
+        />
       </head>
       <body>
         {children}
         <UpdateBanner />
+        <ShortcutsOverlay />
       </body>
     </html>
   );
