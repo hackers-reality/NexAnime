@@ -123,7 +123,7 @@ interface AnimetsuEpisode {
 
 // ─── Flexible field extractors (handle both object & string) ──
 
-function getTitle(raw: any): { romaji: string; english: string | null; native: string | null } {
+function getTitle(raw: AnimetsuTitle | string | null | undefined): { romaji: string; english: string | null; native: string | null } {
   if (!raw) return { romaji: '', english: null, native: null };
   if (typeof raw === 'object' && raw !== null) {
     return {
@@ -145,7 +145,7 @@ function getTitle(raw: any): { romaji: string; english: string | null; native: s
   return { romaji: '', english: null, native: null };
 }
 
-function getCoverUrl(cover: any): string | null {
+function getCoverUrl(cover: AnimetsuCover | string | null | undefined): string | null {
   if (!cover) return null;
   if (typeof cover === 'object' && cover !== null) return cover.large || cover.medium || null;
   if (typeof cover === 'string') {
@@ -155,7 +155,7 @@ function getCoverUrl(cover: any): string | null {
   return null;
 }
 
-function extractAniListId(cover: any): number | null {
+function extractAniListId(cover: AnimetsuCover | string | null | undefined): number | null {
   const url = getCoverUrl(cover);
   if (!url) return null;
   const m = url.match(/\/bx(\d+)-/);
@@ -230,7 +230,8 @@ function searchResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
   if (!r) return null;
   cacheIdMapping(r);
   const titles = getTitle(r.title);
-  const anilistId = extractAniListId(r.cover_image) ?? 0;
+  const anilistId = extractAniListId(r.cover_image);
+  if (!anilistId) return null; // skip results without AniList ID (can't link to them)
   const coverUrl = getCoverUrl(r.cover_image);
 
   return {
@@ -353,7 +354,8 @@ export async function animetsuGetInfo(animetsuId: string): Promise<AnimetsuInfoR
 export function animetsuInfoToMedia(r: AnimetsuInfoResponse): AniListMedia | null {
   if (!r) return null;
   const titles = getTitle(r.title);
-  const anilistId = r.anilist_id ?? extractAniListId(r.cover_image) ?? 0;
+  const anilistId = r.anilist_id ?? extractAniListId(r.cover_image);
+  if (!anilistId) return null;
   const coverUrl = getCoverUrl(r.cover_image);
 
   return {

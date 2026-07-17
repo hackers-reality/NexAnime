@@ -7,8 +7,6 @@ import type {
   AniListSearchResult,
   AniListAiringSchedule,
   AniListPageInfo,
-  AnimeFormat,
-  AnimeStatus,
   AnimeSeason,
   BrowseFilters,
 } from '@/types';
@@ -20,7 +18,7 @@ const ANILIST_API = 'https://graphql.anilist.co';
 const RATE_LIMIT = 80; // AniList allows 90/min, stay just under
 const RATE_WINDOW = 60_000;
 let requestTimestamps: number[] = [];
-let queue: Array<() => void> = [];
+const queue: Array<() => void> = [];
 let activeCount = 0;
 const MAX_CONCURRENT = 5; // allow parallel requests
 
