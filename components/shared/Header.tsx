@@ -237,6 +237,10 @@ export default function Header() {
               >
                 🚪 Sign Out &amp; Reset
               </button>
+              <div className={styles.profileDropdownDivider} />
+              <div className={styles.versionInfo}>
+                NexAnime v0.1.0 · Self-hosted
+              </div>
             </div>
           )}
         </div>

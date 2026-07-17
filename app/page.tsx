@@ -40,6 +40,10 @@ export default function HomePage() {
   const [trendingCards, setTrendingCards] = useState<any[]>([]);
   const [continueWatching, setContinueWatching] = useState<ProgressItem[]>([]);
   const [thisSeasonCards, setThisSeasonCards] = useState<any[]>([]);
+  const currentSeason = (() => {
+    const m = new Date().getMonth();
+    return ['WINTER', 'WINTER', 'SPRING', 'SPRING', 'SPRING', 'SUMMER', 'SUMMER', 'SUMMER', 'FALL', 'FALL', 'FALL', 'WINTER'][m];
+  })();
   const [upcomingCards, setUpcomingCards] = useState<any[]>([]);
   const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<any[]>([]);
   const [formattedSchedules, setFormattedSchedules] = useState<any[]>([]);
@@ -351,7 +355,7 @@ export default function HomePage() {
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <h2 className={styles.sectionTitle}>This Season</h2>
-                  <Link href="/browse?season=WINTER&sort=POPULARITY_DESC" className={styles.viewAllLink}>
+                  <Link href={`/browse?season=${currentSeason}&sort=POPULARITY_DESC`} className={styles.viewAllLink}>
                     →
                   </Link>
                 </div>

@@ -586,6 +586,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           animeTitle={media.title.english || media.title.romaji}
           posterUrl={media.coverImage?.extraLarge || null}
           totalEpisodes={media.episodes}
+          onSaveSuccess={fetchWatchlistStatus}
         />
       )}
     </main>

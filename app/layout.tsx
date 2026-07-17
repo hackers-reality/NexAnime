@@ -3,6 +3,7 @@ import './globals.css';
 import { initializeDb, queryOne } from '@/lib/db';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import UpdateBanner from '@/components/shared/UpdateBanner';
 
 export const metadata: Metadata = {
   title: 'NexAnime — Your Anime, Your Way',
@@ -51,6 +52,7 @@ export default async function RootLayout({
       </head>
       <body>
         {children}
+        <UpdateBanner />
       </body>
     </html>
   );
