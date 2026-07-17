@@ -1,9 +1,5 @@
-// NexAnime — Animetsu.cc/liv Metadata Scraper
-// Fetches anime metadata (search, details, episodes) from animetsu
-// Bypasses AniList rate limits for metadata-heavy pages
-
 import { queryOne, execute } from './db';
-import type { AniListMedia, AnimeFormat, AnimeStatus, AnimeSeason, BrowseFilters } from '@/types';
+import type { AniListMedia, AnimeFormat, AnimeStatus, AnimeSeason } from '@/types';
 
 const ANIMETSU_BASES = [
   'https://animetsu.cc/v2/api/anime',
@@ -12,20 +8,32 @@ const ANIMETSU_BASES = [
 let activeBaseIndex = 0;
 
 const HEADERS: Record<string, string> = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
   'Referer': 'https://animetsu.cc/',
   'Origin': 'https://animetsu.cc',
 };
 
-// ─── Raw animetsu response types ────────────────────────
+// ─── Animetsu API response types ────────────────────────────
+
+interface AnimetsuTitle {
+  romaji: string;
+  english: string | null;
+  native: string | null;
+}
+
+interface AnimetsuCover {
+  large: string;
+  medium: string;
+  small?: string;
+}
 
 interface AnimetsuSearchResult {
   id: string;
   type: string;
-  title: string;
+  title: AnimetsuTitle;
   status: string;
   is_adult: boolean;
-  cover_image: string;
+  cover_image: AnimetsuCover;
   banner: string | null;
   description: string;
   total_eps: number;
@@ -36,6 +44,7 @@ interface AnimetsuSearchResult {
   duration: number;
   genres: string;
   average_score: number;
+  mean_score?: number;
   trailer: string | null;
   season: string;
 }
@@ -45,6 +54,58 @@ interface AnimetsuSearchResponse {
   page: number;
   last_page: number;
   total: number;
+}
+
+interface AnimetsuInfoResponse extends AnimetsuSearchResult {
+  color: string;
+  clear_logo: string | null;
+  mean_score: number;
+  popularity: number;
+  favourites: number;
+  trending: number;
+  source: string;
+  synonyms: string;
+  country: string;
+  hashtag: string;
+  rank: number;
+  users: number;
+  anilist_id: number;
+  mal_id: number;
+  tags: string[];
+  next_airing_ep: {
+    airing_at: number;
+    ep_num: number;
+    time_left: number;
+  } | null;
+  characters: Array<{
+    anilist_id: number;
+    name: string;
+    role: string;
+    image: string;
+    voice_actor: {
+      anilist_id: number;
+      name: string;
+      image: string;
+      language: string;
+    };
+  }>;
+  staff: Array<{
+    name: string;
+    role: string;
+  }>;
+  studios: Array<{
+    name: string;
+    is_main: boolean;
+  }>;
+  relations: Array<{
+    id: string;
+    relation_type: string;
+    title: AnimetsuTitle;
+  }>;
+  recommendations: Array<{
+    id: string;
+    title: AnimetsuTitle;
+  }>;
 }
 
 interface AnimetsuEpisode {
@@ -60,24 +121,48 @@ interface AnimetsuEpisode {
   id: string;
 }
 
-// ─── Helpers ─────────────────────────────────────────────
+// ─── Flexible field extractors (handle both object & string) ──
 
-function parseAnimetsuTitle(raw: string): { romaji: string; english: string; native: string } {
-  const result = { romaji: '', english: '', native: '' };
-  if (!raw) return result;
-  const romaji = raw.match(/romaji=([^;)]+)/);
-  const english = raw.match(/english=([^;)]+)/);
-  const native = raw.match(/native=([^;)]+)/);
-  if (romaji) result.romaji = romaji[1].trim();
-  if (english) result.english = english[1].trim();
-  if (native) result.native = native[1].trim();
-  return result;
+function getTitle(raw: any): { romaji: string; english: string | null; native: string | null } {
+  if (!raw) return { romaji: '', english: null, native: null };
+  if (typeof raw === 'object' && raw !== null) {
+    return {
+      romaji: raw.romaji || raw.english || '',
+      english: raw.english || null,
+      native: raw.native || null,
+    };
+  }
+  if (typeof raw === 'string') {
+    const romaji = raw.match(/romaji=([^;)]+)/);
+    const english = raw.match(/english=([^;)]+)/);
+    const native = raw.match(/native=([^;)]+)/);
+    return {
+      romaji: romaji?.[1]?.trim() || '',
+      english: english?.[1]?.trim() || null,
+      native: native?.[1]?.trim() || null,
+    };
+  }
+  return { romaji: '', english: null, native: null };
 }
 
-function extractAniListIdFromCover(coverImage: string): number | null {
-  const match = coverImage.match(/\/bx(\d+)-/);
-  return match ? parseInt(match[1]) : null;
+function getCoverUrl(cover: any): string | null {
+  if (!cover) return null;
+  if (typeof cover === 'object' && cover !== null) return cover.large || cover.medium || null;
+  if (typeof cover === 'string') {
+    const m = cover.match(/large=([^;]+)/);
+    return m?.[1] || null;
+  }
+  return null;
 }
+
+function extractAniListId(cover: any): number | null {
+  const url = getCoverUrl(cover);
+  if (!url) return null;
+  const m = url.match(/\/bx(\d+)-/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+// ─── Mappers ─────────────────────────────────────────────────
 
 function mapFormat(fmt: string): AnimeFormat {
   const map: Record<string, AnimeFormat> = {
@@ -106,7 +191,7 @@ function parseGenres(genres: string): string[] {
   return genres ? genres.split(/\s+/).filter(Boolean) : [];
 }
 
-// ─── Core fetch with failover ────────────────────────────
+// ─── Core fetch with dual-base failover ──────────────────────
 
 async function animetsuFetch<T>(path: string): Promise<T | null> {
   for (let i = 0; i < ANIMETSU_BASES.length; i++) {
@@ -127,58 +212,29 @@ async function animetsuFetch<T>(path: string): Promise<T | null> {
   return null;
 }
 
-// ─── Public API: Search ──────────────────────────────────
+// ─── Background ID cache ─────────────────────────────────────
 
-export async function animetsuSearch(
-  query: string,
-  page = 1,
-  limit = 20
-): Promise<{ media: AniListMedia[]; total: number; lastPage: number }> {
-  const data = await animetsuFetch<AnimetsuSearchResponse>(
-    `/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
-  );
-  if (!data?.results) return { media: [], total: 0, lastPage: 1 };
-
-  const media = data.results.map(r => animetsuResultToMedia(r)).filter(Boolean) as AniListMedia[];
-  return { media, total: data.total, lastPage: data.last_page };
+function cacheIdMapping(r: AnimetsuSearchResult): void {
+  const anilistId = extractAniListId(r.cover_image);
+  if (anilistId && r.id) {
+    execute(
+      "INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at) VALUES (?, ?, datetime('now'))",
+      [anilistId, r.id]
+    ).catch(() => {});
+  }
 }
 
-// ─── Public API: Anime Detail (by animetsu MongoDB ID) ──
+// ─── Convert search result → AniListMedia ────────────────────
 
-export async function animetsuGetInfo(animetsuId: string): Promise<AnimetsuSearchResult | null> {
-  const data = await animetsuFetch<AnimetsuSearchResult>(`/info/${animetsuId}`);
-  return data;
-}
-
-// ─── Public API: Episodes ────────────────────────────────
-
-export async function animetsuGetEpisodes(animetsuId: string): Promise<AnimetsuEpisode[]> {
-  const data = await animetsuFetch<AnimetsuEpisode[]>(`/eps/${animetsuId}`);
-  return data ?? [];
-}
-
-// ─── Public API: Get servers for episode ─────────────────
-
-export async function animetsuGetServers(animetsuId: string, ep: number) {
-  return await animetsuFetch<Array<{ id: string; default: boolean; tip: string }>>(
-    `/servers/${animetsuId}/${ep}`
-  ) ?? [];
-}
-
-// ─── Convert animetsu result → AniListMedia ──────────────
-
-function animetsuResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
+function searchResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
   if (!r) return null;
-  const titles = parseAnimetsuTitle(r.title);
-  const anilistId = extractAniListIdFromCover(r.cover_image);
-
-  // Extract cover URL from the cover_image field
-  const coverLargeMatch = r.cover_image?.match(/large=([^;]+)/);
-  const coverMediumMatch = r.cover_image?.match(/medium=([^;]+)/);
-  const coverUrl = coverLargeMatch?.[1] || coverMediumMatch?.[1] || '';
+  cacheIdMapping(r);
+  const titles = getTitle(r.title);
+  const anilistId = extractAniListId(r.cover_image) ?? 0;
+  const coverUrl = getCoverUrl(r.cover_image);
 
   return {
-    id: anilistId ?? 0,
+    id: anilistId,
     title: {
       romaji: titles.romaji || titles.english || 'Unknown',
       english: titles.english || null,
@@ -191,7 +247,7 @@ function animetsuResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
     season: mapSeason(r.season),
     seasonYear: r.year,
     averageScore: r.average_score,
-    meanScore: r.average_score,
+    meanScore: r.mean_score ?? r.average_score,
     studios: { nodes: [] },
     genres: parseGenres(r.genres),
     tags: [],
@@ -200,7 +256,7 @@ function animetsuResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
       large: coverUrl || null,
       medium: coverUrl || null,
     },
-    bannerImage: r.banner,
+    bannerImage: r.banner || null,
     episodes: r.total_eps,
     nextAiringEpisode: null,
     streamingEpisodes: [],
@@ -208,16 +264,208 @@ function animetsuResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
   } as unknown as AniListMedia;
 }
 
-// ─── Search by AniList ID (lookup via cover image) ───────
-// Animetsu stores AniList IDs in cover URLs, so we can reverse-lookup
+// ─── Public API: Basic Search ────────────────────────────────
 
-let idSearchCache: Map<number, string> = new Map();
+export async function animetsuSearch(
+  query: string,
+  page = 1,
+  limit = 20
+): Promise<{ media: AniListMedia[]; total: number; lastPage: number }> {
+  const data = await animetsuFetch<AnimetsuSearchResponse>(
+    `/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+  );
+  if (!data?.results) return { media: [], total: 0, lastPage: 1 };
+  const media = data.results.map(r => searchResultToMedia(r)).filter(Boolean) as AniListMedia[];
+  return { media, total: data.total, lastPage: data.last_page };
+}
+
+// ─── Public API: Browse with all filters ─────────────────────
+
+export interface AnimetsuBrowseParams {
+  query?: string;
+  sort?: string;
+  status?: string;
+  genres?: string;
+  format?: string;
+  season?: string;
+  year?: number;
+  tags?: string;
+  country?: string;
+  source?: string;
+  page?: number;
+  limit?: number;
+}
+
+function buildBrowseQuery(params: AnimetsuBrowseParams): string {
+  const parts: string[] = [];
+  if (params.query) parts.push(`query=${encodeURIComponent(params.query)}`);
+  if (params.sort) parts.push(`sort=${params.sort}`);
+  if (params.status) parts.push(`status=${params.status}`);
+  if (params.genres) parts.push(`genres=${encodeURIComponent(params.genres)}`);
+  if (params.format) parts.push(`format=${params.format}`);
+  if (params.season) parts.push(`season=${params.season}`);
+  if (params.year) parts.push(`year=${params.year}`);
+  if (params.tags) parts.push(`tags=${encodeURIComponent(params.tags)}`);
+  if (params.country) parts.push(`country=${params.country}`);
+  if (params.source) parts.push(`source=${params.source}`);
+  if (params.page) parts.push(`page=${params.page}`);
+  if (params.limit) parts.push(`limit=${params.limit}`);
+  return parts.join('&');
+}
+
+export async function animetsuBrowse(
+  params: AnimetsuBrowseParams
+): Promise<{ media: AniListMedia[]; total: number; lastPage: number }> {
+  const qs = buildBrowseQuery(params);
+  const data = await animetsuFetch<AnimetsuSearchResponse>(`/search?${qs}`);
+  if (!data?.results) return { media: [], total: 0, lastPage: 1 };
+  const media = data.results.map(r => searchResultToMedia(r)).filter(Boolean) as AniListMedia[];
+  return { media, total: data.total, lastPage: data.last_page };
+}
+
+export async function animetsuTrending(page = 1, limit = 15) {
+  return animetsuBrowse({ sort: 'trending', page, limit });
+}
+
+export async function animetsuPopular(page = 1, limit = 15) {
+  return animetsuBrowse({ sort: 'popularity', page, limit });
+}
+
+export async function animetsuTopRated(page = 1, limit = 15) {
+  return animetsuBrowse({ sort: 'score', page, limit });
+}
+
+export async function animetsuSeason(season: string, year: number, page = 1, limit = 15) {
+  return animetsuBrowse({ season, year, sort: 'popularity', page, limit });
+}
+
+export async function animetsuUpcoming(page = 1, limit = 15) {
+  return animetsuBrowse({ status: 'NOT_YET_RELEASED', sort: 'popularity', page, limit });
+}
+
+// ─── Public API: Anime Detail (full info) ────────────────────
+
+export async function animetsuGetInfo(animetsuId: string): Promise<AnimetsuInfoResponse | null> {
+  const data = await animetsuFetch<AnimetsuInfoResponse>(`/info/${animetsuId}`);
+  return data;
+}
+
+export function animetsuInfoToMedia(r: AnimetsuInfoResponse): AniListMedia | null {
+  if (!r) return null;
+  const titles = getTitle(r.title);
+  const anilistId = r.anilist_id ?? extractAniListId(r.cover_image) ?? 0;
+  const coverUrl = getCoverUrl(r.cover_image);
+
+  return {
+    id: anilistId,
+    idMal: r.mal_id ?? null,
+    title: {
+      romaji: titles.romaji || titles.english || 'Unknown',
+      english: titles.english || null,
+      native: titles.native || null,
+    },
+    synonyms: r.synonyms ? r.synonyms.split(/\s+/).filter(Boolean) : [],
+    description: r.description?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '') ?? '',
+    format: mapFormat(r.format),
+    status: mapStatus(r.status),
+    season: mapSeason(r.season),
+    seasonYear: r.year,
+    averageScore: r.average_score,
+    meanScore: r.mean_score ?? r.average_score,
+    popularity: r.popularity ?? null,
+    favourites: r.favourites ?? null,
+    studios: { nodes: (r.studios || []).map(s => ({ name: s.name, isMain: s.is_main })) },
+    genres: parseGenres(r.genres),
+    tags: (r.tags || []).map(t => ({ name: t, rank: 50 })),
+    coverImage: {
+      extraLarge: coverUrl || null,
+      large: coverUrl || null,
+      medium: coverUrl || null,
+    },
+    bannerImage: r.banner || null,
+    episodes: r.total_eps,
+    nextAiringEpisode: r.next_airing_ep
+      ? { airingAt: r.next_airing_ep.airing_at, episode: r.next_airing_ep.ep_num, timeUntilAiring: r.next_airing_ep.time_left }
+      : null,
+    streamingEpisodes: [],
+    trailer: r.trailer ? { id: r.trailer, site: 'youtube' } : null,
+    relations: {
+      edges: (r.relations || []).map(rel => ({
+        relationType: rel.relation_type,
+        node: {
+          id: 0,
+          title: (() => { const t = getTitle(rel.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
+          coverImage: { extraLarge: null, large: null, medium: null },
+          format: null, status: null, season: null, seasonYear: null,
+          averageScore: null, meanScore: null, episodes: null,
+        } as unknown as AniListMedia,
+      })),
+    },
+    recommendations: {
+      nodes: (r.recommendations || []).map(rec => ({
+        mediaRecommendation: {
+          id: 0,
+          title: (() => { const t = getTitle(rec.title); return { romaji: t.romaji || '', english: t.english, native: t.native }; })(),
+          coverImage: { extraLarge: null, large: null, medium: null },
+          format: null, status: null, season: null, seasonYear: null,
+          averageScore: null, meanScore: null, episodes: null,
+        } as unknown as AniListMedia,
+      })),
+    },
+    characters: {
+      edges: (r.characters || []).map(char => ({
+        role: char.role as 'MAIN' | 'SUPPORTING' | 'BACKGROUND',
+        node: {
+          id: char.anilist_id ?? 0,
+          name: { full: char.name || '' },
+          image: { large: char.image || null },
+        },
+        voiceActors: char.voice_actor ? [{
+          id: char.voice_actor.anilist_id ?? 0,
+          name: { full: char.voice_actor.name || '' },
+          image: { large: char.voice_actor.image || null },
+          languageV2: char.voice_actor.language || 'Japanese',
+        }] : [],
+      })),
+    },
+    staff: {
+      edges: (r.staff || []).map(s => ({
+        role: s.role || '',
+        node: {
+          id: 0,
+          name: { full: s.name || '' },
+          image: { large: null },
+        },
+      })),
+    },
+  } as unknown as AniListMedia;
+}
+
+// Relations/recommendations from animetsu provide Mongo IDs — no AniList ID lookup possible
+
+// ─── Public API: Episodes ────────────────────────────────────
+
+export async function animetsuGetEpisodes(animetsuId: string): Promise<AnimetsuEpisode[]> {
+  const data = await animetsuFetch<AnimetsuEpisode[]>(`/eps/${animetsuId}`);
+  return data ?? [];
+}
+
+// ─── Public API: Servers ─────────────────────────────────────
+
+export async function animetsuGetServers(animetsuId: string, ep: number) {
+  return await animetsuFetch<Array<{ id: string; default: boolean; tip: string }>>(
+    `/servers/${animetsuId}/${ep}`
+  ) ?? [];
+}
+
+// ─── AniList ID ↔ Animetsu ID bridge ────────────────────────
+
+const idSearchCache: Map<number, string> = new Map();
 
 export async function findAnimetsuIdByAnilistId(anilistId: number): Promise<string | null> {
   const cached = idSearchCache.get(anilistId);
   if (cached) return cached;
 
-  // Check DB cache
   const dbCached = await queryOne<{ animetsu_id: string }>(
     'SELECT animetsu_id FROM animetsu_id_cache WHERE anilist_id = ?',
     [anilistId]
@@ -227,13 +475,29 @@ export async function findAnimetsuIdByAnilistId(anilistId: number): Promise<stri
     return dbCached.animetsu_id;
   }
 
+  // Search animetsu by AniList ID as text query
+  // The search endpoint accepts AniList ID numbers as query
+  const searchRes = await animetsuFetch<AnimetsuSearchResponse>(
+    `/search?query=${anilistId}&limit=1`
+  );
+  if (searchRes?.results?.length) {
+    const foundId = searchRes.results[0].id;
+    idSearchCache.set(anilistId, foundId);
+    await cacheAnimetsuIdDb(anilistId, foundId);
+    return foundId;
+  }
+
   return null;
+}
+
+async function cacheAnimetsuIdDb(anilistId: number, animetsuId: string): Promise<void> {
+  await execute(
+    "INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at) VALUES (?, ?, datetime('now'))",
+    [anilistId, animetsuId]
+  );
 }
 
 export async function cacheAnimetsuId(anilistId: number, animetsuId: string): Promise<void> {
   idSearchCache.set(anilistId, animetsuId);
-  await execute(
-    'INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at) VALUES (?, ?, datetime(\'now\'))',
-    [anilistId, animetsuId]
-  );
+  await cacheAnimetsuIdDb(anilistId, animetsuId);
 }

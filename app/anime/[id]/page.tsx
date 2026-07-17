@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getAnimeDetail } from '@/lib/anilist';
 import { queryOne } from '@/lib/db';
+import { findAnimetsuIdByAnilistId, animetsuGetInfo, animetsuInfoToMedia } from '@/lib/animetsu';
+import { getAnimeDetail } from '@/lib/anilist';
 import Header from '@/components/shared/Header';
 import AnimeDetailClient from './AnimeDetailClient';
 
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const anilistId = parseInt(id);
   if (isNaN(anilistId)) return {};
 
-  // Try DB cache first to avoid AniList API call for metadata
+  // Try DB cache first
   const cached = await queryOne<{
     title_romaji: string | null;
     title_english: string | null;
@@ -34,6 +35,25 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         type: 'website',
       },
     };
+  }
+
+  // Try animetsu (covers 90% of cases)
+  const animetsuId = await findAnimetsuIdByAnilistId(anilistId);
+  if (animetsuId) {
+    const info = await animetsuGetInfo(animetsuId);
+    if (info) {
+      const media = animetsuInfoToMedia(info);
+      if (media) {
+        const title = media.title.english || media.title.romaji || 'Anime';
+        const description = (media.description || '').replace(/<[^>]*>/g, '').slice(0, 160);
+        const image = media.coverImage?.large || media.coverImage?.medium || '';
+        return {
+          title,
+          description,
+          openGraph: { title, description, images: image ? [{ url: image, width: 230, height: 325 }] : [], type: 'website' },
+        };
+      }
+    }
   }
 
   // Fallback to AniList API
@@ -68,7 +88,24 @@ export default async function AnimeDetailPage({ params }: PageProps) {
     return notFound();
   }
 
-  // Fetch detail data from AniList API (server-side)
+  // Try animetsu first
+  const animetsuId = await findAnimetsuIdByAnilistId(anilistId);
+  if (animetsuId) {
+    const info = await animetsuGetInfo(animetsuId);
+    if (info) {
+      const media = animetsuInfoToMedia(info);
+      if (media) {
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header />
+            <AnimeDetailClient media={media} />
+          </div>
+        );
+      }
+    }
+  }
+
+  // Fallback to AniList API
   const media = await getAnimeDetail(anilistId);
 
   if (!media) {

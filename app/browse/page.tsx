@@ -57,13 +57,36 @@ function BrowseContent() {
     setResults([]);
     setCurrentPage(1);
 
+    const SORT_MAP: Record<string, string> = {
+      POPULARITY_DESC: 'popularity',
+      TRENDING_DESC: 'trending',
+      SCORE_DESC: 'score',
+    };
+
+    const buildBrowseUrl = (f: BrowseFilters, pg: number) => {
+      const p = new URLSearchParams();
+      p.set('action', 'browse');
+      if (f.search) p.set('q', f.search);
+      if (f.genres?.length) p.set('genres', f.genres.join(','));
+      if (f.format) p.set('format', f.format);
+      if (f.season) p.set('season', f.season);
+      if (f.seasonYear) p.set('year', String(f.seasonYear));
+      if (f.status) p.set('status', f.status);
+      if (f.tags?.length) p.set('tags', f.tags.join(','));
+      if (f.countryOfOrigin) p.set('country', f.countryOfOrigin);
+      if (f.source) p.set('source', f.source);
+      if (f.sort?.length) {
+        const mapped = SORT_MAP[f.sort[0]];
+        if (mapped) p.set('sort', mapped);
+      }
+      p.set('page', String(pg));
+      p.set('limit', '20');
+      return `/api/animetsu?${p.toString()}`;
+    };
+
     const fetchResults = async () => {
       try {
-        const res = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'search', ...filters, page: 1 }),
-        });
+        const res = await fetch(buildBrowseUrl(filters, 1));
         const data = await res.json();
         if (active) {
           setResults(data.media ?? []);
@@ -86,11 +109,7 @@ function BrowseContent() {
     setLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const res = await fetch('/api/anilist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'search', ...filters, page: nextPage }),
-      });
+      const res = await fetch(buildBrowseUrl(filters, nextPage));
       const data = await res.json();
       setResults((prev) => [...prev, ...(data.media ?? [])]);
       setPageInfo(data.pageInfo ?? null);

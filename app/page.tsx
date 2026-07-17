@@ -94,25 +94,10 @@ export default function HomePage() {
   const handleTrendTabChange = async (tab: 'trending' | 'popular' | 'topRated') => {
     setActiveTrendTab(tab);
     try {
-      const res = await fetch('/api/anilist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: tab === 'trending' ? 'trending' : tab === 'popular' ? 'popular' : 'topRated', page: 1, perPage: 15 })
-      });
+      const res = await fetch(`/api/animetsu?action=${tab}&limit=15`);
       const data = await res.json();
       const media = (data.media || []).slice(5, 15);
-      setTabAnime(media.map((m: any) => ({
-        anilistId: m.id,
-        titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
-        titleEnglish: m.title?.english,
-        coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
-        format: m.format,
-        seasonYear: m.seasonYear,
-        status: m.status,
-        averageScore: m.averageScore,
-        synopsis: m.description,
-        genres: m.genres || [],
-      })));
+      setTabAnime(media);
     } catch (err) {
       console.error('Failed to load tab data:', err);
     }
