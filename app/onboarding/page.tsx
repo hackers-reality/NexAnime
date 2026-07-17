@@ -89,6 +89,7 @@ export default function OnboardingPage() {
           pronouns: pronouns.trim() || null,
           aboutMe: aboutMe.trim() || null,
           avatarCharId: selectedChar?.id || null,
+          avatarUrl: selectedChar?.image?.large || null,
         }),
       });
 

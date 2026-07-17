@@ -137,7 +137,7 @@ const SCHEMA_STATEMENTS: string[] = [
     subscribed_at DATETIME DEFAULT (datetime('now'))
   )`,
 
-  // Animetsu ID mapping cache — bridges AniList IDs to animetsu MongoDB IDs
+  // Animetsu ID cache — bridges AniList IDs to animetsu MongoDB IDs
   `CREATE TABLE IF NOT EXISTS animetsu_id_cache (
     anilist_id INTEGER PRIMARY KEY,
     animetsu_id TEXT NOT NULL,
@@ -183,6 +183,12 @@ export async function initializeDb(): Promise<void> {
 
   try {
     await db.execute('ALTER TABLE settings ADD COLUMN notification_sound INTEGER DEFAULT 1');
+  } catch {
+    // Column already exists — ignore
+  }
+
+  try {
+    await db.execute('ALTER TABLE profile ADD COLUMN avatar_url TEXT');
   } catch {
     // Column already exists — ignore
   }

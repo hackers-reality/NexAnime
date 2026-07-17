@@ -17,19 +17,49 @@ const ANILIST_API = 'https://graphql.anilist.co';
 
 // ─── Rate limiter ────────────────────────────────────────
 
+const RATE_LIMIT = 40; // conservative — stay well under 90/min
+const RATE_WINDOW = 60_000;
 let requestTimestamps: number[] = [];
-const RATE_LIMIT = 85; // stay under 90/min
-const RATE_WINDOW = 60_000; // 1 minute
+let queue: Array<() => void> = [];
+let activeCount = 0;
+const MAX_CONCURRENT = 2; // serialize most requests
+
+function processQueue() {
+  while (activeCount < MAX_CONCURRENT && queue.length > 0) {
+    const next = queue.shift()!;
+    activeCount++;
+    next();
+  }
+}
 
 async function waitForRateLimit(): Promise<void> {
-  const now = Date.now();
-  requestTimestamps = requestTimestamps.filter((t) => now - t < RATE_WINDOW);
-  if (requestTimestamps.length >= RATE_LIMIT) {
-    const oldestInWindow = requestTimestamps[0];
-    const waitMs = RATE_WINDOW - (now - oldestInWindow) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
-  requestTimestamps.push(Date.now());
+  // Enqueue this request
+  await new Promise<void>((resolve) => {
+    const tryAcquire = () => {
+      const now = Date.now();
+      requestTimestamps = requestTimestamps.filter((t) => now - t < RATE_WINDOW);
+      if (requestTimestamps.length >= RATE_LIMIT) {
+        // Wait then re-check
+        const oldestInWindow = requestTimestamps[0];
+        const waitMs = RATE_WINDOW - (now - oldestInWindow) + 200;
+        setTimeout(tryAcquire, Math.min(waitMs, 5000));
+        return;
+      }
+      if (activeCount >= MAX_CONCURRENT) {
+        queue.push(tryAcquire);
+        return;
+      }
+      activeCount++;
+      requestTimestamps.push(Date.now());
+      resolve();
+    };
+    tryAcquire();
+  });
+}
+
+function releaseRateLimit() {
+  activeCount = Math.max(0, activeCount - 1);
+  processQueue();
 }
 
 // ─── Core GraphQL fetch ──────────────────────────────────
@@ -37,36 +67,44 @@ async function waitForRateLimit(): Promise<void> {
 async function anilistFetch<T>(
   query: string,
   variables: Record<string, unknown> = {},
-  retries = 3
+  retries = 2
 ): Promise<T> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     await waitForRateLimit();
 
-    const response = await fetch(ANILIST_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ query, variables }),
-    });
+    try {
+      const response = await fetch(ANILIST_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      });
 
-    if (response.status === 429) {
-      const retryAfter = parseInt(response.headers.get('Retry-After') || '5');
-      const waitMs = (retryAfter || 5) * 1000 * (attempt + 1);
-      console.log(`AniList rate limited, waiting ${waitMs}ms before retry ${attempt + 1}/${retries}`);
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
-      continue;
+      releaseRateLimit();
+
+      if (response.status === 429) {
+        const retryAfter = Math.min(parseInt(response.headers.get('Retry-After') || '10'), 15);
+        const waitMs = retryAfter * 1000;
+        console.log(`[AniList] Rate limited, waiting ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+        continue;
+      }
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`AniList API error ${response.status}: ${text}`);
+      }
+
+      const json = await response.json();
+      if (json.errors) {
+        throw new Error(`AniList GraphQL error: ${JSON.stringify(json.errors)}`);
+      }
+
+      return json.data as T;
+    } catch (err) {
+      releaseRateLimit();
+      if (attempt === retries) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`AniList API error ${response.status}: ${text}`);
-    }
-
-    const json = await response.json();
-    if (json.errors) {
-      throw new Error(`AniList GraphQL error: ${JSON.stringify(json.errors)}`);
-    }
-
-    return json.data as T;
   }
 
   throw new Error('AniList API: max retries exceeded');

@@ -28,8 +28,11 @@ export default function Header() {
       const data = await res.json();
       if (data.profile) {
         setDisplayName(data.profile.display_name);
-        if (data.profile.avatar_char_id) {
-          // Look up character image by ID directly
+        // Use cached avatar URL directly — no AniList call needed
+        if (data.profile.avatar_url) {
+          setAvatarUrl(data.profile.avatar_url);
+        } else if (data.profile.avatar_char_id) {
+          // Fallback: fetch character image (only if no cached URL)
           const charRes = await fetch('/api/anilist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -39,8 +42,8 @@ export default function Header() {
             })
           });
           const charData = await charRes.json();
-          if (charData.character) {
-            setAvatarUrl(charData.character.image?.large || '/avatars/default.svg');
+          if (charData.character?.image?.large) {
+            setAvatarUrl(charData.character.image.large);
           }
         }
       }

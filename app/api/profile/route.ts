@@ -4,7 +4,7 @@ import { getDb, execute, queryOne } from '@/lib/db';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { displayName, pronouns, aboutMe, avatarCharId } = body;
+    const { displayName, pronouns, aboutMe, avatarCharId, avatarUrl } = body;
 
     if (!displayName) {
       return NextResponse.json({ error: 'Display name is required' }, { status: 400 });
@@ -17,9 +17,10 @@ export async function POST(req: NextRequest) {
            pronouns = ?,
            about_me = ?,
            avatar_char_id = ?,
+           avatar_url = ?,
            onboarded_at = datetime('now')
        WHERE id = 1`,
-      [displayName, pronouns || null, aboutMe || null, avatarCharId || null]
+      [displayName, pronouns || null, aboutMe || null, avatarCharId || null, avatarUrl || null]
     );
 
     return NextResponse.json({ success: true });
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const profile = await queryOne(
-      'SELECT id, display_name, pronouns, about_me, avatar_char_id, onboarded_at FROM profile WHERE id = 1'
+      'SELECT id, display_name, pronouns, about_me, avatar_char_id, avatar_url, onboarded_at FROM profile WHERE id = 1'
     );
     return NextResponse.json({ profile });
   } catch (err) {

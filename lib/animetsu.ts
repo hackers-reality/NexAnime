@@ -1,28 +1,28 @@
-// NexAnime — Animetsu.cc API client
-// Provides streaming sources from animetsu.cc's backend API
-// No AniList rate limits — completely independent data source
+// NexAnime — Animetsu.cc/liv Metadata Scraper
+// Fetches anime metadata (search, details, episodes) from animetsu
+// Bypasses AniList rate limits for metadata-heavy pages
 
 import { queryOne, execute } from './db';
+import type { AniListMedia, AnimeFormat, AnimeStatus, AnimeSeason, BrowseFilters } from '@/types';
 
 const ANIMETSU_BASES = [
   'https://animetsu.cc/v2/api/anime',
   'https://animetsu.live/v2/api/anime',
 ];
-let currentBaseIndex = 0;
-const PROXY_BASE = '/api/proxy/hls';
+let activeBaseIndex = 0;
 
-const HEADERS = {
+const HEADERS: Record<string, string> = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   'Referer': 'https://animetsu.cc/',
   'Origin': 'https://animetsu.cc',
 };
 
-// ─── Types ──────────────────────────────────────────────
+// ─── Raw animetsu response types ────────────────────────
 
-export interface AnimetsuSearchResult {
-  id: string; // MongoDB ObjectId
+interface AnimetsuSearchResult {
+  id: string;
   type: string;
-  title: string; // Raw format: "@{romaji=X; english=Y; native=Z}"
+  title: string;
   status: string;
   is_adult: boolean;
   cover_image: string;
@@ -40,7 +40,14 @@ export interface AnimetsuSearchResult {
   season: string;
 }
 
-export interface AnimetsuEpisode {
+interface AnimetsuSearchResponse {
+  results: AnimetsuSearchResult[];
+  page: number;
+  last_page: number;
+  total: number;
+}
+
+interface AnimetsuEpisode {
   ep_num: number;
   aired_at: string;
   desc: string;
@@ -53,221 +60,180 @@ export interface AnimetsuEpisode {
   id: string;
 }
 
-export interface AnimetsuServer {
-  id: string; // 'kite', 'dio', 'sage', 'meg'
-  default: boolean;
-  tip: string;
-}
+// ─── Helpers ─────────────────────────────────────────────
 
-export interface AnimetsuSource {
-  quality: string;
-  url: string;
-  old_hls: boolean;
-  type: string;
-  need_proxy: boolean;
-}
-
-export interface AnimetsuStreamResponse {
-  sources: AnimetsuSource[];
-  subs: Array<{ label: string; url: string; lang: string }>;
-  skips: {
-    intro: { start: number; end: number };
-    outro: { start: number; end: number };
-    ep_num: number;
-  };
-  server: string;
-}
-
-// ─── Title parser ────────────────────────────────────────
-// Animetsu returns titles in Java toString format:
-// "@{romaji=NARUTO; english=Naruto; native=NARUTO -???-}"
 function parseAnimetsuTitle(raw: string): { romaji: string; english: string; native: string } {
   const result = { romaji: '', english: '', native: '' };
   if (!raw) return result;
-  
-  const romajiMatch = raw.match(/romaji=([^;)]+)/);
-  const englishMatch = raw.match(/english=([^;)]+)/);
-  const nativeMatch = raw.match(/native=([^;)]+)/);
-  
-  if (romajiMatch) result.romaji = romajiMatch[1].trim();
-  if (englishMatch) result.english = englishMatch[1].trim();
-  if (nativeMatch) result.native = nativeMatch[1].trim();
-  
+  const romaji = raw.match(/romaji=([^;)]+)/);
+  const english = raw.match(/english=([^;)]+)/);
+  const native = raw.match(/native=([^;)]+)/);
+  if (romaji) result.romaji = romaji[1].trim();
+  if (english) result.english = english[1].trim();
+  if (native) result.native = native[1].trim();
   return result;
 }
 
-// ─── ID Mapping Cache ───────────────────────────────────
-// Cache AniList ID → Animetsu MongoDB ID mapping in DB
-
-async function getCachedAnimetsuId(anilistId: number): Promise<string | null> {
-  const row = await queryOne<{ animetsu_id: string }>(
-    'SELECT animetsu_id FROM animetsu_id_cache WHERE anilist_id = ?',
-    [anilistId]
-  );
-  return row?.animetsu_id ?? null;
+function extractAniListIdFromCover(coverImage: string): number | null {
+  const match = coverImage.match(/\/bx(\d+)-/);
+  return match ? parseInt(match[1]) : null;
 }
 
-async function cacheAnimetsuId(anilistId: number, animetsuId: string): Promise<void> {
-  await execute(
-    `INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at)
-     VALUES (?, ?, datetime('now'))`,
-    [anilistId, animetsuId]
-  );
+function mapFormat(fmt: string): AnimeFormat {
+  const map: Record<string, AnimeFormat> = {
+    TV: 'TV', MOVIE: 'MOVIE', OVA: 'OVA', ONA: 'ONA', SPECIAL: 'SPECIAL',
+    TV_SHORT: 'TV_SHORT', MUSIC: 'MUSIC',
+  };
+  return map[fmt] ?? 'TV';
 }
 
-// ─── API Functions ──────────────────────────────────────
+function mapStatus(status: string): AnimeStatus {
+  const map: Record<string, AnimeStatus> = {
+    FINISHED: 'FINISHED', RELEASING: 'RELEASING', NOT_YET_RELEASED: 'NOT_YET_RELEASED',
+    CANCELLED: 'CANCELLED', HIATUS: 'HIATUS',
+  };
+  return map[status] ?? 'FINISHED';
+}
+
+function mapSeason(s: string): AnimeSeason {
+  const map: Record<string, AnimeSeason> = {
+    WINTER: 'WINTER', SPRING: 'SPRING', SUMMER: 'SUMMER', FALL: 'FALL',
+  };
+  return map[s] ?? 'FALL';
+}
+
+function parseGenres(genres: string): string[] {
+  return genres ? genres.split(/\s+/).filter(Boolean) : [];
+}
+
+// ─── Core fetch with failover ────────────────────────────
 
 async function animetsuFetch<T>(path: string): Promise<T | null> {
-  // Try each base URL, rotating on failure
-  for (let attempt = 0; attempt < ANIMETSU_BASES.length; attempt++) {
-    const baseIndex = (currentBaseIndex + attempt) % ANIMETSU_BASES.length;
-    const base = ANIMETSU_BASES[baseIndex];
+  for (let i = 0; i < ANIMETSU_BASES.length; i++) {
+    const idx = (activeBaseIndex + i) % ANIMETSU_BASES.length;
+    const base = ANIMETSU_BASES[idx];
     try {
       const res = await fetch(`${base}${path}`, {
         headers: HEADERS,
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(12000),
       });
       if (!res.ok) continue;
-      currentBaseIndex = baseIndex; // Stick with working base
+      activeBaseIndex = idx;
       return await res.json() as T;
-    } catch (err) {
-      console.error(`[Animetsu] API error for ${base}${path}:`, err);
+    } catch {
+      // try next base
     }
   }
   return null;
 }
 
-/**
- * Search animetsu by title to find the MongoDB ID.
- * Used to bridge AniList IDs → Animetsu IDs.
- */
-export async function searchAnimetsu(title: string): Promise<AnimetsuSearchResult | null> {
-  const data = await animetsuFetch<{ results: AnimetsuSearchResult[] }>(
-    `/search?query=${encodeURIComponent(title)}`
+// ─── Public API: Search ──────────────────────────────────
+
+export async function animetsuSearch(
+  query: string,
+  page = 1,
+  limit = 20
+): Promise<{ media: AniListMedia[]; total: number; lastPage: number }> {
+  const data = await animetsuFetch<AnimetsuSearchResponse>(
+    `/search?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
   );
-  if (!data?.results?.length) return null;
-  return data.results[0];
+  if (!data?.results) return { media: [], total: 0, lastPage: 1 };
+
+  const media = data.results.map(r => animetsuResultToMedia(r)).filter(Boolean) as AniListMedia[];
+  return { media, total: data.total, lastPage: data.last_page };
 }
 
-/**
- * Resolve the animetsu MongoDB ID for an AniList anime.
- * Checks cache first, then searches by title.
- */
-export async function resolveAnimetsuId(anilistId: number, title: string): Promise<string | null> {
-  // Check cache first
-  const cached = await getCachedAnimetsuId(anilistId);
-  if (cached) return cached;
+// ─── Public API: Anime Detail (by animetsu MongoDB ID) ──
 
-  // Search by title
-  const result = await searchAnimetsu(title);
-  if (!result) return null;
-
-  // Cache the mapping
-  await cacheAnimetsuId(anilistId, result.id);
-  return result.id;
+export async function animetsuGetInfo(animetsuId: string): Promise<AnimetsuSearchResult | null> {
+  const data = await animetsuFetch<AnimetsuSearchResult>(`/info/${animetsuId}`);
+  return data;
 }
 
-/**
- * Get episode list from animetsu.
- */
-export async function getAnimetsuEpisodes(animetsuId: string): Promise<AnimetsuEpisode[]> {
+// ─── Public API: Episodes ────────────────────────────────
+
+export async function animetsuGetEpisodes(animetsuId: string): Promise<AnimetsuEpisode[]> {
   const data = await animetsuFetch<AnimetsuEpisode[]>(`/eps/${animetsuId}`);
   return data ?? [];
 }
 
-/**
- * Get available servers for an episode.
- */
-export async function getAnimetsuServers(animetsuId: string, ep: number): Promise<AnimetsuServer[]> {
-  const data = await animetsuFetch<AnimetsuServer[]>(`/servers/${animetsuId}/${ep}`);
-  return data ?? [];
+// ─── Public API: Get servers for episode ─────────────────
+
+export async function animetsuGetServers(animetsuId: string, ep: number) {
+  return await animetsuFetch<Array<{ id: string; default: boolean; tip: string }>>(
+    `/servers/${animetsuId}/${ep}`
+  ) ?? [];
 }
 
-/**
- * Get streaming sources for a specific episode and server.
- * Returns proxied URLs ready for playback.
- */
-export async function getAnimetsuStream(
-  animetsuId: string,
-  ep: number,
-  server: string = 'kite',
-  sourceType: string = 'sub'
-): Promise<AnimetsuStreamResponse | null> {
-  const data = await animetsuFetch<AnimetsuStreamResponse>(
-    `/oppai/${animetsuId}/${ep}?server=${server}&source_type=${sourceType}`
+// ─── Convert animetsu result → AniListMedia ──────────────
+
+function animetsuResultToMedia(r: AnimetsuSearchResult): AniListMedia | null {
+  if (!r) return null;
+  const titles = parseAnimetsuTitle(r.title);
+  const anilistId = extractAniListIdFromCover(r.cover_image);
+
+  // Extract cover URL from the cover_image field
+  const coverLargeMatch = r.cover_image?.match(/large=([^;]+)/);
+  const coverMediumMatch = r.cover_image?.match(/medium=([^;]+)/);
+  const coverUrl = coverLargeMatch?.[1] || coverMediumMatch?.[1] || '';
+
+  return {
+    id: anilistId ?? 0,
+    title: {
+      romaji: titles.romaji || titles.english || 'Unknown',
+      english: titles.english || null,
+      native: titles.native || null,
+    },
+    synonyms: [],
+    description: r.description?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '') ?? '',
+    format: mapFormat(r.format),
+    status: mapStatus(r.status),
+    season: mapSeason(r.season),
+    seasonYear: r.year,
+    averageScore: r.average_score,
+    meanScore: r.average_score,
+    studios: { nodes: [] },
+    genres: parseGenres(r.genres),
+    tags: [],
+    coverImage: {
+      extraLarge: coverUrl || null,
+      large: coverUrl || null,
+      medium: coverUrl || null,
+    },
+    bannerImage: r.banner,
+    episodes: r.total_eps,
+    nextAiringEpisode: null,
+    streamingEpisodes: [],
+    trailer: r.trailer ? { id: r.trailer, site: 'youtube' } : null,
+  } as unknown as AniListMedia;
+}
+
+// ─── Search by AniList ID (lookup via cover image) ───────
+// Animetsu stores AniList IDs in cover URLs, so we can reverse-lookup
+
+let idSearchCache: Map<number, string> = new Map();
+
+export async function findAnimetsuIdByAnilistId(anilistId: number): Promise<string | null> {
+  const cached = idSearchCache.get(anilistId);
+  if (cached) return cached;
+
+  // Check DB cache
+  const dbCached = await queryOne<{ animetsu_id: string }>(
+    'SELECT animetsu_id FROM animetsu_id_cache WHERE anilist_id = ?',
+    [anilistId]
   );
-  if (!data) return null;
-
-  // Proxy URLs that need proxying
-  data.sources = data.sources.map(s => ({
-    ...s,
-    url: s.need_proxy ? `${PROXY_BASE}${s.url}` : s.url,
-  }));
-
-  return data;
-}
-
-/**
- * Get all available servers with streaming sources for an episode.
- * Tries each server and returns working ones.
- */
-export async function getAnimetsuAllSources(
-  animetsuId: string,
-  ep: number,
-  sourceType: string = 'sub'
-): Promise<Array<{ server: string; source: AnimetsuSource; skips?: AnimetsuStreamResponse['skips'] }>> {
-  const servers = await getAnimetsuServers(animetsuId, ep);
-  if (!servers.length) return [];
-
-  const results: Array<{ server: string; source: AnimetsuSource; skips?: AnimetsuStreamResponse['skips'] }> = [];
-
-  // Try servers in parallel (max 3 concurrent)
-  const serverBatch = servers.slice(0, 3);
-  const streamPromises = serverBatch.map(async (srv) => {
-    const stream = await getAnimetsuStream(animetsuId, ep, srv.id, sourceType);
-    if (stream?.sources?.length) {
-      return {
-        server: srv.id,
-        source: stream.sources[0],
-        skips: stream.skips,
-      };
-    }
-    return null;
-  });
-
-  const results_raw = await Promise.allSettled(streamPromises);
-  for (const r of results_raw) {
-    if (r.status === 'fulfilled' && r.value) {
-      results.push(r.value);
-    }
+  if (dbCached) {
+    idSearchCache.set(anilistId, dbCached.animetsu_id);
+    return dbCached.animetsu_id;
   }
 
-  return results;
+  return null;
 }
 
-/**
- * Convenience function: resolve an AniList ID + episode to animetsu stream URLs.
- * This is the main entry point for the adapter.
- */
-export async function resolveAnimetsuStream(
-  anilistId: number,
-  animeTitle: string,
-  episodeNumber: number,
-  isDub: boolean = false
-): Promise<{ adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[]> {
-  const animetsuId = await resolveAnimetsuId(anilistId, animeTitle);
-  if (!animetsuId) {
-    console.log(`[Animetsu] No mapping found for AniList ID ${anilistId} (${animeTitle})`);
-    return [];
-  }
-
-  const sourceType = isDub ? 'dub' : 'sub';
-  const allSources = await getAnimetsuAllSources(animetsuId, episodeNumber, sourceType);
-
-  return allSources.map(s => ({
-    adapterId: `animetsu-${s.server}`,
-    sourceName: `Animetsu (${s.server})`,
-    streamUrl: s.source.url,
-    subtitleUrl: null, // subs are embedded in HLS or returned separately
-  }));
+export async function cacheAnimetsuId(anilistId: number, animetsuId: string): Promise<void> {
+  idSearchCache.set(anilistId, animetsuId);
+  await execute(
+    'INSERT OR REPLACE INTO animetsu_id_cache (anilist_id, animetsu_id, cached_at) VALUES (?, ?, datetime(\'now\'))',
+    [anilistId, animetsuId]
+  );
 }

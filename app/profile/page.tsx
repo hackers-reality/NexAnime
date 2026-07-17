@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import Header from '@/components/shared/Header';
 import { queryOne, query } from '@/lib/db';
 import { getCharacterById } from '@/lib/anilist';
@@ -10,6 +9,7 @@ interface DbProfile {
   pronouns: string | null;
   about_me: string | null;
   avatar_char_id: number | null;
+  avatar_url: string | null;
   created_at: string;
 }
 
@@ -37,10 +37,13 @@ export default async function ProfilePage() {
   // 1. Fetch Profile
   const profile = await queryOne<DbProfile>('SELECT * FROM profile WHERE id = 1');
   
-  // 2. Fetch avatar character details from AniList if ID exists
-  let avatarUrl: string = '/avatars/default.svg'; // default fallback image
+  // 2. Fetch avatar — use cached URL from DB first, only hit AniList as fallback
+  let avatarUrl: string = '/avatars/default.svg';
   let avatarName = 'User';
-  if (profile?.avatar_char_id) {
+  if (profile?.avatar_url) {
+    avatarUrl = profile.avatar_url;
+    avatarName = profile.display_name || 'User';
+  } else if (profile?.avatar_char_id) {
     const char = await getCharacterById(profile.avatar_char_id);
     if (char) {
       avatarUrl = char.image.large || '/avatars/default.svg';
@@ -85,13 +88,12 @@ export default async function ProfilePage() {
         {/* Profile Card */}
         <section className={styles.profileCard}>
           <div className={styles.avatarWrapper}>
-            <Image
+            <img
               src={avatarUrl}
               alt={avatarName}
               width={120}
               height={120}
               className={styles.avatarImg}
-              onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
             />
           </div>
           <div className={styles.profileDetails}>
@@ -147,13 +149,10 @@ export default async function ProfilePage() {
                       >
                         <div className={styles.thumbWrapper}>
                           {(item.ep_thumbnail || item.cover_image) && (
-                            <Image
+                            <img
                               src={item.ep_thumbnail || item.cover_image!}
                               alt={title}
-                              fill
-                              sizes="180px"
                               className={styles.thumbImage}
-                              onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                             />
                           )}
                           <div className={styles.epBadge}>E{item.episode_number}</div>

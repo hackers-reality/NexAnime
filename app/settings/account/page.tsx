@@ -26,7 +26,10 @@ export default function AccountSettingsPage() {
           setAboutMe(data.profile.about_me || '');
           setAvatarCharId(data.profile.avatar_char_id);
 
-          if (data.profile.avatar_char_id) {
+          // Use cached avatar URL first, only hit AniList as fallback
+          if (data.profile.avatar_url) {
+            setAvatarUrl(data.profile.avatar_url);
+          } else if (data.profile.avatar_char_id) {
             fetch('/api/anilist', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -68,6 +71,7 @@ export default function AccountSettingsPage() {
           pronouns,
           aboutMe,
           avatarCharId,
+          avatarUrl,
         }),
       });
       const data = await res.json();

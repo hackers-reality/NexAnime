@@ -38,12 +38,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
       setLoading(true);
       setSelectedIndex(-1);
       try {
-        const res = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'quickSearch', term: query }),
-          signal: controller.signal,
-        });
+        const res = await fetch(`/api/animetsu?action=search&q=${encodeURIComponent(query)}&limit=8`);
         const data = await res.json();
         setResults(data.media ?? []);
       } catch {

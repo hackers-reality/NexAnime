@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAnimeDetail } from '@/lib/anilist';
+import { queryOne } from '@/lib/db';
 import Header from '@/components/shared/Header';
 import AnimeDetailClient from './AnimeDetailClient';
 
@@ -9,6 +10,33 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const anilistId = parseInt(id);
   if (isNaN(anilistId)) return {};
 
+  // Try DB cache first to avoid AniList API call for metadata
+  const cached = await queryOne<{
+    title_romaji: string | null;
+    title_english: string | null;
+    synopsis: string | null;
+    cover_image: string | null;
+  }>(
+    'SELECT title_romaji, title_english, synopsis, cover_image FROM anime_cache WHERE anilist_id = ?',
+    [anilistId]
+  );
+
+  if (cached) {
+    const title = cached.title_english || cached.title_romaji || 'Anime';
+    const description = cached.synopsis?.replace(/<[^>]*>/g, '').slice(0, 160) || '';
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        images: cached.cover_image ? [{ url: cached.cover_image, width: 230, height: 325 }] : [],
+        type: 'website',
+      },
+    };
+  }
+
+  // Fallback to AniList API
   const media = await getAnimeDetail(anilistId);
   if (!media) return {};
 
