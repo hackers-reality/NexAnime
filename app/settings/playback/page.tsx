@@ -12,6 +12,7 @@ export default function PlaybackSettingsPage() {
   const [miniPlayer, setMiniPlayer] = useState(false);
   const [ambientMode, setAmbientMode] = useState(false);
   const [pauseHistory, setPauseHistory] = useState(false);
+  const [notificationSound, setNotificationSound] = useState(true);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function PlaybackSettingsPage() {
           setMiniPlayer(!!data.settings.mini_player);
           setAmbientMode(!!data.settings.ambient_mode);
           setPauseHistory(!!data.settings.pause_history);
+          setNotificationSound(data.settings.notification_sound !== 0);
         }
         setLoading(false);
       })
@@ -69,6 +71,10 @@ export default function PlaybackSettingsPage() {
         case 'pauseHistory':
           setPauseHistory(value);
           body.pauseHistory = value;
+          break;
+        case 'notificationSound':
+          setNotificationSound(value);
+          body.notificationSound = value;
           break;
       }
 
@@ -151,6 +157,13 @@ export default function PlaybackSettingsPage() {
           description="Temporarily stop saving your progress and status changes to your profile history."
           checked={pauseHistory}
           onChange={(val) => handleUpdateSetting('pauseHistory', val)}
+        />
+
+        <SettingsToggleRow
+          label="Notification Sound"
+          description="Play a sound when new episodes are available for anime in your watchlist."
+          checked={notificationSound}
+          onChange={(val) => handleUpdateSetting('notificationSound', val)}
         />
       </div>
     </div>

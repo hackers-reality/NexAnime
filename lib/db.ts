@@ -45,7 +45,8 @@ const SCHEMA_STATEMENTS: string[] = [
     mini_player INTEGER DEFAULT 0,
     ambient_mode INTEGER DEFAULT 0,
     pause_history INTEGER DEFAULT 0,
-    theme TEXT DEFAULT 'dark'
+    theme TEXT DEFAULT 'dark',
+    notification_sound INTEGER DEFAULT 1
   )`,
 
   // Cached anime metadata from AniList
@@ -168,6 +169,12 @@ export async function initializeDb(): Promise<void> {
   // Run migrations that may fail if column already exists
   try {
     await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark\'');
+  } catch {
+    // Column already exists — ignore
+  }
+
+  try {
+    await db.execute('ALTER TABLE settings ADD COLUMN notification_sound INTEGER DEFAULT 1');
   } catch {
     // Column already exists — ignore
   }
