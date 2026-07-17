@@ -367,6 +367,13 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.charHalf:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .vaHalf {

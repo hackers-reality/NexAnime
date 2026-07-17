@@ -242,3 +242,56 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+// PATCH — Bulk operations
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { action, listStatus } = body as {
+      action: 'mark_all_watched' | 'remove_all' | 'change_status';
+      listStatus?: ListStatus;
+    };
+
+    if (!action) {
+      return NextResponse.json({ error: 'Missing action' }, { status: 400 });
+    }
+
+    let whereClause = '';
+    const params: any[] = [];
+
+    if (listStatus) {
+      whereClause = 'WHERE list_status = ?';
+      params.push(listStatus);
+    }
+
+    if (action === 'mark_all_watched') {
+      // Move all entries (or filtered by status) to 'finished'
+      await execute(
+        `UPDATE watchlist SET list_status = 'finished', updated_at = datetime('now') ${whereClause}`,
+        params
+      );
+    } else if (action === 'remove_all') {
+      await execute(`DELETE FROM watchlist ${whereClause}`, params);
+    } else if (action === 'change_status') {
+      // Body should also have `targetStatus`
+      const { targetStatus } = body;
+      if (!targetStatus) {
+        return NextResponse.json({ error: 'Missing targetStatus' }, { status: 400 });
+      }
+      await execute(
+        `UPDATE watchlist SET list_status = ?, updated_at = datetime('now') ${whereClause}`,
+        [targetStatus, ...params]
+      );
+    } else {
+      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Watchlist PATCH error:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

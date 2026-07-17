@@ -52,6 +52,22 @@
   color: var(--primary);
 }
 
+.randomBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s, transform 0.1s;
+  line-height: 1;
+}
+
+.randomBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.15);
+}
+
 /* ─── Search bar ──────────────────────────────── */
 .searchWrap {
   position: relative;

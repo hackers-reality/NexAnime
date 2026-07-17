@@ -53,7 +53,7 @@ export async function GET() {
       remoteDate: data.commit.author.date,
       remoteAuthor: data.commit.author.name,
       commitUrl: data.html_url,
-      currentVersion: require('../../../package.json').version,
+      currentVersion: require(/* turbopackIgnore: true */ '../../../package.json').version,
     });
   } catch (error) {
     return NextResponse.json(

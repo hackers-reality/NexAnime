@@ -414,8 +414,32 @@ export async function quickSearch(
 
 export interface AniListCharacter {
   id: number;
-  name: { full: string };
+  name: { full: string; native?: string };
   image: { large: string | null };
+  description?: string;
+  favourites?: number;
+  gender?: string;
+  dateOfBirth?: { year?: number; month?: number; day?: number };
+  age?: string;
+  bloodType?: string;
+  media?: {
+    edges: {
+      node: {
+        id: number;
+        title: { english?: string; romaji?: string };
+        coverImage?: { large?: string; medium?: string };
+        format?: string;
+        status?: string;
+      };
+      role: string;
+    }[];
+  };
+  voiceActors?: {
+    id: number;
+    name: { full: string };
+    image: { large: string | null };
+    language?: string;
+  }[];
 }
 
 export async function searchCharacters(
@@ -457,15 +481,42 @@ export async function getCharacterById(id: number): Promise<AniListCharacter | n
     query GetCharacter($id: Int!) {
       Character(id: $id) {
         id
-        name { full }
+        name { full native }
         image { large }
+        description(asHtml: false)
+        favourites
+        gender
+        dateOfBirth { year month day }
+        age
+        bloodType
+        media(sort: FAVOURITES_DESC, perPage: 20) {
+          edges {
+            node {
+              id
+              title { english romaji }
+              coverImage { large medium }
+              format
+              status
+            }
+            role
+          }
+        }
+        mediaConnections: staffVoiceActors(sort: FAVOURITES_DESC, perPage: 10) {
+          id
+          name { full }
+          image { large }
+          language: languageV2
+        }
       }
     }
   `;
 
   try {
     const data = await anilistFetch<{ Character: AniListCharacter }>(query, { id });
-    return data.Character;
+    const char = data.Character;
+    // Map voiceActors from mediaConnections
+    char.voiceActors = (char as any).mediaConnections || [];
+    return char;
   } catch (err) {
     console.warn(`[AniList] Character ID ${id} not found, using default fallback.`);
     return null;

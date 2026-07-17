@@ -322,7 +322,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                       return (
                         <div key={`${character.id}-${index}`} className={styles.charCard}>
                           {/* Character Part */}
-                          <div className={styles.charHalf}>
+                          <Link href={`/character/${character.id}`} className={styles.charHalf}>
                             {character.image?.large && (
                               <img src={character.image.large} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
@@ -330,7 +330,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                               <span className={styles.charName}>{character.name.full}</span>
                               <span className={styles.charRole}>{edge.role}</span>
                             </div>
-                          </div>
+                          </Link>
                           {/* VA Part */}
                           <div className={styles.vaHalf}>
                             {va?.image?.large && (

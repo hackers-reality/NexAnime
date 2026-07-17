@@ -47,6 +47,7 @@ export default function WatchlistPage() {
   const [formatFilter, setFormatFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'recent' | 'title' | 'score' | 'progress'>('recent');
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/watchlist')
@@ -96,6 +97,29 @@ export default function WatchlistPage() {
         return 0; // Keep original order (API returns by recently updated)
     }
   });
+
+  const handleBulkAction = async (action: 'mark_all_watched' | 'remove_all') => {
+    const label = action === 'mark_all_watched' ? 'mark all as completed' : 'remove all from this list';
+    const confirm = window.confirm(`Are you sure you want to ${label}? This cannot be undone.`);
+    if (!confirm) return;
+
+    setBulkLoading(true);
+    try {
+      await fetch('/api/watchlist', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, listStatus: activeTab !== 'all' ? activeTab : undefined }),
+      });
+      // Refresh the list
+      const res = await fetch('/api/watchlist');
+      const data = await res.json();
+      setEntries(data.entries || []);
+    } catch (err) {
+      console.error('Bulk action failed:', err);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -210,6 +234,25 @@ export default function WatchlistPage() {
                     {label}
                   </button>
                 ))}
+                <div style={{ flex: 1 }} />
+                {activeTab !== 'all' && (
+                  <>
+                    <button
+                      className={styles.bulkBtn}
+                      onClick={() => handleBulkAction('mark_all_watched')}
+                      disabled={bulkLoading}
+                    >
+                      {bulkLoading ? '...' : '✓ Mark All Completed'}
+                    </button>
+                    <button
+                      className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
+                      onClick={() => handleBulkAction('remove_all')}
+                      disabled={bulkLoading}
+                    >
+                      {bulkLoading ? '...' : '✕ Remove All'}
+                    </button>
+                  </>
+                )}
               </div>
               <div className={styles.grid}>
                 {sortedEntries.map((entry) => (

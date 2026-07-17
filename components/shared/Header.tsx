@@ -114,6 +114,27 @@ export default function Header() {
         >
           Watchlist
         </Link>
+        <Link
+          href="/schedule"
+          className={`${styles.navLink} ${isActive('/schedule') ? styles.navLinkActive : ''}`}
+        >
+          Schedule
+        </Link>
+        <button
+          className={styles.randomBtn}
+          onClick={async () => {
+            try {
+              const res = await fetch('/api/random');
+              const data = await res.json();
+              if (data.id) {
+                window.location.href = `/anime/${data.id}`;
+              }
+            } catch {}
+          }}
+          title="Random Anime"
+        >
+          🎲
+        </button>
       </nav>
 
       {/* Search */}
