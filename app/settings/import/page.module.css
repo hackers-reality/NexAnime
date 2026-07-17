@@ -93,3 +93,16 @@
   color: var(--text-secondary);
   cursor: not-allowed;
 }
+
+.divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 8px 0;
+  max-width: 500px;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
