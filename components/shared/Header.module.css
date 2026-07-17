@@ -68,6 +68,33 @@
   transform: scale(1.15);
 }
 
+.shortcutsHint {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.shortcutsHint:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.shortcutsHint kbd {
+  font-size: 13px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  min-width: auto;
+  height: auto;
+}
+
 /* ─── Search bar ──────────────────────────────── */
 .searchWrap {
   position: relative;

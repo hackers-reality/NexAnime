@@ -277,6 +277,22 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                     />
                     <span>Auto Next</span>
                   </label>
+
+        {/* Series Progress Bar */}
+        {totalEpisodes > 0 && (
+          <div className={styles.seriesProgress}>
+            <div className={styles.seriesProgressLabel}>
+              <span>Episode {episodeNumber} of {totalEpisodes}</span>
+              <span>{Math.round((episodeNumber / totalEpisodes) * 100)}%</span>
+            </div>
+            <div className={styles.seriesProgressBar}>
+              <div
+                className={styles.seriesProgressFill}
+                style={{ width: `${(episodeNumber / totalEpisodes) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
                   <label className={styles.settingToggle}>
                     <input
                       type="checkbox"

@@ -823,3 +823,32 @@
   scroll-snap-align: start;
 }
 
+/* Series Progress Bar */
+.seriesProgress {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.seriesProgressLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.seriesProgressBar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.seriesProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent-airing));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+

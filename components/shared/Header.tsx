@@ -180,6 +180,17 @@ export default function Header() {
 
       {/* Right actions */}
       <div className={styles.actions}>
+        {/* Keyboard shortcuts hint */}
+        <button
+          className={styles.shortcutsHint}
+          title="Keyboard shortcuts (press ?)"
+          onClick={() => {
+            window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
+          }}
+        >
+          <kbd>?</kbd>
+        </button>
+
         {/* Theme toggle */}
         <button
           className={styles.themeBtn}
