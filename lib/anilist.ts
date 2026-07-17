@@ -169,6 +169,16 @@ const MEDIA_DETAIL_FRAGMENT = `
         }
       }
     }
+    staff(sort: RELEVANCE, perPage: 20) {
+      edges {
+        role
+        node {
+          id
+          name { full }
+          image { large }
+        }
+      }
+    }
   }
   ${MEDIA_FRAGMENT}
 `;

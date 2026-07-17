@@ -219,6 +219,16 @@ export interface AniListMedia {
       }>;
     }>;
   };
+  staff?: {
+    edges: Array<{
+      role: string;
+      node: {
+        id: number;
+        name: { full: string };
+        image: { large: string | null };
+      };
+    }>;
+  };
 }
 
 export interface AniListPageInfo {

@@ -17,6 +17,7 @@ interface AnimeDetailClientProps {
 const DETAIL_TABS: Tab[] = [
   { key: 'episodes', label: 'Episodes' },
   { key: 'characters', label: 'Characters' },
+  { key: 'staff', label: 'Staff' },
   { key: 'stats', label: 'Stats' },
   { key: 'related', label: 'Related' },
   { key: 'recommendations', label: 'More Like This' },
@@ -348,6 +349,31 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                   </div>
                 ) : (
                   <p style={{ color: 'var(--text-muted)' }}>No character data available.</p>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'staff' && (
+              <div>
+                <h3 className={styles.sectionTitle}>Staff</h3>
+                {media.staff?.edges && media.staff.edges.length > 0 ? (
+                  <div className={styles.charactersGrid}>
+                    {media.staff.edges.map((edge, index) => (
+                      <div key={`${edge.node.id}-${index}`} className={styles.charCard}>
+                        <div className={styles.charHalf}>
+                          {edge.node.image?.large && (
+                            <img src={edge.node.image.large} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                          )}
+                          <div className={styles.charMeta}>
+                            <span className={styles.charName}>{edge.node.name.full}</span>
+                            <span className={styles.charRole}>{edge.role}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: 'var(--text-muted)' }}>No staff data available.</p>
                 )}
               </div>
             )}
