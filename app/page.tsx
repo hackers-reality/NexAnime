@@ -53,158 +53,42 @@ export default function HomePage() {
 
   useEffect(() => {
     let active = true;
-    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
     const loadData = async () => {
       try {
         setLoading(true);
 
-        // 1. Trending (Carousel)
-        const trend = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'trending', page: 1, perPage: 15 })
-        }).then(r => r.json()).catch(err => {
-          console.error('Failed to load trending cards:', err);
-          return { media: [] };
-        });
+        // Fetch ALL home data in one batch request (server runs 5 AniList queries in parallel)
+        const [homeData, contData] = await Promise.all([
+          fetch('/api/home').then(r => r.json()).catch(() => null),
+          fetch('/api/watchlist?continue=true').then(r => r.json()).catch(() => ({ progress: [] })),
+        ]);
 
         if (!active) return;
-        const trendMedia = trend.media || [];
-        setCarouselMedia(trendMedia.slice(0, 5));
-        
-        const mappedTrending = trendMedia.map((m: any) => ({
-          anilistId: m.id,
-          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
-          titleEnglish: m.title?.english,
-          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
-          format: m.format,
-          seasonYear: m.seasonYear,
-          status: m.status,
-          averageScore: m.averageScore,
-          synopsis: m.description,
-          genres: m.genres || [],
-        }));
 
-        setTrendingCards(mappedTrending.slice(5, 15));
-        setTabAnime(mappedTrending.slice(5, 15));
-
-        // 2. This Season (Staggered)
-        await delay(350);
-        if (!active) return;
-        const thisSeason = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'thisSeason', page: 1, perPage: 10 })
-        }).then(r => r.json()).catch(err => {
-          console.error('Failed to load this season:', err);
-          return { media: [] };
-        });
-
-        if (!active) return;
-        setThisSeasonCards((thisSeason.media || []).map((m: any) => ({
-          anilistId: m.id,
-          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
-          titleEnglish: m.title?.english,
-          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
-          format: m.format,
-          seasonYear: m.seasonYear,
-          status: m.status,
-          averageScore: m.averageScore,
-          synopsis: m.description,
-          genres: m.genres || [],
-        })));
-
-        // 3. Continue Watching
-        const cont = await fetch('/api/watchlist?continue=true')
-          .then(r => r.json())
-          .catch(() => ({ progress: [] }));
-
-        if (!active) return;
-        if (cont.progress) {
-          setContinueWatching(cont.progress);
+        if (homeData) {
+          const allTrending = homeData.trending || [];
+          setCarouselMedia(allTrending.slice(0, 5));
+          setTrendingCards(allTrending.slice(5, 15));
+          setTabAnime(allTrending.slice(5, 15));
+          setThisSeasonCards(homeData.thisSeason || []);
+          setUpcomingCards(homeData.upcoming || []);
+          setRecentlyUpdatedCards(Array.isArray(homeData.recentlyUpdated) ? homeData.recentlyUpdated : []);
+          setFormattedSchedules(homeData.schedule || []);
         }
 
-        // 4. Upcoming (Staggered to avoid rate limit)
-        await delay(350);
-        if (!active) return;
-        const up = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'upcoming', page: 1, perPage: 10 })
-        }).then(r => r.json()).catch(err => {
-          console.error('Failed to load upcoming cards:', err);
-          return { media: [] };
-        });
-
-        if (!active) return;
-        setUpcomingCards((up.media || []).map((m: any) => ({
-          anilistId: m.id,
-          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
-          titleEnglish: m.title?.english,
-          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
-          format: m.format,
-          seasonYear: m.seasonYear,
-          status: m.status,
-          averageScore: m.averageScore,
-          synopsis: m.description,
-          genres: m.genres || [],
-        })));
-
-        // 5. Recently Updated (Staggered)
-        await delay(350);
-        if (!active) return;
-        const recent = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'recentlyUpdated', page: 1, perPage: 10 })
-        }).then(r => r.json()).catch(err => {
-          console.error('Failed to load recently updated:', err);
-          return { schedules: [] };
-        });
-
-        if (!active) return;
-        const recentSchedules = recent.schedules || recent || [];
-        setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
-
-        // 6. Airing Schedule (Staggered)
-        await delay(350);
-        if (!active) return;
-        const nowSec = Math.floor(Date.now() / 1000);
-        const sevenDaysSec = 7 * 24 * 60 * 60;
-        const sched = await fetch('/api/anilist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'airingSchedule', startTime: nowSec - 12 * 3600, endTime: nowSec + sevenDaysSec, page: 1, perPage: 100 })
-        }).then(r => r.json()).catch(err => {
-          console.error('Failed to load schedule:', err);
-          return { schedules: [] };
-        });
-
-        if (!active) return;
-        const schedSchedules = sched.schedules || sched || [];
-        setFormattedSchedules((Array.isArray(schedSchedules) ? schedSchedules : []).map((item: any) => ({
-          id: item.id,
-          airingAt: item.airingAt,
-          episode: item.episode,
-          mediaId: item.mediaId,
-          title: item.media?.title?.english || item.media?.title?.romaji || 'Unknown',
-          coverImage: item.media?.coverImage?.large || null,
-        })));
-
+        if (contData.progress) {
+          setContinueWatching(contData.progress);
+        }
       } catch (err) {
-        console.error('Failed staggered load:', err);
+        console.error('Failed to load home data:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     };
 
     loadData();
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, []);
 
   const handleTrendTabChange = async (tab: 'trending' | 'popular' | 'topRated') => {

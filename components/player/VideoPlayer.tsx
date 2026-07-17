@@ -61,6 +61,7 @@ export default function VideoPlayer({
   const [showSkipOutro, setShowSkipOutro] = useState(false);
   const [autoPlayNext, setAutoPlayNext] = useState(true);
   const [autoSkip, setAutoSkip] = useState(false);
+  const [miniPlayerEnabled, setMiniPlayerEnabled] = useState(true);
   const [showNextCountdown, setShowNextCountdown] = useState(false);
   const [nextCountdown, setNextCountdown] = useState(5);
   const [ambientColor, setAmbientColor] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export default function VideoPlayer({
           setAutoPlayNext(!!data.settings.auto_next);
           setAutoSkip(!!data.settings.auto_skip_intro_outro);
           setShowAmbient(!!data.settings.ambient_mode);
+          setMiniPlayerEnabled(data.settings.mini_player !== false);
         }
       })
       .catch(() => {});
@@ -243,7 +245,7 @@ export default function VideoPlayer({
 
   // ── Mini player ────────────────────────────────────
   useEffect(() => {
-    if (isEmbed) return;
+    if (isEmbed || !miniPlayerEnabled) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) { setIsMini(false); setDismissedMini(false); }
@@ -254,7 +256,7 @@ export default function VideoPlayer({
     const c = containerRef.current;
     if (c) observer.observe(c);
     return () => { if (c) observer.unobserve(c); };
-  }, [animeId, episodeNumber]);
+  }, [animeId, episodeNumber, miniPlayerEnabled]);
 
   // ── Keyboard shortcuts ─────────────────────────────
   useEffect(() => {

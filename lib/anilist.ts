@@ -17,12 +17,12 @@ const ANILIST_API = 'https://graphql.anilist.co';
 
 // ─── Rate limiter ────────────────────────────────────────
 
-const RATE_LIMIT = 40; // conservative — stay well under 90/min
+const RATE_LIMIT = 80; // AniList allows 90/min, stay just under
 const RATE_WINDOW = 60_000;
 let requestTimestamps: number[] = [];
 let queue: Array<() => void> = [];
 let activeCount = 0;
-const MAX_CONCURRENT = 2; // serialize most requests
+const MAX_CONCURRENT = 5; // allow parallel requests
 
 function processQueue() {
   while (activeCount < MAX_CONCURRENT && queue.length > 0) {
