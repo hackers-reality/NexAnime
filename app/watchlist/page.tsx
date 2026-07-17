@@ -46,6 +46,7 @@ export default function WatchlistPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [formatFilter, setFormatFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'recent' | 'title' | 'score' | 'progress'>('recent');
 
   useEffect(() => {
     fetch('/api/watchlist')
@@ -77,6 +78,23 @@ export default function WatchlistPage() {
     const formatMatch = !formatFilter || entry.anime?.format?.replace('_', ' ') === formatFilter;
     const animeStatusMatch = !statusFilter || entry.anime?.status === statusFilter;
     return statusMatch && queryMatch && formatMatch && animeStatusMatch;
+  });
+
+  const sortedEntries = [...filteredEntries].sort((a, b) => {
+    switch (sortBy) {
+      case 'title': {
+        const aTitle = (a.anime?.title?.english || a.anime?.title?.romaji || '').toLowerCase();
+        const bTitle = (b.anime?.title?.english || b.anime?.title?.romaji || '').toLowerCase();
+        return aTitle.localeCompare(bTitle);
+      }
+      case 'score':
+        return (b.score || b.anime?.averageScore || 0) - (a.score || a.anime?.averageScore || 0);
+      case 'progress':
+        return b.episodeWatched - a.episodeWatched;
+      case 'recent':
+      default:
+        return 0; // Keep original order (API returns by recently updated)
+    }
   });
 
   return (
@@ -175,10 +193,26 @@ export default function WatchlistPage() {
           ) : (
             <div className={styles.singleGridSection}>
               <h3 className={styles.gridHeader}>
-                {CATEGORIES.find((c) => c.status === activeTab)?.label} ({filteredEntries.length})
+                {CATEGORIES.find((c) => c.status === activeTab)?.label} ({sortedEntries.length})
               </h3>
+              <div className={styles.sortRow}>
+                {([
+                  ['recent', 'Recent'],
+                  ['title', 'Title'],
+                  ['score', 'Score'],
+                  ['progress', 'Progress'],
+                ] as const).map(([key, label]) => (
+                  <button
+                    key={key}
+                    className={`${styles.sortBtn} ${sortBy === key ? styles.activeSortBtn : ''}`}
+                    onClick={() => setSortBy(key)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <div className={styles.grid}>
-                {filteredEntries.map((entry) => (
+                {sortedEntries.map((entry) => (
                   <div key={entry.id} className={styles.gridCardContainer}>
                     <AnimeCard
                       id={entry.anilistId}

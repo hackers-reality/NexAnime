@@ -18,6 +18,7 @@ export default function Header() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +61,13 @@ export default function Header() {
       console.error(err);
     }
   };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    const initial = saved || 'dark';
+    setTheme(initial);
+    document.documentElement.setAttribute('data-theme', initial);
+  }, []);
 
   useEffect(() => {
     fetchProfile();
@@ -140,6 +148,20 @@ export default function Header() {
 
       {/* Right actions */}
       <div className={styles.actions}>
+        {/* Theme toggle */}
+        <button
+          className={styles.themeBtn}
+          title="Toggle theme"
+          onClick={() => {
+            const next = theme === 'dark' ? 'light' : 'dark';
+            setTheme(next);
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+          }}
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
         {/* Notification bell */}
         <div className={styles.bellWrapper} ref={dropdownRef}>
           <button 

@@ -26,6 +26,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [showTrailer, setShowTrailer] = useState(false);
 
   useEffect(() => {
     if (!media.idMal) return;
@@ -73,7 +74,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
       {/* Hero Banner Section */}
       <div className={styles.bannerWrap}>
         {media.bannerImage ? (
-          <img src={media.bannerImage} alt="" className={styles.bannerImage} suppressHydrationWarning />
+          <img src={media.bannerImage} alt="" className={styles.bannerImage} suppressHydrationWarning onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
           <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg-surface)' }} />
         )}
@@ -91,6 +92,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 alt={anime.titleEnglish || anime.titleRomaji || ''}
                 className={styles.posterImage}
                 suppressHydrationWarning
+                onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
               />
             ) : (
               <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg-surface-hover)' }} />
@@ -105,15 +107,13 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
             )}
             
             {media.trailer && media.trailer.site === 'youtube' && (
-              <a
-                href={`https://www.youtube.com/watch?v=${media.trailer.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => setShowTrailer(true)}
                 className="btn btn--primary"
                 style={{ width: '100%', textDecoration: 'none', color: 'white' }}
               >
                 ▶ Watch Trailer
-              </a>
+              </button>
             )}
           </div>
 
@@ -297,6 +297,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                             className={styles.epThumb}
                             loading="lazy"
                             suppressHydrationWarning
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                           />
                           <span className={styles.epBadge}>Ep {epNum}</span>
                         </div>
@@ -323,7 +324,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                           {/* Character Part */}
                           <div className={styles.charHalf}>
                             {character.image?.large && (
-                              <img src={character.image.large} alt="" className={styles.charImage} />
+                              <img src={character.image.large} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.charMeta}>
                               <span className={styles.charName}>{character.name.full}</span>
@@ -333,7 +334,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                           {/* VA Part */}
                           <div className={styles.vaHalf}>
                             {va?.image?.large && (
-                              <img src={va.image.large} alt="" className={styles.vaImage} />
+                              <img src={va.image.large} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.vaMeta}>
                               <span className={styles.vaName}>{va ? va.name.full : 'N/A'}</span>
@@ -442,6 +443,24 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
         totalEpisodes={media.episodes}
         onSaveSuccess={handleWatchlistUpdate}
       />
+
+      {/* Trailer Modal */}
+      {showTrailer && media.trailer && (
+        <div className={styles.trailerOverlay} onClick={() => setShowTrailer(false)}>
+          <div className={styles.trailerModal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.trailerClose} onClick={() => setShowTrailer(false)}>
+              ✕
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${media.trailer.id}?autoplay=1`}
+              title="Trailer"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              className={styles.trailerIframe}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

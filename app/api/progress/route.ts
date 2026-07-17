@@ -39,6 +39,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Sync watchlist episode_watched with max episode from watch_progress
+    await db.execute({
+      sql: `
+        UPDATE watchlist
+        SET episode_watched = (
+          SELECT COALESCE(MAX(episode_number), 0)
+          FROM watch_progress
+          WHERE anilist_id = ?
+        ),
+        updated_at = datetime('now')
+        WHERE anilist_id = ?
+      `,
+      args: [anilistId, anilistId]
+    });
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Failed to update progress:', err);

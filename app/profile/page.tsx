@@ -91,6 +91,7 @@ export default async function ProfilePage() {
               width={120}
               height={120}
               className={styles.avatarImg}
+              onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
             />
           </div>
           <div className={styles.profileDetails}>
@@ -152,6 +153,7 @@ export default async function ProfilePage() {
                               fill
                               sizes="180px"
                               className={styles.thumbImage}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                             />
                           )}
                           <div className={styles.epBadge}>E{item.episode_number}</div>

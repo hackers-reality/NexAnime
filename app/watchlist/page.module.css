@@ -206,6 +206,12 @@
   color: var(--text-primary);
 }
 
+.activeSortBtn {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
 /* Filter Sections */
 .filterSection {
   margin-bottom: 16px;

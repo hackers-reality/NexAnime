@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import FilterBar from '@/components/browse/FilterBar';
@@ -12,7 +12,6 @@ function BrowseContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Parse filters from search params on load
   const getFiltersFromParams = (): BrowseFilters => {
     const search = searchParams?.get('search') ?? undefined;
     const genres = searchParams?.get('genres')?.split(',') ?? undefined;
@@ -24,7 +23,6 @@ function BrowseContent() {
     const country = searchParams?.get('country') ?? undefined;
     const source = searchParams?.get('source') ?? undefined;
     const sort = searchParams?.get('sort')?.split(',') ?? ['POPULARITY_DESC'];
-    const page = searchParams?.get('page') ? parseInt(searchParams.get('page')!) : 1;
 
     return {
       search,
@@ -37,7 +35,7 @@ function BrowseContent() {
       countryOfOrigin: country,
       source,
       sort,
-      page,
+      page: 1,
     };
   };
 
@@ -45,48 +43,81 @@ function BrowseContent() {
   const [results, setResults] = useState<AniListMedia[]>([]);
   const [pageInfo, setPageInfo] = useState<AniListPageInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Sync state with URL params if they change externally (e.g. back button)
   useEffect(() => {
     setFilters(getFiltersFromParams());
   }, [searchParams]);
 
-  // Fetch results when filters change
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setResults([]);
+    setCurrentPage(1);
 
     const fetchResults = async () => {
       try {
         const res = await fetch('/api/anilist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'search',
-            ...filters,
-          }),
+          body: JSON.stringify({ action: 'search', ...filters, page: 1 }),
         });
         const data = await res.json();
-        
         if (active) {
           setResults(data.media ?? []);
           setPageInfo(data.pageInfo ?? null);
+          setCurrentPage(1);
         }
       } catch (err) {
         console.error('Failed to search anime:', err);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     };
 
     fetchResults();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [filters]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !pageInfo || currentPage >= pageInfo.lastPage) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const res = await fetch('/api/anilist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'search', ...filters, page: nextPage }),
+      });
+      const data = await res.json();
+      setResults((prev) => [...prev, ...(data.media ?? [])]);
+      setPageInfo(data.pageInfo ?? null);
+      setCurrentPage(nextPage);
+    } catch (err) {
+      console.error('Failed to load more:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, pageInfo, currentPage, filters]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, loading]);
 
   const updateUrlParams = (newFilters: BrowseFilters) => {
     const params = new URLSearchParams();
@@ -100,35 +131,22 @@ function BrowseContent() {
     if (newFilters.countryOfOrigin) params.set('country', newFilters.countryOfOrigin);
     if (newFilters.source) params.set('source', newFilters.source);
     if (newFilters.sort?.length) params.set('sort', newFilters.sort.join(','));
-    if (newFilters.page && newFilters.page > 1) params.set('page', newFilters.page.toString());
 
     router.push(`/browse?${params.toString()}`);
   };
 
   const handleFilterChange = (newFilters: BrowseFilters) => {
-    const updated = {
-      ...newFilters,
-      page: 1, // Reset page on filter change
-    };
+    const updated = { ...newFilters, page: 1 };
     setFilters(updated);
     updateUrlParams(updated);
   };
 
-  const handlePageChange = (newPage: number) => {
-    if (!pageInfo || newPage < 1 || newPage > pageInfo.lastPage) return;
-    const updated = {
-      ...filters,
-      page: newPage,
-    };
-    setFilters(updated);
-    updateUrlParams(updated);
-  };
+  const allLoaded = pageInfo ? currentPage >= pageInfo.lastPage : true;
 
   return (
     <div className={styles.page}>
       <Header />
       <main className={styles.main}>
-        {/* Title & Stats */}
         <div className={styles.titleRow}>
           <h1 className={styles.pageTitle}>Browse Anime</h1>
           {pageInfo && (
@@ -138,17 +156,14 @@ function BrowseContent() {
           )}
         </div>
 
-        {/* Filter panel */}
         <FilterBar initialFilters={filters} onFilterChange={handleFilterChange} />
 
-        {/* Loading Spinner */}
         {loading ? (
           <div className={styles.loadingBox}>
             <div className={styles.spinner} />
             <p style={{ color: 'var(--text-muted)' }}>Fetching matching titles...</p>
           </div>
         ) : results.length === 0 ? (
-          /* Empty State */
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>🔍</span>
             <h3 className={styles.emptyTitle}>No anime found</h3>
@@ -157,7 +172,6 @@ function BrowseContent() {
             </p>
           </div>
         ) : (
-          /* Grid of Cards */
           <>
             <div className="anime-grid">
               {results.map((anime) => (
@@ -170,7 +184,6 @@ function BrowseContent() {
                   year={anime.seasonYear}
                   status={anime.status}
                   score={anime.averageScore}
-                  // Optional preview details
                   synopsis={anime.description}
                   genres={anime.genres}
                   airDate={
@@ -182,73 +195,16 @@ function BrowseContent() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
-            {pageInfo && pageInfo.lastPage > 1 && (
-              <div className={styles.paginationRow}>
-                {/* First Page */}
-                <button
-                  className={styles.pagerBtn}
-                  disabled={pageInfo.currentPage === 1}
-                  onClick={() => handlePageChange(1)}
-                  title="First Page"
-                >
-                  «
-                </button>
+            <div ref={sentinelRef} />
 
-                {/* Prev */}
-                <button
-                  className={styles.pagerBtn}
-                  disabled={pageInfo.currentPage === 1}
-                  onClick={() => handlePageChange(pageInfo.currentPage - 1)}
-                  title="Previous Page"
-                >
-                  ‹
-                </button>
-
-                {/* Current & Surrounding Pages */}
-                {Array.from({ length: Math.min(5, pageInfo.lastPage) }, (_, i) => {
-                  let pageNum = pageInfo.currentPage - 2 + i;
-                  // Boundary checks
-                  if (pageInfo.currentPage <= 2) {
-                    pageNum = i + 1;
-                  } else if (pageInfo.currentPage >= pageInfo.lastPage - 1) {
-                    pageNum = pageInfo.lastPage - 4 + i;
-                  }
-                  pageNum = Math.max(1, Math.min(pageInfo.lastPage, pageNum));
-
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`${styles.pagerBtn} ${
-                        pageInfo.currentPage === pageNum ? styles.pagerBtnActive : ''
-                      }`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                {/* Next */}
-                <button
-                  className={styles.pagerBtn}
-                  disabled={pageInfo.currentPage === pageInfo.lastPage}
-                  onClick={() => handlePageChange(pageInfo.currentPage + 1)}
-                  title="Next Page"
-                >
-                  ›
-                </button>
-
-                {/* Last Page */}
-                <button
-                  className={styles.pagerBtn}
-                  disabled={pageInfo.currentPage === pageInfo.lastPage}
-                  onClick={() => handlePageChange(pageInfo.lastPage)}
-                  title="Last Page"
-                >
-                  »
-                </button>
+            {loadingMore && (
+              <div className={styles.loadingMore}>
+                <div className={styles.spinner} />
               </div>
+            )}
+
+            {allLoaded && results.length > 0 && (
+              <div className={styles.allLoaded}>All results loaded</div>
             )}
           </>
         )}

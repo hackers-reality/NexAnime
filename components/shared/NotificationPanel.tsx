@@ -18,6 +18,22 @@ interface NotificationPanelProps {
   onRefreshCount: () => void;
 }
 
+function timeAgo(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const seconds = Math.floor((now - then) / 1000);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
 export default function NotificationPanel({ onClose, onRefreshCount }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'new_episode' | 'airing_soon'>('all');
@@ -68,6 +84,20 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
       });
       if (res.ok) {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: 1 })));
+        onRefreshCount();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      const res = await fetch(`/api/notifications?id=${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
         onRefreshCount();
       }
     } catch (err) {
@@ -127,6 +157,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
               <div className={styles.content}>
                 <p className={styles.msg}>{notif.message}</p>
                 <div className={styles.meta}>
+                  <span className={styles.timestamp}>{timeAgo(notif.created_at)}</span>
                   <Link
                     href={`/anime/${notif.anilist_id}`}
                     onClick={onClose}
@@ -142,6 +173,13 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
                       Mark read
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDelete(notif.id)}
+                    className={styles.deleteBtn}
+                    title="Dismiss"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             </div>

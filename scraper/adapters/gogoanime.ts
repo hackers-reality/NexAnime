@@ -51,14 +51,6 @@ export class GogoanimeAdapter implements ScraperAdapter {
   ): Promise<ScraperSource | null> {
     console.log(`[Gogoanime Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
     
-    // Fallback stream source (Big Buck Bunny VOD HLS)
-    const fallbackSource: ScraperSource = {
-      adapterId: this.id,
-      sourceName: this.name,
-      streamUrl: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-      subtitleUrl: null,
-    };
-
     try {
       // 1. Retrieve titles from DB cache
       let dbAnime = await queryOne<{ title_romaji: string; title_english: string; synonyms: string }>(
@@ -205,7 +197,6 @@ export class GogoanimeAdapter implements ScraperAdapter {
       console.error(`[Gogoanime Scraper] Error during resolution: ${e.message}`);
     }
 
-    console.log(`[Gogoanime Scraper] Falling back to test stream for AniList ID: ${anilistId}`);
-    return fallbackSource;
+    return null;
   }
 }

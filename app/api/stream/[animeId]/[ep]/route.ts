@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADAPTERS } from '@/scraper/adapters';
-import { execute } from '@/lib/db';
+import { execute, query } from '@/lib/db';
 
 interface RouteParams {
   params: Promise<{ animeId: string; ep: string }>;
@@ -17,6 +17,32 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const isDub = request.nextUrl.searchParams.get('dub') === 'true';
+
+    // Check episode_sources cache first
+    const cachedSources = await query<{
+      source_adapter: string;
+      stream_url: string;
+      subtitle_url: string | null;
+      resolved_at: string;
+    }>(
+      `SELECT source_adapter, stream_url, subtitle_url, resolved_at
+       FROM episode_sources
+       WHERE anilist_id = ? AND episode_number = ?
+       AND resolved_at >= datetime('now', '-24 hours')
+       ORDER BY resolved_at DESC`,
+      [anilistId, episodeNumber]
+    );
+
+    if (cachedSources.length > 0) {
+      return NextResponse.json({
+        sources: cachedSources.map(s => ({
+          adapterId: s.source_adapter,
+          sourceName: s.source_adapter,
+          streamUrl: s.stream_url,
+          subtitleUrl: s.subtitle_url,
+        })),
+      });
+    }
 
     // Resolve Nova (primary) first for fastest response
     const primaryAdapter = ADAPTERS.find(a => a.id === 'nova');

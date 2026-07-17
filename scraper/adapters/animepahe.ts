@@ -13,14 +13,6 @@ export class AnimepaheAdapter implements ScraperAdapter {
   ): Promise<ScraperSource | null> {
     console.log(`[Animepahe Scraper] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
     
-    // Fallback stream source (Tears of Steel HLS)
-    const fallbackSource: ScraperSource = {
-      adapterId: this.id,
-      sourceName: this.name,
-      streamUrl: 'https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8',
-      subtitleUrl: null,
-    };
-
     try {
       // 1. Retrieve titles from DB cache or AniList
       let dbAnime = await queryOne<{ title_romaji: string; title_english: string; synonyms: string }>(
@@ -153,7 +145,6 @@ export class AnimepaheAdapter implements ScraperAdapter {
       console.error(`[Animepahe Scraper] Error during resolution: ${e.message}`);
     }
 
-    console.log(`[Animepahe Scraper] Falling back to test stream for AniList ID: ${anilistId}`);
-    return fallbackSource;
+    return null;
   }
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './SearchDropdown.module.css';
 
 interface SearchResult {
@@ -21,8 +22,10 @@ interface SearchDropdownProps {
 }
 
 export default function SearchDropdown({ query, onSelect }: SearchDropdownProps) {
+  const router = useRouter();
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -33,6 +36,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
     const controller = new AbortController();
     const timeoutId = setTimeout(async () => {
       setLoading(true);
+      setSelectedIndex(-1);
       try {
         const res = await fetch('/api/anilist', {
           method: 'POST',
@@ -47,7 +51,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
       } finally {
         setLoading(false);
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       clearTimeout(timeoutId);
@@ -55,10 +59,43 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
     };
   }, [query]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!results.length && e.key !== 'Escape') return;
+
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev + 1) % results.length);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedIndex >= 0 && selectedIndex < results.length) {
+            router.push(`/anime/${results[selectedIndex].id}`);
+            onSelect();
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          onSelect();
+          break;
+      }
+    },
+    [results, selectedIndex, router, onSelect]
+  );
+
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [query]);
+
   if (!query.trim()) return null;
 
   return (
-    <div className={styles.dropdown}>
+    <div className={styles.dropdown} role="listbox" onKeyDown={handleKeyDown}>
       {loading && results.length === 0 && (
         <div className={styles.loading}>Searching...</div>
       )}
@@ -67,14 +104,16 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
         <div className={styles.empty}>No results for &ldquo;{query}&rdquo;</div>
       )}
 
-      {results.map((result) => (
+      {results.map((result, index) => (
         <Link
           key={result.id}
           href={`/anime/${result.id}`}
-          className={styles.item}
+          className={`${styles.item} ${index === selectedIndex ? styles.selected : ''}`}
+          role="option"
+          aria-selected={index === selectedIndex}
           onClick={onSelect}
+          onMouseEnter={() => setSelectedIndex(index)}
         >
-          {/* Thumbnail */}
           <div className={styles.thumb}>
             {result.coverImage?.large ? (
               <img src={result.coverImage.large} alt="" className={styles.thumbImage} />
@@ -83,7 +122,6 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
             )}
           </div>
 
-          {/* Info */}
           <div className={styles.info}>
             <div className={styles.title}>
               {result.title.english || result.title.romaji || 'Untitled'}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './page.module.css';
@@ -24,6 +24,7 @@ export default function OnboardingPage() {
   const [loadingChars, setLoadingChars] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch initial popular characters
   useEffect(() => {
@@ -61,8 +62,12 @@ export default function OnboardingPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setSearchQuery(val);
-    // Debounce/Fetch immediately on change for responsiveness
-    fetchCharacters(val);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      fetchCharacters(val);
+    }, 300);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

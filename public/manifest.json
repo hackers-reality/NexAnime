@@ -1,0 +1,12 @@
+{
+  "name": "NexAnime",
+  "short_name": "NexAnime",
+  "description": "Self-hosted anime streaming & tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

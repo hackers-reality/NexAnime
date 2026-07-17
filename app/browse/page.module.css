@@ -132,3 +132,16 @@
   color: var(--text-muted);
   max-width: 320px;
 }
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8) 0;
+}
+
+.allLoaded {
+  text-align: center;
+  padding: var(--space-6) 0;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}

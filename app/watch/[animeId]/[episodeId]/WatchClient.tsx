@@ -124,8 +124,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }, [media.idMal, media.streamingEpisodes]);
 
   useEffect(() => {
-    setClientAutoPlay(localStorage.getItem('nexanime_autoplay') !== 'false');
-    setClientAutoSkip(localStorage.getItem('nexanime_autoskip') === 'true');
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.settings) {
+          setClientAutoPlay(data.settings.auto_next !== false);
+          setClientAutoSkip(!!data.settings.auto_skip_intro_outro);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const fetchWatchlistStatus = async () => {
@@ -235,10 +242,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             <>
               <VideoPlayer
                 src={activeSource?.streamUrl || null}
+                subtitleUrl={activeSource?.subtitleUrl}
                 animeId={media.id}
                 episodeNumber={episodeNumber}
-                autoPlayNext={clientAutoPlay}
-                autoSkipIntro={clientAutoSkip}
+                totalEpisodes={totalEpisodes}
               />
               <div className={styles.playerControlsBar}>
                 <div className={styles.playNavGroup}>
@@ -264,10 +271,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                       checked={clientAutoPlay}
                       onChange={(e) => {
                         setClientAutoPlay(e.target.checked);
-                        localStorage.setItem('nexanime_autoplay', e.target.checked ? 'true' : 'false');
+                        fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ autoNext: e.target.checked }) });
                       }}
                     />
-                    <span>Auto Play</span>
+                    <span>Auto Next</span>
                   </label>
                   <label className={styles.settingToggle}>
                     <input
@@ -275,10 +282,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                       checked={clientAutoSkip}
                       onChange={(e) => {
                         setClientAutoSkip(e.target.checked);
-                        localStorage.setItem('nexanime_autoskip', e.target.checked ? 'true' : 'false');
+                        fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ autoSkipIntroOutro: e.target.checked }) });
                       }}
                     />
-                    <span>Auto Skip Intro</span>
+                    <span>Auto Skip</span>
                   </label>
                 </div>
               </div>
@@ -322,7 +329,12 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
               onStatusUpdated={fetchWatchlistStatus}
               isAiring={media.status === 'RELEASING'}
             />
-            <button className={styles.secondaryButton}>
+            <button className={styles.secondaryButton} onClick={() => {
+              navigator.clipboard.writeText(window.location.href).then(() => {
+                const btn = document.querySelector(`.${styles.secondaryButton}`);
+                if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => { btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> Share'; }, 2000); }
+              });
+            }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               Share
             </button>
@@ -370,6 +382,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                 height={170}
                 className={styles.animeCoverImg}
                 suppressHydrationWarning
+                onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
               />
             </div>
           )}
@@ -473,6 +486,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                         alt={title}
                         className={styles.epThumb}
                         suppressHydrationWarning
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                       />
                     )}
                     <div className={styles.epNumOverlay}>Ep {epNum}</div>
@@ -517,6 +531,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                           height={68}
                           className={styles.relThumb}
                           suppressHydrationWarning
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                         />
                         <span className={styles.relTypeBadge}>{relType}</span>
                       </div>

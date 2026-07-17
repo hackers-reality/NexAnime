@@ -77,6 +77,7 @@ export default function AnimeCard({
               alt={title}
               className={styles.posterImage}
               loading="lazy"
+              onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
             />
           ) : (
             <div style={{

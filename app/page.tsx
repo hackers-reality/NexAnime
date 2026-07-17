@@ -39,6 +39,7 @@ export default function HomePage() {
   const [carouselMedia, setCarouselMedia] = useState<any[]>([]);
   const [trendingCards, setTrendingCards] = useState<any[]>([]);
   const [continueWatching, setContinueWatching] = useState<ProgressItem[]>([]);
+  const [thisSeasonCards, setThisSeasonCards] = useState<any[]>([]);
   const [upcomingCards, setUpcomingCards] = useState<any[]>([]);
   const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<any[]>([]);
   const [formattedSchedules, setFormattedSchedules] = useState<any[]>([]);
@@ -84,7 +85,33 @@ export default function HomePage() {
         setTrendingCards(mappedTrending.slice(5, 15));
         setTabAnime(mappedTrending.slice(5, 15));
 
-        // 2. Continue Watching
+        // 2. This Season (Staggered)
+        await delay(350);
+        if (!active) return;
+        const thisSeason = await fetch('/api/anilist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'thisSeason', page: 1, perPage: 10 })
+        }).then(r => r.json()).catch(err => {
+          console.error('Failed to load this season:', err);
+          return { media: [] };
+        });
+
+        if (!active) return;
+        setThisSeasonCards((thisSeason.media || []).map((m: any) => ({
+          anilistId: m.id,
+          titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
+          titleEnglish: m.title?.english,
+          coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
+          format: m.format,
+          seasonYear: m.seasonYear,
+          status: m.status,
+          averageScore: m.averageScore,
+          synopsis: m.description,
+          genres: m.genres || [],
+        })));
+
+        // 3. Continue Watching
         const cont = await fetch('/api/watchlist?continue=true')
           .then(r => r.json())
           .catch(() => ({ progress: [] }));
@@ -94,7 +121,7 @@ export default function HomePage() {
           setContinueWatching(cont.progress);
         }
 
-        // 3. Upcoming (Staggered to avoid rate limit)
+        // 4. Upcoming (Staggered to avoid rate limit)
         await delay(350);
         if (!active) return;
         const up = await fetch('/api/anilist', {
@@ -120,7 +147,7 @@ export default function HomePage() {
           genres: m.genres || [],
         })));
 
-        // 4. Recently Updated (Staggered)
+        // 5. Recently Updated (Staggered)
         await delay(350);
         if (!active) return;
         const recent = await fetch('/api/anilist', {
@@ -136,7 +163,7 @@ export default function HomePage() {
         const recentSchedules = recent.schedules || recent || [];
         setRecentlyUpdatedCards(Array.isArray(recentSchedules) ? recentSchedules : []);
 
-        // 5. Airing Schedule (Staggered)
+        // 6. Airing Schedule (Staggered)
         await delay(350);
         if (!active) return;
         const nowSec = Math.floor(Date.now() / 1000);
@@ -217,7 +244,7 @@ export default function HomePage() {
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}
 
           <main className={styles.main}>
-            {continueWatching.length > 0 && (
+            {continueWatching.length > 0 ? (
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Dive Back In</h2>
                 <div className={styles.continueGrid}>
@@ -264,6 +291,14 @@ export default function HomePage() {
                   })}
                 </div>
               </section>
+            ) : (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Dive Back In</h2>
+                <div className={styles.emptyState}>
+                  <p>Start watching anime to see your progress here!</p>
+                  <Link href="/browse" className={styles.browseLink}>Browse Anime</Link>
+                </div>
+              </section>
             )}
 
             <section className={styles.section}>
@@ -308,6 +343,49 @@ export default function HomePage() {
                       genres={anime.genres}
                     />
                   </div>
+                ))}
+              </div>
+            </section>
+
+            {thisSeasonCards.length > 0 && (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>This Season</h2>
+                  <Link href="/browse?season=WINTER&sort=POPULARITY_DESC" className={styles.viewAllLink}>
+                    →
+                  </Link>
+                </div>
+                <div className={styles.horizontalScroll}>
+                  {thisSeasonCards.map((anime: any) => (
+                    <div key={anime.anilistId} className={styles.cardWrapper}>
+                      <AnimeCard
+                        id={anime.anilistId}
+                        poster={anime.coverImage}
+                        title={anime.titleRomaji}
+                        format={anime.format as any}
+                        year={anime.seasonYear}
+                        status={anime.status as any}
+                        score={anime.averageScore}
+                        synopsis={anime.synopsis}
+                        genres={anime.genres}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Browse by Genre</h2>
+              <div className={styles.genrePills}>
+                {['Action', 'Romance', 'Comedy', 'Drama', 'Fantasy', 'Sci-Fi', 'Horror', 'Slice of Life', 'Sports', 'Supernatural', 'Thriller', 'Mystery'].map((genre) => (
+                  <Link
+                    key={genre}
+                    href={`/browse?genres=${encodeURIComponent(genre)}`}
+                    className={styles.genrePill}
+                  >
+                    {genre}
+                  </Link>
                 ))}
               </div>
             </section>

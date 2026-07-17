@@ -2,19 +2,18 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   position: relative;
-}
-
-.playerWrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  background-color: #000;
+  background: #000;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--border);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+.playerContainer:focus-within {
+  outline: 2px solid var(--primary);
+}
+
+/* ── Mini Player ──────────────────────── */
 .miniPlayer {
   position: fixed;
   bottom: 24px;
@@ -26,17 +25,12 @@
   border: 2px solid var(--primary);
   border-radius: 12px;
   animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  aspect-ratio: auto;
 }
 
 @keyframes slideIn {
-  from {
-    transform: translateY(100px) scale(0.85);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  from { transform: translateY(100px) scale(0.85); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .closeMiniBtn {
@@ -46,7 +40,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
@@ -55,27 +49,33 @@
   justify-content: center;
   font-size: 10px;
   z-index: 10001;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
-.closeMiniBtn:hover {
-  background-color: #ef4444;
-  transform: scale(1.1);
-}
+.closeMiniBtn:hover { background: #ef4444; transform: scale(1.1); }
 
+/* ── Video Element ────────────────────── */
 .video {
   width: 100%;
   height: 100%;
   outline: none;
+  cursor: pointer;
 }
 
+/* ── Ambient Glow ─────────────────────── */
+.ambientGlow {
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+/* ── Loading / Error ──────────────────── */
 .loadingOverlay,
 .errorOverlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -85,9 +85,7 @@
   z-index: 10;
 }
 
-.errorOverlay {
-  color: #ef4444; /* red error */
-}
+.errorOverlay { color: #ef4444; }
 
 .spinner {
   width: 40px;
@@ -99,37 +97,318 @@
   margin-bottom: 16px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .iframe {
   width: 100%;
   height: 100%;
   border: none;
-  background-color: #000;
+  background: #000;
 }
 
-.skipIntroBtn {
+/* ── Controls Overlay ─────────────────── */
+.controlsOverlay {
   position: absolute;
-  bottom: 60px;
-  right: 24px;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   z-index: 20;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  font-family: inherit;
-  transition: transform 0.2s, background-color 0.2s;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.5) 100%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
-.skipIntroBtn:hover {
-  background-color: #00d2b4;
+/* ── Top Bar ──────────────────────────── */
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.epLabel {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.topActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Center Play ──────────────────────── */
+.centerPlayBtn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 25;
+}
+
+.centerPlayBtn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* ── Skip Buttons ─────────────────────── */
+.skipBtn {
+  position: absolute;
+  bottom: 80px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 25;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.skipBtn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
   transform: scale(1.05);
 }
+
+/* ── Next Episode Countdown ───────────── */
+.nextCountdown {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px 24px;
+  text-align: center;
+  z-index: 30;
+  color: #fff;
+  min-width: 260px;
+}
+
+.nextCountdown p {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.countdownBar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.countdownFill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+
+.countdownActions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.countdownBtn {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.countdownBtn:hover { background: var(--primary-hover); }
+
+.countdownCancel {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.countdownCancel:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* ── Bottom Controls Bar ──────────────── */
+.bottomBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.ctrlBtn {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background 0.2s, color 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.ctrlBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--primary);
+}
+
+/* ── Seek Bar ─────────────────────────── */
+.seekBarWrap {
+  flex: 1;
+  padding: 0 4px;
+}
+
+.seekBar {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, var(--primary) var(--progress, 0%), rgba(255,255,255,0.2) var(--progress, 0%));
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.seekBar:hover { height: 6px; }
+
+.seekBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
+.seekBar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+}
+
+/* ── Time Label ───────────────────────── */
+.timeLabel {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* ── Volume ───────────────────────────── */
+.volumeWrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.volumeSlider {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right, #fff var(--progress, 100%), rgba(255,255,255,0.2) var(--progress, 100%));
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.volumeSlider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* ── Speed Menu ───────────────────────── */
+.speedWrap {
+  position: relative;
+}
+
+.speedMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(12, 12, 20, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 30;
+  min-width: 60px;
+}
+
+.speedOption {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.speedOption:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+.speedActive { color: var(--primary); font-weight: 600; }

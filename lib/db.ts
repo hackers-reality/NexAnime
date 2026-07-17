@@ -135,6 +135,19 @@ const SCHEMA_STATEMENTS: string[] = [
     subscribed_at DATETIME DEFAULT (datetime('now'))
   )`,
 
+  // Schema version tracking
+  `CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at DATETIME DEFAULT (datetime('now')))`,
+  `INSERT OR IGNORE INTO schema_version (version) VALUES (1)`,
+
+  // Indexes for performance
+  `CREATE INDEX IF NOT EXISTS idx_watchlist_status ON watchlist(list_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_watch_progress_anilist ON watch_progress(anilist_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_watch_progress_ep ON watch_progress(anilist_id, episode_number)`,
+  `CREATE INDEX IF NOT EXISTS idx_episode_sources_lookup ON episode_sources(anilist_id, episode_number)`,
+  `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)`,
+  `CREATE INDEX IF NOT EXISTS idx_anime_cache_status ON anime_cache(status)`,
+
   // Seed default profile row if empty
   `INSERT OR IGNORE INTO profile (id) VALUES (1)`,
 
