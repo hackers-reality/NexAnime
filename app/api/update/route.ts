@@ -54,7 +54,7 @@ export async function GET() {
       remoteDate: data.commit.author.date,
       remoteAuthor: data.commit.author.name,
       commitUrl: data.html_url,
-      currentVersion: JSON.parse(readFileSync(/* turbopackIgnore: true */ path.resolve(process.cwd(), 'package.json'), 'utf-8')).version,
+      currentVersion: JSON.parse(/* turbopackIgnore: true */ readFileSync(/* turbopackIgnore: true */ path.join(process.cwd(), 'package.json'), 'utf-8')).version,
     });
   } catch (error) {
     return NextResponse.json(
