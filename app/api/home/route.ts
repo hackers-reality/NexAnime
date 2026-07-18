@@ -11,8 +11,17 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+// In-memory cache for home data (2 min TTL)
+let homeCache: { data: unknown; expiry: number } | null = null;
+const HOME_CACHE_TTL = 120_000;
+
 export async function GET() {
   try {
+    // Return cached response if fresh
+    if (homeCache && Date.now() < homeCache.expiry) {
+      return NextResponse.json(homeCache.data);
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const sevenDaysSec = 7 * 24 * 60 * 60;
 
@@ -43,7 +52,7 @@ export async function GET() {
       genres: m.genres || [],
     });
 
-    return NextResponse.json({
+    const payload = {
       trending: trendingRes.status === 'fulfilled' ? trendingRes.value.media.map(mapMedia) : [],
       thisSeason: thisSeasonRes.status === 'fulfilled' ? thisSeasonRes.value.media.map(mapMedia) : [],
       upcoming: upcomingRes.status === 'fulfilled' ? upcomingRes.value.media.map(mapMedia) : [],
@@ -60,9 +69,14 @@ export async function GET() {
             coverImage: s.media?.coverImage?.large || null,
           }))
         : [],
-    });
+    };
+
+    homeCache = { data: payload, expiry: Date.now() + HOME_CACHE_TTL };
+    return NextResponse.json(payload);
   } catch (err) {
     console.error('[Home] Batch load error:', err);
+    // Return stale cache if available
+    if (homeCache) return NextResponse.json(homeCache.data);
     return NextResponse.json(
       { error: 'Failed to load home data' },
       { status: 500 }

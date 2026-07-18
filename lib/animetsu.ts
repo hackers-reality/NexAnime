@@ -215,9 +215,56 @@ function parseGenres(genres: string): string[] {
   return genres ? genres.split(/\s+/).filter(Boolean) : [];
 }
 
-// ─── Core fetch with dual-base failover ──────────────────────
+// ─── In-memory response cache with TTL ───────────────────────
+
+interface CacheEntry<T> {
+  data: T;
+  expiry: number;
+}
+
+const responseCache = new Map<string, CacheEntry<unknown>>();
+const CACHE_TTL: Record<string, number> = {
+  search: 300_000,  // 5 min
+  info:   600_000,  // 10 min
+  eps:    120_000,  // 2 min
+  servers: 60_000,  // 1 min
+};
+
+function getCacheTtl(path: string): number {
+  for (const [key, ttl] of Object.entries(CACHE_TTL)) {
+    if (path.startsWith(`/${key}`)) return ttl;
+  }
+  return 60_000; // default 1 min
+}
+
+function cacheGet<T>(path: string): T | null {
+  const entry = responseCache.get(path);
+  if (!entry) return null;
+  if (Date.now() > entry.expiry) {
+    responseCache.delete(path);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function cacheSet<T>(path: string, data: T): void {
+  const ttl = getCacheTtl(path);
+  responseCache.set(path, { data, expiry: Date.now() + ttl });
+  // Evict old entries when cache grows large
+  if (responseCache.size > 500) {
+    const now = Date.now();
+    for (const [key, entry] of responseCache) {
+      if (now > entry.expiry) responseCache.delete(key);
+    }
+  }
+}
+
+// ─── Core fetch with dual-base failover + cache ─────────────
 
 async function animetsuFetch<T>(path: string): Promise<T | null> {
+  const cached = cacheGet<T>(path);
+  if (cached !== null) return cached;
+
   for (let i = 0; i < ANIMETSU_BASES.length; i++) {
     const idx = (activeBaseIndex + i) % ANIMETSU_BASES.length;
     const base = ANIMETSU_BASES[idx];
@@ -228,7 +275,9 @@ async function animetsuFetch<T>(path: string): Promise<T | null> {
       });
       if (!res.ok) continue;
       activeBaseIndex = idx;
-      return await res.json() as T;
+      const data = await res.json() as T;
+      cacheSet(path, data);
+      return data;
     } catch {
       // try next base
     }
