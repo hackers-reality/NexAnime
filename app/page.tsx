@@ -21,6 +21,15 @@ interface ProgressItem {
   ep_thumbnail: string | null;
 }
 
+interface CarouselItem {
+  id: number;
+  title: { romaji?: string; english?: string };
+  coverImage: { extraLarge: string | null };
+  bannerImage: string | null;
+  description: string | null;
+  genres: string[];
+}
+
 interface MediaItem {
   id: number;
   title: { romaji: string; english: string; native: string };
@@ -36,20 +45,33 @@ interface MediaItem {
   episodes: number | null;
 }
 
+interface HomeCardItem {
+  anilistId: number;
+  titleRomaji: string;
+  titleEnglish: string | null;
+  coverImage: string | null;
+  format: string;
+  seasonYear: number | null;
+  status: string;
+  averageScore: number | null;
+  synopsis: string;
+  genres: string[];
+}
+
 export default function HomePage() {
-  const [carouselMedia, setCarouselMedia] = useState<any[]>([]);
-  const [trendingCards, setTrendingCards] = useState<any[]>([]);
+  const [carouselMedia, setCarouselMedia] = useState<CarouselItem[]>([]);
+  const [trendingCards, setTrendingCards] = useState<HomeCardItem[]>([]);
   const [continueWatching, setContinueWatching] = useState<ProgressItem[]>([]);
-  const [thisSeasonCards, setThisSeasonCards] = useState<any[]>([]);
+  const [thisSeasonCards, setThisSeasonCards] = useState<HomeCardItem[]>([]);
   const currentSeason = (() => {
     const m = new Date().getMonth();
     return ['WINTER', 'WINTER', 'SPRING', 'SPRING', 'SPRING', 'SUMMER', 'SUMMER', 'SUMMER', 'FALL', 'FALL', 'FALL', 'WINTER'][m];
   })();
-  const [upcomingCards, setUpcomingCards] = useState<any[]>([]);
+  const [upcomingCards, setUpcomingCards] = useState<HomeCardItem[]>([]);
   const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<any[]>([]);
   const [formattedSchedules, setFormattedSchedules] = useState<any[]>([]);
   const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'popular' | 'topRated'>('trending');
-  const [tabAnime, setTabAnime] = useState<any[]>([]);
+  const [tabAnime, setTabAnime] = useState<HomeCardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,13 +91,13 @@ export default function HomePage() {
 
         if (homeData) {
           const allTrending = (homeData.trending || []);
-          setCarouselMedia(allTrending.slice(0, 5).map((m: any) => ({
+          setCarouselMedia(allTrending.slice(0, 5).map((m: HomeCardItem): CarouselItem => ({
             id: m.anilistId,
-            title: { english: m.titleEnglish, romaji: m.titleRomaji },
+            title: { english: m.titleEnglish ?? undefined, romaji: m.titleRomaji },
             coverImage: { extraLarge: m.coverImage },
             bannerImage: null,
-            description: m.synopsis,
-            genres: m.genres,
+            description: m.synopsis ?? null,
+            genres: m.genres ?? [],
           })));
           setTrendingCards(allTrending.slice(5, 15));
           setTabAnime(allTrending.slice(5, 15));
@@ -216,7 +238,7 @@ export default function HomePage() {
                 </button>
               </div>
               <div className={styles.horizontalScroll}>
-                {tabAnime.map((anime: any) => (
+                {tabAnime.map((anime: HomeCardItem) => (
                   <div key={anime.anilistId} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
@@ -243,7 +265,7 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <div className={styles.horizontalScroll}>
-                  {thisSeasonCards.map((anime: any) => (
+                  {thisSeasonCards.map((anime: HomeCardItem) => (
                     <div key={anime.anilistId} className={styles.cardWrapper}>
                       <AnimeCard
                         id={anime.anilistId}
@@ -321,7 +343,7 @@ export default function HomePage() {
                 </Link>
               </div>
               <div className={styles.horizontalScroll}>
-                {upcomingCards.map((anime: any) => (
+                {upcomingCards.map((anime: HomeCardItem) => (
                   <div key={anime.anilistId} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
