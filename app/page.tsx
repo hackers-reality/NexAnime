@@ -6,6 +6,7 @@ import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
 import HomeCarousel from '@/components/home/HomeCarousel';
 import ScheduleWidget from '@/components/home/ScheduleWidget';
+import SkeletonGrid from '@/components/shared/SkeletonGrid';
 import Image from 'next/image';
 import styles from './page.module.css';
 
@@ -115,10 +116,16 @@ export default function HomePage() {
       <Header />
 
       {loading ? (
-        <div className={styles.loadingState}>
-          <div className={styles.spinner} />
-          <p>Loading...</p>
-        </div>
+        <main className={styles.main}>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Trending Now</h2>
+            <SkeletonGrid count={8} horizontal />
+          </section>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>This Season</h2>
+            <SkeletonGrid count={8} horizontal />
+          </section>
+        </main>
       ) : (
         <>
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}

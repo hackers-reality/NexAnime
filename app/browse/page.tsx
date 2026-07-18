@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import FilterBar from '@/components/browse/FilterBar';
 import AnimeCard from '@/components/cards/AnimeCard';
+import SkeletonGrid from '@/components/shared/SkeletonGrid';
 import type { BrowseFilters, AniListMedia, AniListPageInfo } from '@/types';
 import styles from './page.module.css';
 
@@ -180,10 +181,7 @@ function BrowseContent() {
         <FilterBar initialFilters={filters} onFilterChange={handleFilterChange} />
 
         {loading ? (
-          <div className={styles.loadingBox}>
-            <div className={styles.spinner} />
-            <p style={{ color: 'var(--text-muted)' }}>Fetching matching titles...</p>
-          </div>
+          <SkeletonGrid count={12} horizontal={false} />
         ) : results.length === 0 ? (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>🔍</span>
