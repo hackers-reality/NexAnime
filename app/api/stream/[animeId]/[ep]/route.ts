@@ -17,6 +17,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     const isDub = request.nextUrl.searchParams.get('dub') === 'true';
+    const all = request.nextUrl.searchParams.get('all') === 'true';
+    const quality = request.nextUrl.searchParams.get('quality');
+
+    if (quality) {
+      console.log(`[Stream] Quality preference "${quality}" requested for anime ${anilistId} ep ${episodeNumber} — adapters do not support quality selection yet`);
+    }
 
     // Check episode_sources cache first
     const cachedSources = await query<{
@@ -33,9 +39,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       [anilistId, episodeNumber]
     );
 
-    if (cachedSources.length > 0) {
+    const knownAdapters = new Set(ADAPTERS.map(a => a.id));
+    const validCached = cachedSources.filter(s => knownAdapters.has(s.source_adapter));
+
+    if (validCached.length > 0 && !all) {
       return NextResponse.json({
-        sources: cachedSources.map(s => ({
+        sources: validCached.map(s => ({
           adapterId: s.source_adapter,
           sourceName: s.source_adapter,
           streamUrl: s.stream_url,
@@ -44,37 +53,41 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    // Resolve Nova (primary) first for fastest response
-    const primaryAdapter = ADAPTERS.find(a => a.id === 'nova');
-    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'nova');
+    // Try primary adapters (AnimePlay + Zoko) first, then fallbacks in parallel
+    const primaryAdapters = ADAPTERS.filter(a => a.id === 'rapidstream' || a.id === 'nova');
+    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'rapidstream' && a.id !== 'nova');
 
     const sources: { adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[] = [];
 
-    // Try primary adapter first
-    if (primaryAdapter) {
-      try {
-        const source = await primaryAdapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
+    // Try primary adapters in parallel (fast — just HEAD requests)
+    const primaryResults = await Promise.allSettled(
+      primaryAdapters.map(async (adapter) => {
+        const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
         if (source) {
-          sources.push(source);
           await execute(
-            `INSERT INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
+            `INSERT OR IGNORE INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
              VALUES (?, ?, ?, ?, ?, datetime('now'))`,
             [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
           );
         }
-      } catch (err) {
-        console.error(`Primary adapter ${primaryAdapter.id} failed:`, err);
+        return source;
+      })
+    );
+
+    for (const result of primaryResults) {
+      if (result.status === 'fulfilled' && result.value) {
+        sources.push(result.value);
       }
     }
 
-    // If primary failed or we want all sources, try fallbacks in parallel
-    if (sources.length === 0 || request.nextUrl.searchParams.get('all') === 'true') {
+    // If no primary sources found or all requested, try fallbacks
+    if (sources.length === 0 || all) {
       const fallbackResults = await Promise.allSettled(
         fallbackAdapters.map(async (adapter) => {
           const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
           if (source) {
             await execute(
-              `INSERT INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
+              `INSERT OR IGNORE INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
                VALUES (?, ?, ?, ?, ?, datetime('now'))`,
               [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
             );

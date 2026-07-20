@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getLocalCommitSha, GITHUB_OWNER, GITHUB_REPO, GITHUB_BRANCH } from '@/lib/version';
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import path from 'path';
 
@@ -22,9 +22,26 @@ interface GitHubCommit {
   html_url: string;
 }
 
+let _pkgVersion: string | null = null;
+function getPackageVersion(): string {
+  if (_pkgVersion !== null) return _pkgVersion;
+  try {
+    _pkgVersion = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8')).version;
+  } catch {
+    _pkgVersion = '0.0.0';
+  }
+  return _pkgVersion!;
+}
+
+let updateCache: { data: any; expiry: number } | null = null;
+
 // GET — Check for available updates
 export async function GET() {
   try {
+    if (updateCache && Date.now() < updateCache.expiry) {
+      return NextResponse.json(updateCache.data);
+    }
+
     const localSha = getLocalCommitSha();
 
     const response = await fetch(GITHUB_API, {
@@ -32,6 +49,7 @@ export async function GET() {
         Accept: 'application/vnd.github.v3+json',
         'User-Agent': 'NexAnime-Updater',
       },
+      signal: AbortSignal.timeout(3000),
     });
 
     if (!response.ok) {
@@ -46,7 +64,7 @@ export async function GET() {
     const remoteSha = data.sha;
     const isUpToDate = localSha === remoteSha;
 
-    return NextResponse.json({
+    const result = {
       updateAvailable: !isUpToDate,
       localSha,
       remoteSha,
@@ -54,8 +72,11 @@ export async function GET() {
       remoteDate: data.commit.author.date,
       remoteAuthor: data.commit.author.name,
       commitUrl: data.html_url,
-      currentVersion: JSON.parse(/* turbopackIgnore: true */ readFileSync(/* turbopackIgnore: true */ path.join(process.cwd(), 'package.json'), 'utf-8')).version,
-    });
+      currentVersion: getPackageVersion(),
+    };
+
+    updateCache = { data: result, expiry: Date.now() + 300_000 };
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       {

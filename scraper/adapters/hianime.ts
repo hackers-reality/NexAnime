@@ -1,72 +1,76 @@
 import type { ScraperAdapter, ScraperSource } from './adapter';
+import { queryOne } from '@/lib/db';
 
 async function getMalId(anilistId: number): Promise<number | null> {
-  const query = `
-    query ($id: Int) {
-      Media (id: $id, type: ANIME) {
-        idMal
-      }
-    }
-  `;
+  const cached = await queryOne<{ mal_id: number }>(
+    'SELECT mal_id FROM anime_cache WHERE anilist_id = ?',
+    [anilistId]
+  );
+  if (cached?.mal_id) return cached.mal_id;
+
   try {
     const res = await fetch('https://graphql.anilist.co', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { id: anilistId } })
+      body: JSON.stringify({
+        query: `query ($id: Int) { Media(id: $id, type: ANIME) { idMal } }`,
+        variables: { id: anilistId }
+      }),
+      signal: AbortSignal.timeout(3000),
     });
     const json = await res.json();
     return json.data?.Media?.idMal || null;
-  } catch (err) {
-    console.error('[NexStream] Failed to fetch MAL ID from AniList:', err);
+  } catch {
     return null;
   }
 }
 
-export class NovaAdapter implements ScraperAdapter {
+export class AnimePlayAdapter implements ScraperAdapter {
+  id = 'rapidstream';
+  name = 'RapidStream';
+
+  async resolveEpisodeSource(anilistId: number, episodeNumber: number, isDub?: boolean): Promise<ScraperSource | null> {
+    const malId = await getMalId(anilistId);
+    if (!malId) return null;
+
+    const type = isDub ? 'dub' : 'sub';
+    const streamUrl = `https://animeplay.cfd/stream/mal/${malId}/${episodeNumber}/${type}`;
+
+    try {
+      const res = await fetch(streamUrl, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hianimes.se/' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.status === 200) {
+        return { adapterId: this.id, sourceName: this.name, streamUrl, subtitleUrl: null };
+      }
+    } catch {}
+    return null;
+  }
+}
+
+export class ZokoAdapter implements ScraperAdapter {
   id = 'nova';
   name = 'Nova';
 
-  async resolveEpisodeSource(
-    anilistId: number,
-    episodeNumber: number,
-    isDub?: boolean
-  ): Promise<ScraperSource | null> {
-    console.log(`[NexStream] Resolving source for AniList ID: ${anilistId}, Episode: ${episodeNumber}, Dub: ${!!isDub}`);
+  async resolveEpisodeSource(anilistId: number, episodeNumber: number, isDub?: boolean): Promise<ScraperSource | null> {
+    const malId = await getMalId(anilistId);
+    if (!malId) return null;
+
+    const type = isDub ? 'dub' : 'sub';
+    const streamUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
 
     try {
-      const malId = await getMalId(anilistId);
-      if (!malId) {
-        console.log(`[NexStream] Could not find MAL ID mapping for AniList ID ${anilistId}`);
-        return null;
-      }
-
-      const type = isDub ? 'dub' : 'sub';
-      const embedUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
-      console.log(`[NexStream] Verifying stream embed: ${embedUrl}`);
-
-      const res = await fetch(embedUrl, {
+      const res = await fetch(streamUrl, {
         method: 'HEAD',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
-          'Referer': 'https://hianimes.se/'
-        }
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hianimes.se/' },
+        signal: AbortSignal.timeout(5000),
       });
-
-      if (res.status !== 200) {
-        throw new Error(`Episode embed not available (HTTP ${res.status})`);
+      if (res.status === 200) {
+        return { adapterId: this.id, sourceName: this.name, streamUrl, subtitleUrl: null };
       }
-
-      console.log(`[NexStream] Successfully verified embed URL: ${embedUrl}`);
-
-      return {
-        adapterId: this.id,
-        sourceName: this.name,
-        streamUrl: embedUrl,
-        subtitleUrl: null, // Subtitles are rendered natively inside the ZokoAnime player iframe
-      };
-    } catch (err: any) {
-      console.error(`[NexStream] Failed to resolve stream:`, err.message);
-      return null;
-    }
+    } catch {}
+    return null;
   }
 }

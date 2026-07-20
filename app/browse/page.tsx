@@ -58,6 +58,7 @@ function BrowseContent() {
     SCORE_DESC: 'score',
     START_DATE_DESC: 'newest',
     START_DATE: 'oldest',
+    TITLE_ROMAJI_DESC: 'title',
   };
 
   const buildBrowseUrl = (f: BrowseFilters, pg: number) => {

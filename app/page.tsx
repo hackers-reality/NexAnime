@@ -1,14 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
 import HomeCarousel from '@/components/home/HomeCarousel';
+import SkeletonCarousel from '@/components/home/SkeletonCarousel';
 import ScheduleWidget from '@/components/home/ScheduleWidget';
 import SkeletonGrid from '@/components/shared/SkeletonGrid';
 import Image from 'next/image';
 import styles from './page.module.css';
+
+async function fetchJSON(url: string): Promise<any> {
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return res.json().catch(() => null);
+}
 
 interface ProgressItem {
   anilist_id: number;
@@ -28,6 +35,7 @@ interface CarouselItem {
   bannerImage: string | null;
   description: string | null;
   genres: string[];
+  trailer: string | null;
 }
 
 interface MediaItem {
@@ -50,12 +58,14 @@ interface HomeCardItem {
   titleRomaji: string;
   titleEnglish: string | null;
   coverImage: string | null;
+  bannerImage: string | null;
   format: string;
   seasonYear: number | null;
   status: string;
   averageScore: number | null;
   synopsis: string;
   genres: string[];
+  trailer: string | null;
 }
 
 export default function HomePage() {
@@ -74,17 +84,20 @@ export default function HomePage() {
   const [tabAnime, setTabAnime] = useState<HomeCardItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadAttempt = useRef(0);
+
   useEffect(() => {
     let active = true;
 
     const loadData = async () => {
       try {
         setLoading(true);
+        loadAttempt.current++;
 
         // Fetch ALL home data in one batch request (server runs 5 AniList queries in parallel)
         const [homeData, contData] = await Promise.all([
-          fetch('/api/home').then(r => r.json()).catch(() => null),
-          fetch('/api/watchlist?continue=true').then(r => r.json()).catch(() => ({ progress: [] })),
+          fetchJSON('/api/home'),
+          fetchJSON('/api/watchlist?continue=true').then(d => d || { progress: [] }),
         ]);
 
         if (!active) return;
@@ -95,9 +108,10 @@ export default function HomePage() {
             id: m.anilistId,
             title: { english: m.titleEnglish ?? undefined, romaji: m.titleRomaji },
             coverImage: { extraLarge: m.coverImage },
-            bannerImage: null,
+            bannerImage: m.bannerImage ?? null,
             description: m.synopsis ?? null,
             genres: m.genres ?? [],
+            trailer: m.trailer ?? null,
           })));
           setTrendingCards(allTrending.slice(5, 15));
           setTabAnime(allTrending.slice(5, 15));
@@ -127,10 +141,10 @@ export default function HomePage() {
       const res = await fetch(`/api/animetsu?action=${tab}&limit=15`);
       const data = await res.json();
       const media = (data.media || []).slice(5, 15);
-      setTabAnime(media);
-    } catch (err) {
-      console.error('Failed to load tab data:', err);
-    }
+      if (media.length > 0) { setTabAnime(media); return; }
+    } catch {}
+    // Fallback: use trending cards we already loaded
+    setTabAnime(trendingCards);
   };
 
   return (
@@ -138,7 +152,9 @@ export default function HomePage() {
       <Header />
 
       {loading ? (
-        <main className={styles.main}>
+        <>
+          <SkeletonCarousel />
+          <main className={styles.main}>
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Trending Now</h2>
             <SkeletonGrid count={8} horizontal />
@@ -148,6 +164,7 @@ export default function HomePage() {
             <SkeletonGrid count={8} horizontal />
           </section>
         </main>
+        </>
       ) : (
         <>
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}

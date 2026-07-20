@@ -1,10 +1,5 @@
-// NexAnime — Database layer using @libsql/client (async API)
-// Single SQLite file: nexanime.db in project root
-
 import { createClient, type Client, type InStatement } from '@libsql/client';
 import path from 'path';
-
-// ─── Singleton client ────────────────────────────────────
 
 let _client: Client | null = null;
 
@@ -18,10 +13,7 @@ export function getDb(): Client {
   return _client;
 }
 
-// ─── Schema initialization ──────────────────────────────
-
 const SCHEMA_STATEMENTS: string[] = [
-  // Single-row profile — one local user, no user_id FKs anywhere
   `CREATE TABLE IF NOT EXISTS profile (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     display_name TEXT,
@@ -31,8 +23,6 @@ const SCHEMA_STATEMENTS: string[] = [
     onboarded_at DATETIME,
     created_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Single-row settings
   `CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     title_language TEXT DEFAULT 'romaji',
@@ -48,8 +38,6 @@ const SCHEMA_STATEMENTS: string[] = [
     theme TEXT DEFAULT 'dark',
     notification_sound INTEGER DEFAULT 1
   )`,
-
-  // Cached anime metadata from AniList
   `CREATE TABLE IF NOT EXISTS anime_cache (
     anilist_id INTEGER PRIMARY KEY,
     title_romaji TEXT,
@@ -73,8 +61,6 @@ const SCHEMA_STATEMENTS: string[] = [
     next_airing_at DATETIME,
     cached_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Episode stream sources resolved by scraper adapters
   `CREATE TABLE IF NOT EXISTS episode_sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     anilist_id INTEGER NOT NULL,
@@ -86,8 +72,6 @@ const SCHEMA_STATEMENTS: string[] = [
     subtitle_url TEXT,
     resolved_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // User's watchlist entries
   `CREATE TABLE IF NOT EXISTS watchlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     anilist_id INTEGER NOT NULL UNIQUE,
@@ -100,8 +84,6 @@ const SCHEMA_STATEMENTS: string[] = [
     notes TEXT,
     updated_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Per-episode watch progress (seconds watched, duration)
   `CREATE TABLE IF NOT EXISTS watch_progress (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     anilist_id INTEGER NOT NULL,
@@ -111,8 +93,6 @@ const SCHEMA_STATEMENTS: string[] = [
     last_watched_at DATETIME DEFAULT (datetime('now')),
     UNIQUE(anilist_id, episode_number)
   )`,
-
-  // Activity log — personal history feed
   `CREATE TABLE IF NOT EXISTS activity_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
@@ -120,8 +100,6 @@ const SCHEMA_STATEMENTS: string[] = [
     message TEXT NOT NULL,
     created_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Notifications from scraper schedule-check
   `CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     anilist_id INTEGER NOT NULL,
@@ -130,25 +108,17 @@ const SCHEMA_STATEMENTS: string[] = [
     read INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Subscriptions — anime the user wants notifications for
   `CREATE TABLE IF NOT EXISTS subscriptions (
     anilist_id INTEGER PRIMARY KEY,
     subscribed_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Animetsu ID cache — bridges AniList IDs to animetsu MongoDB IDs
-  `CREATE TABLE IF NOT EXISTS animetsu_id_cache (
-    anilist_id INTEGER PRIMARY KEY,
-    animetsu_id TEXT NOT NULL,
+  `CREATE TABLE IF NOT EXISTS home_cache (
+    key TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
     cached_at DATETIME DEFAULT (datetime('now'))
   )`,
-
-  // Schema version tracking
   `CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at DATETIME DEFAULT (datetime('now')))`,
   `INSERT OR IGNORE INTO schema_version (version) VALUES (1)`,
-
-  // Indexes for performance
   `CREATE INDEX IF NOT EXISTS idx_watchlist_status ON watchlist(list_status)`,
   `CREATE INDEX IF NOT EXISTS idx_watch_progress_anilist ON watch_progress(anilist_id)`,
   `CREATE INDEX IF NOT EXISTS idx_watch_progress_ep ON watch_progress(anilist_id, episode_number)`,
@@ -156,49 +126,27 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read)`,
   `CREATE INDEX IF NOT EXISTS idx_anime_cache_status ON anime_cache(status)`,
-  `CREATE INDEX IF NOT EXISTS idx_animetsu_cache_anilist ON animetsu_id_cache(anilist_id)`,
-
-  // Seed default profile row if empty
   `INSERT OR IGNORE INTO profile (id) VALUES (1)`,
-
-  // Seed default settings row if empty
   `INSERT OR IGNORE INTO settings (id) VALUES (1)`,
 ];
 
-/**
- * Initialize the database schema. Safe to call multiple times —
- * all statements use IF NOT EXISTS / INSERT OR IGNORE.
- */
 export async function initializeDb(): Promise<void> {
   const db = getDb();
   const statements: InStatement[] = SCHEMA_STATEMENTS.map((sql) => ({ sql, args: [] }));
   await db.batch(statements, 'write');
 
-  // Run migrations that may fail if column already exists
-  try {
-    await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark\'');
-  } catch {
-    // Column already exists — ignore
-  }
+  try { await db.execute('ALTER TABLE settings ADD COLUMN theme TEXT DEFAULT \'dark\''); } catch {}
+  try { await db.execute('ALTER TABLE settings ADD COLUMN notification_sound INTEGER DEFAULT 1'); } catch {}
+  try { await db.execute('ALTER TABLE profile ADD COLUMN avatar_url TEXT'); } catch {}
+  try { await db.execute('ALTER TABLE anime_cache ADD COLUMN mal_id INTEGER'); } catch {}
+  try { await db.execute('ALTER TABLE anime_cache ADD COLUMN streaming_episodes TEXT'); } catch {}
+  try { await db.execute('ALTER TABLE anime_cache ADD COLUMN full_data TEXT'); } catch {}
 
   try {
-    await db.execute('ALTER TABLE settings ADD COLUMN notification_sound INTEGER DEFAULT 1');
-  } catch {
-    // Column already exists — ignore
-  }
-
-  try {
-    await db.execute('ALTER TABLE profile ADD COLUMN avatar_url TEXT');
-  } catch {
-    // Column already exists — ignore
-  }
+    await db.execute(`DELETE FROM episode_sources WHERE source_adapter NOT IN ('rapidstream', 'zoko', 'gogoanime', 'animepahe')`);
+  } catch {}
 }
 
-// ─── Query helpers ──────────────────────────────────────
-
-/**
- * Execute a single SQL statement and return all rows.
- */
 export async function query<T = Record<string, unknown>>(
   sql: string,
   args: Record<string, unknown> | unknown[] = []
@@ -208,9 +156,6 @@ export async function query<T = Record<string, unknown>>(
   return result.rows as unknown as T[];
 }
 
-/**
- * Execute a single SQL statement and return the first row (or null).
- */
 export async function queryOne<T = Record<string, unknown>>(
   sql: string,
   args: Record<string, unknown> | unknown[] = []
@@ -219,10 +164,6 @@ export async function queryOne<T = Record<string, unknown>>(
   return rows[0] ?? null;
 }
 
-/**
- * Execute a write statement (INSERT/UPDATE/DELETE).
- * Returns the number of rows affected and last insert rowid.
- */
 export async function execute(
   sql: string,
   args: Record<string, unknown> | unknown[] = []
@@ -235,9 +176,6 @@ export async function execute(
   };
 }
 
-/**
- * Execute multiple statements in a batch/transaction.
- */
 export async function batch(statements: InStatement[]): Promise<void> {
   const db = getDb();
   await db.batch(statements, 'write');

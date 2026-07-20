@@ -270,6 +270,127 @@ export interface BrowseFilters {
   perPage?: number;
 }
 
+// ─── Jikan API types ──────────────────────────────────────
+
+export interface JikanCharacter {
+  mal_id: number;
+  url: string;
+  images: {
+    jpg: { image_url: string; small_image_url?: string };
+    webp: { image_url: string; small_image_url?: string };
+  };
+  name: string;
+  name_kanji?: string;
+}
+
+export interface JikanVoiceActor {
+  person: {
+    mal_id: number;
+    url: string;
+    images: { jpg: { image_url: string } };
+    name: string;
+  };
+  language: string;
+}
+
+export interface JikanCharacterEntry {
+  character: JikanCharacter;
+  role: string;
+  favorites: number;
+  voice_actors: JikanVoiceActor[];
+}
+
+export interface JikanStaffEntry {
+  person: {
+    mal_id: number;
+    url: string;
+    images: { jpg: { image_url: string } };
+    name: string;
+  };
+  positions: string[];
+}
+
+export interface JikanEpisode {
+  mal_id: number;
+  url: string;
+  title: string;
+  title_english: string | null;
+  title_japanese: string;
+  aired: string | null;
+  score: number | null;
+  filler: boolean;
+  recap: boolean;
+  forum_url: string | null;
+  synopsis: string | null;
+}
+
+export interface CharacterWithVA {
+  id: number;
+  malId: number;
+  name: string;
+  image: string | null;
+  role: string;
+  voiceActors: Array<{
+    id: number;
+    name: string;
+    image: string | null;
+    language: string;
+  }>;
+}
+
+export interface StaffEntry {
+  id: number;
+  name: string;
+  image: string | null;
+  roles: string[];
+}
+
+// ─── Extended Anime types for rich detail ─────────────────
+
+export interface ExtendedAnime extends Anime {
+  malId: number | null;
+  duration: number | null;
+  popularity: number | null;
+  trending: number | null;
+  favourites: number | null;
+  rating: string | null;
+  isAdult: boolean;
+  countryOfOrigin: string | null;
+  hashtag: string | null;
+  trailer: { id: string; site: string; thumbnail?: string } | null;
+  nextAiringEpisode: { airingAt: number; episode: number; timeUntilAiring?: number } | null;
+  scoreDistribution: Array<{ score: number; amount: number }> | null;
+  statusDistribution: Array<{ status: string; amount: number }> | null;
+  relations: Array<{
+    id: number;
+    titleRomaji: string | null;
+    titleEnglish: string | null;
+    format: string | null;
+    status: string | null;
+    coverImage: string | null;
+    relationType: string;
+  }> | null;
+  recommendations: Array<{
+    id: number;
+    titleRomaji: string | null;
+    titleEnglish: string | null;
+    format: string | null;
+    status: string | null;
+    coverImage: string | null;
+    score: number | null;
+  }> | null;
+  episodes: Array<{
+    number: number;
+    title: string | null;
+    thumbnail: string | null;
+    aired: string | null;
+    filler: boolean;
+    recap: boolean;
+  }> | null;
+  characters: CharacterWithVA[] | null;
+  staff: StaffEntry[] | null;
+}
+
 // ─── Component prop types ────────────────────────────────
 
 export interface AnimeCardProps {

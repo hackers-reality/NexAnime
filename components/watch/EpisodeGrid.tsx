@@ -22,7 +22,7 @@ export default function EpisodeGrid({ animeId, totalEpisodes, currentEpisode }: 
         {episodes.map((ep) => (
           <Link
             key={ep}
-            href={`/watch/${animeId}/episode-${ep}`}
+            href={`/watch/${animeId}/${ep}`}
             className={`${styles.episode} ${ep === currentEpisode ? styles.current : ''} ${ep < currentEpisode ? styles.watched : ''}`}
           >
             {ep}

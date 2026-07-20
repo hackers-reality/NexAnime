@@ -105,11 +105,11 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [showWarning, setShowWarning] = useState(true);
   const [clientAutoPlay, setClientAutoPlay] = useState(true);
   const [clientAutoSkip, setClientAutoSkip] = useState(false);
+  const [videoQuality, setVideoQuality] = useState('auto');
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
 
   useEffect(() => {
     if (!media.idMal) return;
-    if (media.streamingEpisodes && media.streamingEpisodes.length > 5) return;
 
     fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
       .then((res) => {
@@ -122,7 +122,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         }
       })
       .catch((err) => console.warn('[Jikan] Fallback episode titles unavailable:', err));
-  }, [media.idMal, media.streamingEpisodes]);
+  }, [media.idMal]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -131,6 +131,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         if (data.settings) {
           setClientAutoPlay(data.settings.auto_next !== false);
           setClientAutoSkip(!!data.settings.auto_skip_intro_outro);
+          setVideoQuality(data.settings.video_quality || 'auto');
         }
       })
       .catch(() => {});
@@ -152,7 +153,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     let isMounted = true;
     setLoading(true);
 
-    fetch(`/api/stream/${media.id}/${episodeNumber}?dub=${isDub}`)
+    fetch(`/api/stream/${media.id}/${episodeNumber}?dub=${isDub}&quality=${videoQuality}`)
       .then(res => res.json())
       .then(data => {
         if (!isMounted) return;
@@ -174,7 +175,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
     fetchWatchlistStatus();
     return () => { isMounted = false; };
-  }, [media.id, episodeNumber, isDub]);
+  }, [media.id, episodeNumber, isDub, videoQuality]);
 
   const activeSource = sources.find(s => s.adapterId === activeServerId);
 

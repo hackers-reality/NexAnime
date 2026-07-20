@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
-import { getAnimeDetail } from '@/lib/anilist';
-import { findAnimetsuIdByAnilistId, animetsuGetInfo, animetsuInfoToMedia } from '@/lib/animetsu';
+import { getAnimeRecommendations } from '@/lib/anilist';
+import { getReanimeByAnilistId } from '@/lib/reanime';
+import { getMediaDetail } from '@/lib/data-api';
 import Header from '@/components/shared/Header';
 import WatchClient from './WatchClient';
 
@@ -17,25 +18,26 @@ export default async function WatchPage({ params }: PageProps) {
     return notFound();
   }
 
-  // Try animetsu first
-  const animetsuId = await findAnimetsuIdByAnilistId(anilistId);
-  if (animetsuId) {
-    const info = await animetsuGetInfo(animetsuId);
-    if (info) {
-      const media = animetsuInfoToMedia(info);
-      if (media) {
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Header />
-            <WatchClient media={media} episodeNumber={epNumber} />
-          </div>
-        );
-      }
-    }
+  // 1. reanime.to first (milliseconds)
+  let media: any = null;
+  try {
+    media = await getReanimeByAnilistId(anilistId);
+  } catch {}
+
+  // 1b. Fetch recommendations in parallel (5s timeout, won't block page load)
+  if (media) {
+    try {
+      const recs = await getAnimeRecommendations(anilistId);
+      if (recs) media.recommendations = recs;
+    } catch {}
   }
 
-  // Fallback to AniList
-  const media = await getAnimeDetail(anilistId);
+  // 2. data-api fallback (reanime → AniList, chars/staff/relations included)
+  if (!media) {
+    try {
+      media = await getMediaDetail(anilistId);
+    } catch {}
+  }
 
   if (!media) {
     return notFound();

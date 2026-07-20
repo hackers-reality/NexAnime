@@ -1,14 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { AniListMedia, AniListAiringSchedule } from '@/types';
-import {
-  animetsuTrending,
-  animetsuSeason,
-  animetsuUpcoming,
-} from '@/lib/animetsu';
-import {
-  getRecentlyUpdated,
-  getAiringSchedule,
-} from '@/lib/anilist';
+import { getHomeData } from '@/lib/data-api';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,12 +17,14 @@ interface HomeMediaItem {
   titleRomaji: string;
   titleEnglish: string | null;
   coverImage: string | null;
+  bannerImage: string | null;
   format: string;
   seasonYear: number | null;
   status: string;
   averageScore: number | null;
   synopsis: string;
   genres: string[];
+  trailer: string | null;
 }
 
 interface HomeScheduleItem {
@@ -43,7 +37,7 @@ interface HomeScheduleItem {
 }
 
 let homeCache: { data: HomePayload; expiry: number } | null = null;
-const HOME_CACHE_TTL = 120_000;
+const HOME_CACHE_TTL = 600_000;
 
 function mapMedia(m: AniListMedia): HomeMediaItem {
   return {
@@ -51,6 +45,8 @@ function mapMedia(m: AniListMedia): HomeMediaItem {
     titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
     titleEnglish: m.title?.english ?? null,
     coverImage: m.coverImage?.extraLarge || m.coverImage?.large || null,
+    bannerImage: m.bannerImage ?? null,
+    trailer: m.trailer?.id ?? null,
     format: m.format ?? '',
     seasonYear: m.seasonYear ?? null,
     status: m.status ?? '',
@@ -77,29 +73,14 @@ export async function GET() {
       return NextResponse.json(homeCache.data);
     }
 
-    const now = Math.floor(Date.now() / 1000);
-    const sevenDaysSec = 7 * 24 * 60 * 60;
-
-    const currentSeason = (() => {
-      const m = new Date().getMonth();
-      return ['WINTER','WINTER','SPRING','SPRING','SPRING','SUMMER','SUMMER','SUMMER','FALL','FALL','FALL','WINTER'][m];
-    })();
-    const currentYear = new Date().getFullYear();
-
-    const [trendingRes, thisSeasonRes, upcomingRes, recentlyUpdatedRes, scheduleRes] = await Promise.allSettled([
-      animetsuTrending(1, 15),
-      animetsuSeason(currentSeason, currentYear, 1, 10),
-      animetsuUpcoming(1, 10),
-      getRecentlyUpdated(1, 10),
-      getAiringSchedule(now - 12 * 3600, now + sevenDaysSec, 1, 100),
-    ]);
+    const data = await getHomeData();
 
     const payload: HomePayload = {
-      trending: trendingRes.status === 'fulfilled' ? trendingRes.value.media.map(mapMedia) : [],
-      thisSeason: thisSeasonRes.status === 'fulfilled' ? thisSeasonRes.value.media.map(mapMedia) : [],
-      upcoming: upcomingRes.status === 'fulfilled' ? upcomingRes.value.media.map(mapMedia) : [],
-      recentlyUpdated: recentlyUpdatedRes.status === 'fulfilled' ? recentlyUpdatedRes.value : [],
-      schedule: scheduleRes.status === 'fulfilled' ? scheduleRes.value.map(mapSchedule) : [],
+      trending: data.trending.map(mapMedia),
+      thisSeason: data.thisSeason.map(mapMedia),
+      upcoming: data.upcoming.map(mapMedia),
+      recentlyUpdated: data.recentlyUpdated,
+      schedule: data.schedule.map(mapSchedule),
     };
 
     homeCache = { data: payload, expiry: Date.now() + HOME_CACHE_TTL };

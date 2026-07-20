@@ -1,6 +1,6 @@
 import type { ScraperAdapter, ScraperSource } from './adapter';
 import { queryOne } from '@/lib/db';
-import { getAnimeDetail } from '@/lib/anilist';
+import { getReanimeByAnilistId } from '@/lib/reanime';
 import crypto from 'crypto';
 
 const keys = {
@@ -71,11 +71,11 @@ export class GogoanimeAdapter implements ScraperAdapter {
           } catch (_) {}
         }
       } else {
-        // Fallback: Query AniList API directly
-        const details = await getAnimeDetail(anilistId);
+        // Fallback: Query reanime.to (fast, avoids AniList rate limits)
+        const details = await getReanimeByAnilistId(anilistId);
         if (details) {
-          if (details.title.romaji) titleCandidates.push(details.title.romaji);
-          if (details.title.english) titleCandidates.push(details.title.english);
+          if (details.title?.romaji) titleCandidates.push(details.title.romaji);
+          if (details.title?.english) titleCandidates.push(details.title.english);
           if (details.synonyms) titleCandidates.push(...details.synonyms);
         }
       }

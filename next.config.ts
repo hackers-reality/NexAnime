@@ -11,8 +11,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'gogocdn.net', pathname: '/**' },
       { protocol: 'https', hostname: 'anilist.co', pathname: '/**' },
       { protocol: 'https', hostname: 'artworks.thetvdb.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'animetsu.cc', pathname: '/**' },
-      { protocol: 'https', hostname: 'animetsu.live', pathname: '/**' },
     ],
   },
   async headers() {

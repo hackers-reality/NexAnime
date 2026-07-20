@@ -1,6 +1,6 @@
 import type { ScraperAdapter, ScraperSource } from './adapter';
 import { queryOne } from '@/lib/db';
-import { getAnimeDetail } from '@/lib/anilist';
+import { getReanimeByAnilistId } from '@/lib/reanime';
 
 export class AnimepaheAdapter implements ScraperAdapter {
   id = 'animepahe';
@@ -33,10 +33,10 @@ export class AnimepaheAdapter implements ScraperAdapter {
           } catch (_) {}
         }
       } else {
-        const details = await getAnimeDetail(anilistId);
+        const details = await getReanimeByAnilistId(anilistId);
         if (details) {
-          if (details.title.romaji) titleCandidates.push(details.title.romaji);
-          if (details.title.english) titleCandidates.push(details.title.english);
+          if (details.title?.romaji) titleCandidates.push(details.title.romaji);
+          if (details.title?.english) titleCandidates.push(details.title.english);
           if (details.synonyms) titleCandidates.push(...details.synonyms);
         }
       }

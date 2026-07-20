@@ -78,7 +78,7 @@ export default function WatchHistoryPage() {
               return (
                 <Link
                   key={`${item.anilist_id}-${item.episode_number}-${i}`}
-                  href={`/watch/${item.anilist_id}/episode-${item.episode_number}`}
+                  href={`/watch/${item.anilist_id}/${item.episode_number}`}
                   className={styles.card}
                 >
                   <div className={styles.cardImage}>

@@ -66,10 +66,12 @@ export default function VideoPlayer({
   const [nextCountdown, setNextCountdown] = useState(5);
   const [ambientColor, setAmbientColor] = useState<string | null>(null);
   const [showAmbient, setShowAmbient] = useState(false);
+  const autoPlayRef = useRef(true);
 
   const isEmbed = src
     ? src.includes('zokoanime.video/stream') ||
       src.includes('megaplay.buzz/stream') ||
+      src.includes('animeplay.cfd/stream') ||
       (!src.endsWith('.m3u8') && !src.endsWith('.mp4') && !src.endsWith('.mkv') && !src.includes('.m3u8?') && !src.includes('.mp4?'))
     : false;
 
@@ -83,6 +85,7 @@ export default function VideoPlayer({
           setAutoSkip(!!data.settings.auto_skip_intro_outro);
           setShowAmbient(!!data.settings.ambient_mode);
           setMiniPlayerEnabled(data.settings.mini_player !== false);
+          autoPlayRef.current = !!data.settings.auto_play;
         }
       })
       .catch(() => {});
@@ -105,7 +108,7 @@ export default function VideoPlayer({
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
+        if (autoPlayRef.current) video.play().catch(() => {});
       });
       hls.on(Hls.Events.ERROR, (_e, data) => {
         if (data.fatal) {
@@ -117,10 +120,10 @@ export default function VideoPlayer({
       hlsRef.current = hls;
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = src;
-      video.addEventListener('loadedmetadata', () => video.play().catch(() => {}));
+      video.addEventListener('loadedmetadata', () => { if (autoPlayRef.current) video.play().catch(() => {}); });
     } else if (!src.includes('.m3u8')) {
       video.src = src;
-      video.play().catch(() => {});
+      if (autoPlayRef.current) video.play().catch(() => {});
     } else {
       setError('Your browser does not support HLS video playback.');
     }

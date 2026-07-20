@@ -14,7 +14,7 @@ setInterval(() => {
   }
 }, RATE_WINDOW);
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname.startsWith('/api/')) {

@@ -6,12 +6,18 @@ import styles from './ServerPicker.module.css';
 interface Server {
   adapterId: string;
   streamUrl: string;
+  sourceName?: string;
 }
 
 interface ServerPickerProps {
   servers: Server[];
   activeServerId: string | null;
   onSelectServer: (serverId: string) => void;
+}
+
+function formatName(id?: string): string {
+  if (!id) return 'Loading...';
+  return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 export default function ServerPicker({ servers, activeServerId, onSelectServer }: ServerPickerProps) {
@@ -28,7 +34,7 @@ export default function ServerPicker({ servers, activeServerId, onSelectServer }
         aria-expanded={isOpen}
       >
         <span className={styles.label}>Server:</span>
-        <span className={styles.activeName}>{activeServer?.adapterId || 'Loading...'}</span>
+        <span className={styles.activeName}>{activeServer?.sourceName || formatName(activeServer?.adapterId) || 'Loading...'}</span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -57,7 +63,7 @@ export default function ServerPicker({ servers, activeServerId, onSelectServer }
                     setIsOpen(false);
                   }}
                 >
-                  {server.adapterId}
+                  {server.sourceName || formatName(server.adapterId)}
                 </button>
               </li>
             ))

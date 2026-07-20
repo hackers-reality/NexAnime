@@ -178,3 +178,84 @@
 .activeDot {
   background-color: var(--primary);
 }
+
+/* ─── Slide container (each carousel item) ──────────────────── */
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  pointer-events: none;
+}
+
+.activeSlide {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* ─── YouTube trailer iframe ──────────────────────────────── */
+.trailerContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.trailerIframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* ─── Trailer badge ───────────────────────────────────────── */
+.trailerBadge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 11;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.3px;
+  pointer-events: none;
+}
+
+/* ─── Touch device tap-to-play overlay ────────────────────── */
+.touchPlayOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.touchPlayBtn {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background-color: rgba(59, 130, 246, 0.85);
+  padding: 14px 28px;
+  border-radius: 8px;
+  backdrop-filter: blur(4px);
+}
+
+

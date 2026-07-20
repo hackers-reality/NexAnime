@@ -1,25 +1,25 @@
 // NexAnime — Random Anime API
-// Returns a random anime from animetsu for the "feeling lucky" feature
+// Returns a random anime from reanime.to search for the "feeling lucky" feature
 
 import { NextResponse } from 'next/server';
-import { animetsuBrowse } from '@/lib/animetsu';
+import { searchReanime } from '@/lib/reanime';
 
 export async function GET() {
   try {
     const randomPage = Math.floor(Math.random() * 5) + 1;
-    const result = await animetsuBrowse({ page: randomPage, limit: 25, sort: 'popular' });
+    const result = await searchReanime({ sort: 'score', limit: 25, offset: (randomPage - 1) * 25 });
 
-    if (result.media.length === 0) {
+    if (!result?.results?.length) {
       return NextResponse.json({ error: 'No anime found' }, { status: 404 });
     }
 
-    const randomIndex = Math.floor(Math.random() * result.media.length);
-    const anime = result.media[randomIndex];
+    const randomIndex = Math.floor(Math.random() * result.results.length);
+    const anime = result.results[randomIndex];
 
     return NextResponse.json({
-      id: anime.id,
-      title: anime.title,
-      coverImage: anime.coverImage,
+      id: anime.anilist_id,
+      title: anime.title?.romaji || anime.title?.english || 'Unknown',
+      coverImage: anime.cover_image?.extra_large || anime.cover_image?.large,
       format: anime.format,
       status: anime.status,
     });

@@ -6,8 +6,8 @@ import TabNav, { type Tab } from '@/components/shared/TabNav';
 import AnimeCard from '@/components/cards/AnimeCard';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
-import { anilistMediaToAnime } from '@/lib/anilist';
-import type { AniListMedia } from '@/types';
+import { anilistMediaToAnime, getMediaCharacters, getMediaStaff, getMediaEpisodes } from '@/lib/data-api';
+import type { AniListMedia, CharacterWithVA, StaffEntry } from '@/types';
 import styles from './page.module.css';
 
 interface AnimeDetailClientProps {
@@ -28,24 +28,53 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [jikanCharacters, setJikanCharacters] = useState<CharacterWithVA[]>([]);
+  const [jikanStaff, setJikanStaff] = useState<StaffEntry[]>([]);
+  const [charsLoading, setCharsLoading] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [watchProgress, setWatchProgress] = useState<Record<number, { secondsWatched: number; durationSeconds: number }>>({});
+
+  useEffect(() => {
+    if (!media.trailer || media.trailer.site !== 'youtube') return;
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.settings?.autoplay_trailers) {
+          setShowTrailer(true);
+        }
+      })
+      .catch(() => {});
+  }, [media.trailer]);
 
   useEffect(() => {
     if (!media.idMal) return;
-    if (media.streamingEpisodes && media.streamingEpisodes.length > 5) return;
 
-    fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
+    setCharsLoading(true);
+
+    // Fetch episodes, characters, and staff from Jikan in parallel
+    Promise.allSettled([
+      // Episodes
+      fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.data) setJikanEpisodes(d.data); }),
+      // Characters with voice actors
+      getMediaCharacters(media.idMal).then(setJikanCharacters),
+      // Staff
+      getMediaStaff(media.idMal).then(setJikanStaff),
+    ]).finally(() => setCharsLoading(false));
+  }, [media.idMal]);
+
+  useEffect(() => {
+    fetch(`/api/progress/anime?anilistId=${media.id}`)
       .then((res) => {
-        if (!res.ok) throw new Error('Jikan API rate limit');
+        if (!res.ok) throw new Error('Failed to fetch progress');
         return res.json();
       })
       .then((data) => {
-        if (data.data) {
-          setJikanEpisodes(data.data);
+        if (data.progress) {
+          setWatchProgress(data.progress);
         }
       })
-      .catch((err) => console.warn('[Jikan] Fallback episodes list unavailable:', err));
-  }, [media.idMal, media.streamingEpisodes]);
+      .catch(() => {});
+  }, [media.id]);
 
   const anime = anilistMediaToAnime(media);
 
@@ -53,6 +82,13 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
   const cleanSynopsis = media.description
     ? media.description.replace(/<[^>]*>/g, '').trim()
     : 'No synopsis available.';
+
+  const formatAirDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
 
   // Airing countdown info
   const formatAiringCountdown = (timestamp: number) => {
@@ -286,6 +322,12 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                           : `Episode ${epNum}`);
                     const epThumb = streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
 
+                    const jikanEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+                    const progress = watchProgress[epNum];
+                    const hasProgress = progress && progress.durationSeconds > 0;
+                    const pct = hasProgress ? Math.min(progress.secondsWatched / progress.durationSeconds, 1) : 0;
+                    const isWatched = pct >= 0.9;
+
                     return (
                       <Link
                         key={epNum}
@@ -302,9 +344,31 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                             onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                           />
                           <span className={styles.epBadge}>Ep {epNum}</span>
+                          {jikanEp && (jikanEp.filler || jikanEp.recap) && (
+                            <div className={styles.epThumbBadges}>
+                              {jikanEp.filler && <span className={styles.fillerBadge}>Filler</span>}
+                              {jikanEp.recap && <span className={styles.recapBadge}>Recap</span>}
+                            </div>
+                          )}
                         </div>
                         <div className={styles.epInfo}>
                           <div className={styles.epTitle}>{epTitle}</div>
+                          {jikanEp?.synopsis && (
+                            <div className={styles.epSynopsis}>{jikanEp.synopsis}</div>
+                          )}
+                          {formatAirDate(jikanEp?.aired) && (
+                            <div className={styles.epAirDate}>Aired: {formatAirDate(jikanEp.aired)}</div>
+                          )}
+                          {hasProgress && (
+                            <>
+                              <div className={styles.epStatusText + ' ' + (isWatched ? styles.watchedText : styles.resumeText)}>
+                                {isWatched ? '✓ Watched' : '▶ Resume'}
+                              </div>
+                              <div className={styles.progressBarWrap}>
+                                <div className={styles.progressBar} style={{ width: `${pct * 100}%` }} />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </Link>
                     );
@@ -316,15 +380,45 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
             {activeTab === 'characters' && (
               <div>
                 <h3 className={styles.sectionTitle}>Characters &amp; Voice Actors</h3>
-                {media.characters?.edges && media.characters.edges.length > 0 ? (
+                {charsLoading ? (
+                  <p style={{ color: 'var(--text-muted)' }}>Loading characters...</p>
+                ) : jikanCharacters.length > 0 ? (
+                  <div className={styles.charactersGrid}>
+                    {jikanCharacters.map((entry, index) => {
+                      const va = entry.voiceActors?.find(v => v.language === 'Japanese') || entry.voiceActors?.[0];
+                      return (
+                        <div key={`${entry.id}-${index}`} className={styles.charCard}>
+                          {/* Character Part */}
+                          <Link href={`/character/${entry.malId}`} className={styles.charHalf}>
+                            {entry.image && (
+                              <img src={entry.image} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                            )}
+                            <div className={styles.charMeta}>
+                              <span className={styles.charName}>{entry.name}</span>
+                              <span className={styles.charRole}>{entry.role}</span>
+                            </div>
+                          </Link>
+                          {/* VA Part */}
+                          <div className={styles.vaHalf}>
+                            {va?.image && (
+                              <img src={va.image} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                            )}
+                            <div className={styles.vaMeta}>
+                              <span className={styles.vaName}>{va ? va.name : 'N/A'}</span>
+                              <span className={styles.vaLang}>{va ? va.language : ''}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : media.characters?.edges && media.characters.edges.length > 0 ? (
                   <div className={styles.charactersGrid}>
                     {media.characters.edges.map((edge, index) => {
                       const character = edge.node;
-                      const va = edge.voiceActors?.[0];
                       return (
                         <div key={`${character.id}-${index}`} className={styles.charCard}>
-                          {/* Character Part */}
-                          <Link href={`/character/${character.id}`} className={styles.charHalf}>
+                          <div className={styles.charHalf}>
                             {character.image?.large && (
                               <img src={character.image.large} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
@@ -332,15 +426,10 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                               <span className={styles.charName}>{character.name.full}</span>
                               <span className={styles.charRole}>{edge.role}</span>
                             </div>
-                          </Link>
-                          {/* VA Part */}
+                          </div>
                           <div className={styles.vaHalf}>
-                            {va?.image?.large && (
-                              <img src={va.image.large} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
-                            )}
                             <div className={styles.vaMeta}>
-                              <span className={styles.vaName}>{va ? va.name.full : 'N/A'}</span>
-                              <span className={styles.vaLang}>{va ? 'Japanese' : ''}</span>
+                              <span className={styles.vaName}>N/A</span>
                             </div>
                           </div>
                         </div>
@@ -356,7 +445,25 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
             {activeTab === 'staff' && (
               <div>
                 <h3 className={styles.sectionTitle}>Staff</h3>
-                {media.staff?.edges && media.staff.edges.length > 0 ? (
+                {charsLoading ? (
+                  <p style={{ color: 'var(--text-muted)' }}>Loading staff...</p>
+                ) : jikanStaff.length > 0 ? (
+                  <div className={styles.charactersGrid}>
+                    {jikanStaff.map((entry, index) => (
+                      <div key={`${entry.id}-${index}`} className={styles.charCard}>
+                        <div className={styles.charHalf}>
+                          {entry.image && (
+                            <img src={entry.image} alt="" className={styles.charImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                          )}
+                          <div className={styles.charMeta}>
+                            <span className={styles.charName}>{entry.name}</span>
+                            <span className={styles.charRole}>{entry.roles.join(', ')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : media.staff?.edges && media.staff.edges.length > 0 ? (
                   <div className={styles.charactersGrid}>
                     {media.staff.edges.map((edge, index) => (
                       <div key={`${edge.node.id}-${index}`} className={styles.charCard}>

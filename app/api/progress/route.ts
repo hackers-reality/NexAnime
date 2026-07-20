@@ -11,6 +11,15 @@ export async function POST(req: NextRequest) {
     }
 
     const db = getDb();
+
+    // Respect pause_history setting
+    const settingsRes = await db.execute({
+      sql: 'SELECT pause_history FROM settings WHERE id = 1',
+      args: [],
+    });
+    if (settingsRes.rows.length > 0 && settingsRes.rows[0].pause_history === 1) {
+      return NextResponse.json({ success: true });
+    }
     
     // Check if progress already exists
     const existing = await db.execute({
