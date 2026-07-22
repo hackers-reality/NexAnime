@@ -227,69 +227,6 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     return () => clearInterval(interval);
   }, [media.id, episodeNumber, media.title?.english, media.title?.romaji]);
 
-  // ── Iframe postMessage progress tracking (Zoko + MegaPlay embeds) ──
-  useEffect(() => {
-    let lastSync = 0;
-    const syncProgress = (currentTime: number, duration: number) => {
-      const now = Date.now();
-      if (now - lastSync < 10000) return;
-      lastSync = now;
-      fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          anilistId: media.id,
-          episodeNumber,
-          secondsWatched: Math.floor(currentTime),
-          durationSeconds: Math.floor(duration),
-        }),
-      }).catch(() => {});
-    };
-    const markComplete = () => {
-      fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          anilistId: media.id,
-          episodeNumber,
-          secondsWatched: 99999,
-          durationSeconds: 99999,
-        }),
-      }).catch(() => {});
-    };
-    const handleMessage = (e: MessageEvent) => {
-      try {
-        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (!data) return;
-        // Zoko format: { channel: 'zokoanime', type: 'timeupdate', currentTime, duration }
-        if (data.channel === 'zokoanime') {
-          if (data.type === 'timeupdate' && data.currentTime != null && data.duration != null) {
-            syncProgress(data.currentTime, data.duration);
-          } else if (data.type === 'ended') {
-            markComplete();
-          }
-          return;
-        }
-        // MegaPlay format: { event: 'time', time, duration, percent }
-        if (data.event === 'time' && data.time != null && data.duration != null) {
-          syncProgress(data.time, data.duration);
-          return;
-        }
-        // MegaPlay complete
-        if (data.event === 'complete') {
-          markComplete();
-          return;
-        }
-        // MegaPlay watching-log: { type: 'watching-log', currentTime, duration }
-        if (data.type === 'watching-log' && data.currentTime != null && data.duration != null) {
-          syncProgress(data.currentTime, data.duration);
-        }
-      } catch {}
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [media.id, episodeNumber]);
-
   const fetchWatchlistStatus = async () => {
     if (!media.id) return;
     try {
@@ -362,6 +299,107 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
   const nextEpisode = media.nextAiringEpisode?.episode;
   const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 0;
+  const hasNextEp = totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes;
+
+  const [showAutoAdvance, setShowAutoAdvance] = useState(false);
+  const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Iframe postMessage progress tracking (Zoko + MegaPlay embeds) ──
+  useEffect(() => {
+    let lastSync = 0;
+    const syncProgress = (currentTime: number, duration: number) => {
+      const now = Date.now();
+      if (now - lastSync < 10000) return;
+      lastSync = now;
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anilistId: media.id,
+          episodeNumber,
+          secondsWatched: Math.floor(currentTime),
+          durationSeconds: Math.floor(duration),
+        }),
+      }).catch(() => {});
+    };
+    const markComplete = () => {
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anilistId: media.id,
+          episodeNumber,
+          secondsWatched: 99999,
+          durationSeconds: 99999,
+        }),
+      }).catch(() => {});
+      // Auto-advance to next episode
+      if (hasNextEp) {
+        setShowAutoAdvance(true);
+        autoAdvanceTimer.current = setTimeout(() => {
+          window.location.href = `/watch/${media.id}/${episodeNumber + 1}`;
+        }, 8000);
+      }
+    };
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (!data) return;
+        // Zoko format: { channel: 'zokoanime', type: 'timeupdate', currentTime, duration }
+        if (data.channel === 'zokoanime') {
+          if (data.type === 'timeupdate' && data.currentTime != null && data.duration != null) {
+            syncProgress(data.currentTime, data.duration);
+          } else if (data.type === 'ended') {
+            markComplete();
+          }
+          return;
+        }
+        // MegaPlay format: { event: 'time', time, duration, percent }
+        if (data.event === 'time' && data.time != null && data.duration != null) {
+          syncProgress(data.time, data.duration);
+          return;
+        }
+        // MegaPlay complete
+        if (data.event === 'complete') {
+          markComplete();
+          return;
+        }
+        // MegaPlay watching-log: { type: 'watching-log', currentTime, duration }
+        if (data.type === 'watching-log' && data.currentTime != null && data.duration != null) {
+          syncProgress(data.currentTime, data.duration);
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+    };
+  }, [media.id, episodeNumber, hasNextEp]);
+
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'Escape') {
+        if (showEditor) setShowEditor(false);
+        if (showEpisodeList) setShowEpisodeList(false);
+        if (showAutoAdvance) {
+          setShowAutoAdvance(false);
+          if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+        }
+      }
+      if (e.key === 'ArrowLeft' && episodeNumber > 1) {
+        window.location.href = `/watch/${media.id}/${episodeNumber - 1}`;
+      }
+      if (e.key === 'ArrowRight' && hasNextEp) {
+        window.location.href = `/watch/${media.id}/${episodeNumber + 1}`;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [showEditor, showEpisodeList, showAutoAdvance, media.id, episodeNumber, hasNextEp]);
+
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
   const filteredEpisodes = rawEpisodes.filter(epNum =>
     epNum.toString().includes(searchQuery) ||
@@ -417,6 +455,34 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                 episodeNumber={episodeNumber}
                 totalEpisodes={totalEpisodes}
               />
+              {showAutoAdvance && hasNextEp && (
+                <div className={styles.autoAdvanceBanner}>
+                  <div className={styles.autoAdvanceInfo}>
+                    <span className={styles.autoAdvanceIcon}>▶</span>
+                    <div>
+                      <p className={styles.autoAdvanceTitle}>Up Next: Episode {episodeNumber + 1}</p>
+                      <p className={styles.autoAdvanceSub}>Starting in 8 seconds...</p>
+                    </div>
+                  </div>
+                  <div className={styles.autoAdvanceActions}>
+                    <button
+                      className={styles.autoAdvanceCancel}
+                      onClick={() => {
+                        setShowAutoAdvance(false);
+                        if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <Link
+                      href={`/watch/${media.id}/${episodeNumber + 1}`}
+                      className={styles.autoAdvancePlayNow}
+                    >
+                      Play Now
+                    </Link>
+                  </div>
+                </div>
+              )}
               <div className={styles.playerControlsBar}>
                 <div className={styles.playNavGroup}>
                   <Link
