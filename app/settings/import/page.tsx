@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 export default function ImportSettingsPage() {
@@ -9,6 +10,7 @@ export default function ImportSettingsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const handleAnilistImport = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +74,10 @@ export default function ImportSettingsPage() {
       URL.revokeObjectURL(url);
 
       setMessage(`Exported ${exportData.entries.length} entries to JSON file.`);
+      toast(`Exported ${exportData.entries.length} entries`, 'success');
     } catch (err) {
       setError('Failed to export watchlist.');
+      toast('Failed to export watchlist.', 'error');
     }
   };
 
@@ -121,8 +125,10 @@ export default function ImportSettingsPage() {
       }
 
       setMessage(`Imported ${imported} entries from JSON file.`);
+      toast(`Imported ${imported} entries`, 'success');
     } catch (err) {
       setError('Failed to parse JSON file. Make sure it is a valid NexAnime export.');
+      toast('Failed to parse JSON file.', 'error');
     } finally {
       setImporting(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

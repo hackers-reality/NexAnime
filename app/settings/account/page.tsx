@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Header from '@/components/shared/Header';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 export default function AccountSettingsPage() {
@@ -15,6 +16,7 @@ export default function AccountSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetch('/api/profile')
@@ -97,14 +99,14 @@ export default function AccountSettingsPage() {
     try {
       const res = await fetch('/api/profile', { method: 'DELETE' });
       if (res.ok) {
-        alert('Local data reset successfully.');
+        toast('Profile saved successfully.', 'success');
         window.location.href = '/onboarding';
       } else {
-        alert('Failed to reset data.');
+        toast('Failed to reset data.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred.');
+      toast('An error occurred.', 'error');
     }
   };
 
