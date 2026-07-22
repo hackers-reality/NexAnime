@@ -103,7 +103,7 @@ export default function HomePage() {
         if (!active) return;
 
         if (homeData) {
-          const allTrending = (homeData.trending || []);
+          const allTrending = (homeData.trending || []).filter((m: HomeCardItem) => m.anilistId && m.anilistId > 0);
           setCarouselMedia(allTrending.slice(0, 5).map((m: HomeCardItem): CarouselItem => ({
             id: m.anilistId,
             title: { english: m.titleEnglish ?? undefined, romaji: m.titleRomaji },
@@ -113,12 +113,23 @@ export default function HomePage() {
             genres: m.genres ?? [],
             trailer: m.trailer ?? null,
           })));
-          setTrendingCards(allTrending.slice(5, 15));
-          setTabAnime(allTrending.slice(5, 15));
+          setTrendingCards(allTrending.slice(5));
+          setTabAnime(allTrending.slice(5));
           setThisSeasonCards(homeData.thisSeason || []);
           setUpcomingCards(homeData.upcoming || []);
           setRecentlyUpdatedCards(Array.isArray(homeData.recentlyUpdated) ? homeData.recentlyUpdated : []);
           setFormattedSchedules(homeData.schedule || []);
+
+          // If reanime home didn't give us enough trending, pre-fetch from meta API
+          if (allTrending.length < 6) {
+            fetchJSON('/api/meta?action=trending&limit=15').then(fallbackData => {
+              const fallbackMedia = (fallbackData?.media || []);
+              if (fallbackMedia.length > 0) {
+                setTabAnime(fallbackMedia);
+                setTrendingCards(fallbackMedia);
+              }
+            }).catch(() => {});
+          }
         }
 
         if (contData.progress) {
@@ -138,9 +149,9 @@ export default function HomePage() {
   const handleTrendTabChange = async (tab: 'trending' | 'popular' | 'topRated') => {
     setActiveTrendTab(tab);
     try {
-      const res = await fetch(`/api/animetsu?action=${tab}&limit=15`);
+      const res = await fetch(`/api/meta?action=${tab}&limit=15`);
       const data = await res.json();
-      const media = (data.media || []).slice(5, 15);
+      const media = (data.media || []);
       if (media.length > 0) { setTabAnime(media); return; }
     } catch {}
     // Fallback: use trending cards we already loaded
@@ -227,6 +238,7 @@ export default function HomePage() {
               </section>
             )}
 
+            {tabAnime.length > 0 && (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Trending Now</h2>
@@ -255,8 +267,8 @@ export default function HomePage() {
                 </button>
               </div>
               <div className={styles.horizontalScroll}>
-                {tabAnime.map((anime: HomeCardItem) => (
-                  <div key={anime.anilistId} className={styles.cardWrapper}>
+                {tabAnime.filter((a: HomeCardItem) => a.anilistId && a.anilistId > 0).map((anime: HomeCardItem, idx: number) => (
+                  <div key={`${anime.anilistId}-${idx}`} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
                       poster={anime.coverImage}
@@ -272,6 +284,7 @@ export default function HomePage() {
                 ))}
               </div>
             </section>
+            )}
 
             {thisSeasonCards.length > 0 && (
               <section className={styles.section}>
@@ -321,11 +334,11 @@ export default function HomePage() {
                 <section className={styles.section}>
                   <h2 className={styles.sectionTitle}>Recently Updated</h2>
                   <div className={styles.horizontalScroll}>
-                    {recentlyUpdatedCards.map((item: any) => {
+                    {recentlyUpdatedCards.map((item: any, idx: number) => {
                       const anime = item.media;
                       if (!anime?.id) return null;
                       return (
-                        <div key={`${anime.id}-${item.episode}`} className={styles.cardWrapper}>
+                        <div key={`${anime.id}-${item.episode}-${idx}`} className={styles.cardWrapper}>
                           <AnimeCard
                             id={anime.id}
                             poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}

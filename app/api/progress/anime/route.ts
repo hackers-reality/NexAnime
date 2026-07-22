@@ -9,11 +9,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing anilistId' }, { status: 400 });
   }
 
+  const parsedId = parseInt(anilistId);
+  if (isNaN(parsedId)) {
+    return NextResponse.json({ error: 'Invalid anilistId' }, { status: 400 });
+  }
+
   try {
     const db = getDb();
     const result = await db.execute({
       sql: 'SELECT episode_number, seconds_watched, duration_seconds FROM watch_progress WHERE anilist_id = ?',
-      args: [parseInt(anilistId)]
+      args: [parsedId]
     });
 
     const progress: Record<number, { secondsWatched: number; durationSeconds: number }> = {};

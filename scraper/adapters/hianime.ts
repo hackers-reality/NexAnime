@@ -74,3 +74,28 @@ export class ZokoAdapter implements ScraperAdapter {
     return null;
   }
 }
+
+export class MegaPlayAdapter implements ScraperAdapter {
+  id = 'megaplay';
+  name = 'MegaPlay';
+
+  async resolveEpisodeSource(anilistId: number, episodeNumber: number, isDub?: boolean): Promise<ScraperSource | null> {
+    const malId = await getMalId(anilistId);
+    if (!malId) return null;
+
+    const type = isDub ? 'dub' : 'sub';
+    const streamUrl = `https://megaplay.buzz/stream/mal/${malId}/${episodeNumber}/${type}`;
+
+    try {
+      const res = await fetch(streamUrl, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hianimes.se/' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.status === 200) {
+        return { adapterId: this.id, sourceName: this.name, streamUrl, subtitleUrl: null };
+      }
+    } catch {}
+    return null;
+  }
+}

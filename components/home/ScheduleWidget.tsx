@@ -108,7 +108,7 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
         ) : (
           activeEntries.map((entry) => (
             <Link
-              key={entry.id}
+              key={`${entry.mediaId}-${entry.episode}`}
               href={`/anime/${entry.mediaId}`}
               className={styles.item}
             >

@@ -46,6 +46,7 @@ function BrowseContent() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'grid' | 'dense'>('grid');
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -79,7 +80,7 @@ function BrowseContent() {
     }
     p.set('page', String(pg));
     p.set('limit', '20');
-    return `/api/animetsu?${p.toString()}`;
+    return `/api/meta?${p.toString()}`;
   };
 
   useEffect(() => {
@@ -172,11 +173,29 @@ function BrowseContent() {
       <main className={styles.main}>
         <div className={styles.titleRow}>
           <h1 className={styles.pageTitle}>Browse Anime</h1>
-          {pageInfo && (
-            <span className={styles.countLabel}>
-              Showing {results.length} of {pageInfo.total.toLocaleString()} results
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {pageInfo && (
+              <span className={styles.countLabel}>
+                Showing {results.length} of {pageInfo.total.toLocaleString()} results
+              </span>
+            )}
+            <div className="viewToggle">
+              <button
+                className={`viewToggleBtn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Standard grid"
+              >
+                ▦
+              </button>
+              <button
+                className={`viewToggleBtn ${viewMode === 'dense' ? 'active' : ''}`}
+                onClick={() => setViewMode('dense')}
+                title="Dense grid"
+              >
+                ▤
+              </button>
+            </div>
+          </div>
         </div>
 
         <FilterBar initialFilters={filters} onFilterChange={handleFilterChange} />
@@ -193,7 +212,7 @@ function BrowseContent() {
           </div>
         ) : (
           <>
-            <div className="anime-grid">
+            <div className={`anime-grid ${viewMode === 'dense' ? 'anime-grid--dense' : ''}`}>
               {results.map((anime) => (
                 <AnimeCard
                   key={anime.id}

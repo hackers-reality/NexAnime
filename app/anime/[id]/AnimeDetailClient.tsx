@@ -6,7 +6,7 @@ import TabNav, { type Tab } from '@/components/shared/TabNav';
 import AnimeCard from '@/components/cards/AnimeCard';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
-import { anilistMediaToAnime, getMediaCharacters, getMediaStaff, getMediaEpisodes } from '@/lib/data-api';
+import { anilistMediaToAnime, getMediaCharacters, getMediaStaff } from '@/lib/data-api';
 import type { AniListMedia, CharacterWithVA, StaffEntry } from '@/types';
 import styles from './page.module.css';
 
@@ -28,39 +28,29 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [jikanCharacters, setJikanCharacters] = useState<CharacterWithVA[]>([]);
   const [jikanStaff, setJikanStaff] = useState<StaffEntry[]>([]);
   const [charsLoading, setCharsLoading] = useState(false);
-  const [showTrailer, setShowTrailer] = useState(false);
   const [watchProgress, setWatchProgress] = useState<Record<number, { secondsWatched: number; durationSeconds: number }>>({});
 
   useEffect(() => {
-    if (!media.trailer || media.trailer.site !== 'youtube') return;
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.settings?.autoplay_trailers) {
-          setShowTrailer(true);
-        }
-      })
-      .catch(() => {});
-  }, [media.trailer]);
-
-  useEffect(() => {
-    if (!media.idMal) return;
+    if (!media.idMal && !media.id) return;
 
     setCharsLoading(true);
 
-    // Fetch episodes, characters, and staff from Jikan in parallel
+    // Fetch episodes, characters, and staff in parallel
     Promise.allSettled([
-      // Episodes
-      fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.data) setJikanEpisodes(d.data); }),
+      // Reanime.to episodes (thumbnails)
+      fetch(`/api/meta?action=episodes&id=${media.id}`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.episodes?.length) setReanimeEpisodes(d.episodes); }),
+      // Jikan episodes (titles, filler flags, air dates)
+      media.idMal ? fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.data) setJikanEpisodes(d.data); }) : Promise.resolve(),
       // Characters with voice actors
-      getMediaCharacters(media.idMal).then(setJikanCharacters),
+      media.idMal ? getMediaCharacters(media.idMal).then(setJikanCharacters) : Promise.resolve(),
       // Staff
-      getMediaStaff(media.idMal).then(setJikanStaff),
+      media.idMal ? getMediaStaff(media.idMal).then(setJikanStaff) : Promise.resolve(),
     ]).finally(() => setCharsLoading(false));
-  }, [media.idMal]);
+  }, [media.idMal, media.id]);
 
   useEffect(() => {
     fetch(`/api/progress/anime?anilistId=${media.id}`)
@@ -142,16 +132,6 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
               <div className={styles.airingSoonPill}>
                 🔔 {formatAiringCountdown(media.nextAiringEpisode.airingAt)}
               </div>
-            )}
-            
-            {media.trailer && media.trailer.site === 'youtube' && (
-              <button
-                onClick={() => setShowTrailer(true)}
-                className="btn btn--primary"
-                style={{ width: '100%', textDecoration: 'none', color: 'white' }}
-              >
-                ▶ Watch Trailer
-              </button>
             )}
           </div>
 
@@ -309,18 +289,26 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                 </div>
                 
                 <div className={styles.episodesGrid}>
-                  {Array.from({ length: media.episodes || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || media.streamingEpisodes?.length || 12 }, (_, i) => {
+                  {(() => {
+                    const epCount = media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || reanimeEpisodes.length || jikanEpisodes.length || 0;
+                    if (epCount === 0 && !media.streamingEpisodes?.length) {
+                      return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>No episode data available yet.</p>;
+                    }
+                    return Array.from({ length: epCount || media.streamingEpisodes?.length || 0 }, (_, i) => {
                     const epNum = i + 1;
                     const streamingEp = media.streamingEpisodes?.find((ep: any) => {
                       const match = ep.title?.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
                       return match && parseInt(match[1]) === epNum;
                     });
-                    const epTitle = streamingEp?.title
-                      ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
-                      : (jikanEpisodes.length
-                          ? (jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title_english || jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title || `Episode ${epNum}`)
-                          : `Episode ${epNum}`);
-                    const epThumb = streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
+                    const reanimeEp = reanimeEpisodes.find((e: any) => e.episode_number === epNum);
+                    const epTitle = reanimeEp?.title
+                      ? reanimeEp.title
+                      : (streamingEp?.title
+                          ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
+                          : (jikanEpisodes.length
+                              ? (jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title_english || jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title || `Episode ${epNum}`)
+                              : `Episode ${epNum}`));
+                    const epThumb = reanimeEp?.thumbnail || streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
 
                     const jikanEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
                     const progress = watchProgress[epNum];
@@ -372,7 +360,8 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                         </div>
                       </Link>
                     );
-                  })}
+                  });
+                  })()}
                 </div>
               </div>
             )}
@@ -548,7 +537,8 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
                   <div className={styles.relationsGrid}>
                     {media.relations.edges
                       .filter((edge) => {
-                        const fmt = edge.node.format as string;
+                        if (!edge.node) return false;
+                        const fmt = (edge.node.format as string)?.toUpperCase() || '';
                         return ['TV', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'].includes(fmt);
                       })
                       .map((edge, index) => {
@@ -593,24 +583,25 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
               <div>
                 <h3 className={styles.sectionTitle}>More Like This</h3>
                 {media.recommendations?.nodes && media.recommendations.nodes.length > 0 ? (
-                  <div className="anime-grid">
+                  <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12 }}>
                     {media.recommendations.nodes
                       .filter((n) => n.mediaRecommendation !== null)
                       .map((n, index) => {
                         const rec = n.mediaRecommendation!;
                         return (
-                          <AnimeCard
-                            key={`${rec.id}-${index}`}
-                            id={rec.id}
-                            poster={rec.coverImage?.extraLarge || rec.coverImage?.large}
-                            title={rec.title.english || rec.title.romaji || 'Untitled'}
-                            format={rec.format}
-                            year={rec.seasonYear}
-                            status={rec.status}
-                            score={rec.averageScore}
-                            synopsis={rec.description}
-                            genres={rec.genres || []}
-                          />
+                          <div key={`${rec.id}-${index}`} style={{ width: 160, flexShrink: 0 }}>
+                            <AnimeCard
+                              id={rec.id}
+                              poster={rec.coverImage?.extraLarge || rec.coverImage?.large}
+                              title={rec.title.english || rec.title.romaji || 'Untitled'}
+                              format={rec.format}
+                              year={rec.seasonYear}
+                              status={rec.status}
+                              score={rec.averageScore}
+                              synopsis={rec.description}
+                              genres={rec.genres || []}
+                            />
+                          </div>
                         );
                       })}
                   </div>
@@ -634,23 +625,7 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
         onSaveSuccess={handleWatchlistUpdate}
       />
 
-      {/* Trailer Modal */}
-      {showTrailer && media.trailer && (
-        <div className={styles.trailerOverlay} onClick={() => setShowTrailer(false)}>
-          <div className={styles.trailerModal} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.trailerClose} onClick={() => setShowTrailer(false)}>
-              ✕
-            </button>
-            <iframe
-              src={`https://www.youtube.com/embed/${media.trailer.id}?autoplay=1`}
-              title="Trailer"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              className={styles.trailerIframe}
-            />
-          </div>
-        </div>
-      )}
+      {/* Trailer removed from detail page - trailers only play in homepage carousel */}
     </div>
   );
 }

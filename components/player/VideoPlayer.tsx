@@ -66,7 +66,11 @@ export default function VideoPlayer({
   const [nextCountdown, setNextCountdown] = useState(5);
   const [ambientColor, setAmbientColor] = useState<string | null>(null);
   const [showAmbient, setShowAmbient] = useState(false);
+  const [doubleTapSide, setDoubleTapSide] = useState<'left' | 'right' | null>(null);
+  const [doubleTapAmount, setDoubleTapAmount] = useState(0);
   const autoPlayRef = useRef(true);
+  const lastTapRef = useRef<{ time: number; x: number } | null>(null);
+  const doubleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const isEmbed = src
     ? src.includes('zokoanime.video/stream') ||
@@ -327,6 +331,43 @@ export default function VideoPlayer({
     }, 3000);
   }, []);
 
+  // ── Double-tap to seek (mobile) ────────────────────
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container || isEmbed) return;
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length > 0) return;
+      const touch = e.changedTouches[0];
+      const now = Date.now();
+      const rect = container.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const isLeft = x < rect.width / 3;
+      const isRight = x > (rect.width * 2) / 3;
+
+      if (!isLeft && !isRight) return;
+
+      const last = lastTapRef.current;
+      if (last && now - last.time < 300 && Math.abs(last.x - x) < 60) {
+        if (doubleTapTimerRef.current) clearTimeout(doubleTapTimerRef.current);
+        lastTapRef.current = null;
+        const amount = isLeft ? -10 : 10;
+        video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + amount));
+        setDoubleTapSide(isLeft ? 'left' : 'right');
+        setDoubleTapAmount(amount);
+        setTimeout(() => { setDoubleTapSide(null); setDoubleTapAmount(0); }, 600);
+        showControlsTemporarily();
+      } else {
+        lastTapRef.current = { time: now, x };
+        doubleTapTimerRef.current = setTimeout(() => { lastTapRef.current = null; }, 350);
+      }
+    };
+
+    container.addEventListener('touchend', handleTouchEnd);
+    return () => container.removeEventListener('touchend', handleTouchEnd);
+  }, [isEmbed, showControlsTemporarily]);
+
   // ── Ambient mode ───────────────────────────────────
   useEffect(() => {
     if (!showAmbient || isEmbed) return;
@@ -433,6 +474,26 @@ export default function VideoPlayer({
       {/* Ambient glow */}
       {showAmbient && ambientColor && (
         <div className={styles.ambientGlow} style={{ background: `radial-gradient(ellipse at center, ${ambientColor} 0%, transparent 70%)` }} />
+      )}
+
+      {/* Double-tap seek indicator */}
+      {doubleTapSide && (
+        <div className={`${styles.doubleTapIndicator} ${doubleTapSide === 'left' ? styles.doubleTapLeft : styles.doubleTapRight}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="32" height="32">
+            {doubleTapSide === 'left' ? (
+              <>
+                <path d="M1 4v6h6" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </>
+            ) : (
+              <>
+                <path d="M23 4v6h-6" />
+                <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" />
+              </>
+            )}
+          </svg>
+          <span>{Math.abs(doubleTapAmount)}s</span>
+        </div>
       )}
 
       {/* Mini player close */}

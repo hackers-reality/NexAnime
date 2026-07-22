@@ -412,3 +412,29 @@
 .speedOption:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
 
 .speedActive { color: var(--primary); font-weight: 600; }
+
+/* ── Double-tap seek indicator ───────────── */
+.doubleTapIndicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 30;
+  pointer-events: none;
+  animation: doubleTapPulse 0.6s ease-out forwards;
+}
+
+.doubleTapLeft { left: 15%; }
+.doubleTapRight { right: 15%; }
+
+@keyframes doubleTapPulse {
+  0% { opacity: 1; transform: translateY(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+  100% { opacity: 0; transform: translateY(-50%) scale(1.2); }
+}

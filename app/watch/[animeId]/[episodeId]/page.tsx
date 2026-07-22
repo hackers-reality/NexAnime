@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { getAnimeRecommendations } from '@/lib/anilist';
-import { getReanimeByAnilistId } from '@/lib/reanime';
 import { getMediaDetail } from '@/lib/data-api';
 import Header from '@/components/shared/Header';
 import WatchClient from './WatchClient';
@@ -18,24 +17,17 @@ export default async function WatchPage({ params }: PageProps) {
     return notFound();
   }
 
-  // 1. reanime.to first (milliseconds)
+  // getMediaDetail handles reanime→mapAnimeDetail→AniList fallback automatically
   let media: any = null;
   try {
-    media = await getReanimeByAnilistId(anilistId);
+    media = await getMediaDetail(anilistId);
   } catch {}
 
-  // 1b. Fetch recommendations in parallel (5s timeout, won't block page load)
+  // Fetch recommendations in parallel (5s timeout, won't block page load)
   if (media) {
     try {
       const recs = await getAnimeRecommendations(anilistId);
       if (recs) media.recommendations = recs;
-    } catch {}
-  }
-
-  // 2. data-api fallback (reanime → AniList, chars/staff/relations included)
-  if (!media) {
-    try {
-      media = await getMediaDetail(anilistId);
     } catch {}
   }
 

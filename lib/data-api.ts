@@ -62,7 +62,8 @@ export async function getHomeData(): Promise<HomePayload> {
       ...(home.latest_aired || []).map(mapHomeItem).filter(Boolean),
       ...(home.new_on_site || []).map(mapHomeItem).filter(Boolean),
     ] as AniListMedia[];
-    // Deduplicate
+    // Filter out items with invalid IDs and deduplicate
+    trending = trending.filter(m => m && m.id > 0);
     const seen = new Set<number>();
     trending = trending.filter(m => {
       if (seen.has(m.id)) return false;
@@ -92,6 +93,13 @@ export async function getHomeData(): Promise<HomePayload> {
     schedule = anilistSchedule.value;
   }
 
+  // If reanime trending is empty/short, fill from AniList
+  if (trending.length < 10 && seasonRes.status === 'fulfilled' && seasonRes.value.media) {
+    const existingIds = new Set(trending.map(m => m.id));
+    const fillers = seasonRes.value.media.filter(m => !existingIds.has(m.id));
+    trending = [...trending, ...fillers].slice(0, 20);
+  }
+
   return {
     trending,
     thisSeason: seasonRes.status === 'fulfilled' ? seasonRes.value.media : [],
@@ -104,7 +112,20 @@ export async function getHomeData(): Promise<HomePayload> {
 // ─── Media detail ──────────────────────────────────────────
 
 export async function getMediaDetail(anilistId: number): Promise<AniListMedia | null> {
-  // Try reanime.to first
+  // Check DB cache first (instant)
+  const { queryOne } = await import('./db');
+  const cached = await queryOne<{ full_data: string }>(
+    'SELECT full_data FROM anime_cache WHERE anilist_id = ?',
+    [anilistId]
+  );
+  if (cached?.full_data) {
+    try {
+      const parsed = JSON.parse(cached.full_data);
+      if (parsed?.id) return parsed as AniListMedia;
+    } catch {}
+  }
+
+  // Try reanime.to first (fast MAL ID path)
   const reanimeDetail = await getReanimeByAnilistId(anilistId);
   if (reanimeDetail) return mapAnimeDetail(reanimeDetail);
   // Fallback to AniList

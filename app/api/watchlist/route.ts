@@ -35,11 +35,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ progress });
     }
 
-    if (anilistId) {
+    if (anilistId && anilistId !== 'undefined' && anilistId !== 'null') {
+      const parsedId = parseInt(anilistId);
+      if (isNaN(parsedId)) {
+        return NextResponse.json({ entry: null });
+      }
       // Get a single watchlist entry
       const entry = await queryOne<any>(
         'SELECT * FROM watchlist WHERE anilist_id = ?',
-        [parseInt(anilistId)]
+        [parsedId]
       );
 
       if (!entry) {

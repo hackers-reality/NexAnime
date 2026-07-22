@@ -31,9 +31,11 @@ const STATUS_LABELS: Record<string, string> = {
   rewatching: 'Rewatching',
 };
 
-function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = []): string {
+function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], reanimeEps: Array<{ episode_number: number; title: string | null }> = []): string {
+  const reanimeEp = reanimeEps.find(e => e.episode_number === epNum);
+  if (reanimeEp?.title) return reanimeEp.title;
+
   if (media.streamingEpisodes?.length) {
-    // Try exact match first: "Episode N: Title" or "Ep N - Title"
     const ep = media.streamingEpisodes.find((e: any) => {
       const t = e.title || '';
       const match = t.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
@@ -45,7 +47,6 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = []): 
     }
   }
 
-  // Fallback to Jikan (MAL) episodes list titles if available
   if (jikanEpisodes?.length) {
     const jEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
     if (jEp?.title) {
@@ -56,7 +57,9 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = []): 
   return `Episode ${epNum}`;
 }
 
-function getEpisodeThumb(media: any, epNum: number): string | null {
+function getEpisodeThumb(media: any, epNum: number, reanimeEps: Array<{ episode_number: number; thumbnail: string | null }> = []): string | null {
+  const reanimeEp = reanimeEps.find(e => e.episode_number === epNum);
+  if (reanimeEp?.thumbnail) return reanimeEp.thumbnail;
   if (media.streamingEpisodes?.length) {
     const ep = media.streamingEpisodes.find((e: any) => {
       const t = e.title || '';
@@ -107,22 +110,28 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [clientAutoSkip, setClientAutoSkip] = useState(false);
   const [videoQuality, setVideoQuality] = useState('auto');
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
 
   useEffect(() => {
-    if (!media.idMal) return;
+    if (!media.idMal && !media.id) return;
 
-    fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Jikan API rate limit');
-        return res.json();
-      })
-      .then((data) => {
-        if (data.data) {
-          setJikanEpisodes(data.data);
-        }
-      })
-      .catch((err) => console.warn('[Jikan] Fallback episode titles unavailable:', err));
-  }, [media.idMal]);
+    // Fetch reanime episodes (thumbnails) and Jikan episodes in parallel
+    Promise.allSettled([
+      fetch(`/api/meta?action=episodes&id=${media.id}`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.episodes?.length) setReanimeEpisodes(d.episodes); }),
+      media.idMal ? fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Jikan API rate limit');
+          return res.json();
+        })
+        .then((data) => {
+          if (data.data) {
+            setJikanEpisodes(data.data);
+          }
+        })
+        .catch((err) => console.warn('[Jikan] Fallback episode titles unavailable:', err))
+        : Promise.resolve(),
+    ]);
+  }, [media.idMal, media.id]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -138,6 +147,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }, []);
 
   const fetchWatchlistStatus = async () => {
+    if (!media.id) return;
     try {
       const res = await fetch(`/api/watchlist?anilistId=${media.id}`);
       if (res.ok) {
@@ -152,6 +162,12 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+
+    if (!media.id) {
+      setError('Invalid anime ID');
+      setLoading(false);
+      return;
+    }
 
     fetch(`/api/stream/${media.id}/${episodeNumber}?dub=${isDub}&quality=${videoQuality}`)
       .then(res => res.json())
@@ -197,11 +213,11 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }
 
   const nextEpisode = media.nextAiringEpisode?.episode;
-  const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 12;
+  const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 0;
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
   const filteredEpisodes = rawEpisodes.filter(epNum =>
     epNum.toString().includes(searchQuery) ||
-    getEpisodeTitle(media, epNum, jikanEpisodes).toLowerCase().includes(searchQuery.toLowerCase())
+    getEpisodeTitle(media, epNum, jikanEpisodes, reanimeEpisodes).toLowerCase().includes(searchQuery.toLowerCase())
   );
   const sortedEpisodes = sortOrder === 'asc' ? filteredEpisodes : [...filteredEpisodes].reverse();
 
@@ -227,7 +243,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <span className={styles.separator}>›</span>
           <Link href={`/anime/${media.id}`}>{media.title.romaji || media.title.english}</Link>
           <span className={styles.separator}>›</span>
-          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber, jikanEpisodes)}</span>
+          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber, jikanEpisodes, reanimeEpisodes)}</span>
         </div>
 
         <div className={styles.playerSection}>
@@ -260,8 +276,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                   </Link>
                   <Link
                     href={`/watch/${media.id}/${episodeNumber + 1}`}
-                    className={`${styles.navControlBtn} ${episodeNumber >= totalEpisodes ? styles.disabledBtn : ''}`}
-                    onClick={(e) => episodeNumber >= totalEpisodes && e.preventDefault()}
+                    className={`${styles.navControlBtn} ${totalEpisodes > 0 && episodeNumber >= totalEpisodes ? styles.disabledBtn : ''}`}
+                    onClick={(e) => totalEpisodes > 0 && episodeNumber >= totalEpisodes && e.preventDefault()}
                   >
                     Next Ep ⏭
                   </Link>
@@ -362,7 +378,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         <div className={styles.detailsSection}>
           <div className={styles.episodeHeaderRow}>
             <h1 className={styles.episodeTitle}>
-              {getEpisodeTitle(media, episodeNumber, jikanEpisodes)}
+              {getEpisodeTitle(media, episodeNumber, jikanEpisodes, reanimeEpisodes)}
             </h1>
             {watchlistStatus && (
               <span className={`${styles.statusPill} ${styles[watchlistStatus]}`}>
@@ -444,7 +460,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       <aside className={styles.rightRail}>
         <div className={styles.upNextHeader}>
           <div>
-            <h2>Up Next - {getEpisodeTitle(media, episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber, jikanEpisodes)}</h2>
+            <h2>Up Next - {getEpisodeTitle(media, totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber, jikanEpisodes, reanimeEpisodes)}</h2>
             <p className={styles.upNextSub}>Playing - Episode {episodeNumber} - {media.title.english || media.title.romaji}</p>
           </div>
           <div className={styles.headerIcons}>
@@ -494,8 +510,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <div className={styles.episodeList}>
             {sortedEpisodes.map((epNum) => {
               const isCurrent = epNum === episodeNumber;
-              const thumb = getEpisodeThumb(media, epNum);
-              const title = getEpisodeTitle(media, epNum, jikanEpisodes);
+              const thumb = getEpisodeThumb(media, epNum, reanimeEpisodes);
+              const title = getEpisodeTitle(media, epNum, jikanEpisodes, reanimeEpisodes);
 
               return (
                 <Link

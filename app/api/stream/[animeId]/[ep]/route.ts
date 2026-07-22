@@ -53,9 +53,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    // Try primary adapters (AnimePlay + Zoko) first, then fallbacks in parallel
-    const primaryAdapters = ADAPTERS.filter(a => a.id === 'rapidstream' || a.id === 'nova');
-    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'rapidstream' && a.id !== 'nova');
+    // Try primary adapters (RapidStream + Nova + MegaPlay) first, then fallbacks in parallel
+    const primaryAdapters = ADAPTERS.filter(a => a.id === 'rapidstream' || a.id === 'nova' || a.id === 'megaplay');
+    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'rapidstream' && a.id !== 'nova' && a.id !== 'megaplay');
 
     const sources: { adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[] = [];
 

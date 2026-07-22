@@ -143,7 +143,7 @@ export async function initializeDb(): Promise<void> {
   try { await db.execute('ALTER TABLE anime_cache ADD COLUMN full_data TEXT'); } catch {}
 
   try {
-    await db.execute(`DELETE FROM episode_sources WHERE source_adapter NOT IN ('rapidstream', 'zoko', 'gogoanime', 'animepahe')`);
+    await db.execute(`DELETE FROM episode_sources WHERE source_adapter NOT IN ('rapidstream', 'nova', 'megaplay', 'gogoanime', 'animepahe')`);
   } catch {}
 }
 
@@ -152,7 +152,9 @@ export async function query<T = Record<string, unknown>>(
   args: Record<string, unknown> | unknown[] = []
 ): Promise<T[]> {
   const db = getDb();
-  const result = await db.execute({ sql, args: args as never });
+  const result = Array.isArray(args) && args.length > 0
+    ? await db.execute({ sql, args: args as never })
+    : await db.execute(sql);
   return result.rows as unknown as T[];
 }
 
@@ -169,7 +171,9 @@ export async function execute(
   args: Record<string, unknown> | unknown[] = []
 ): Promise<{ rowsAffected: number; lastInsertRowid: bigint | undefined }> {
   const db = getDb();
-  const result = await db.execute({ sql, args: args as never });
+  const result = Array.isArray(args) && args.length > 0
+    ? await db.execute({ sql, args: args as never })
+    : await db.execute(sql);
   return {
     rowsAffected: result.rowsAffected,
     lastInsertRowid: result.lastInsertRowid,

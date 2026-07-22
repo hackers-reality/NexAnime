@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { queryOne } from '@/lib/db';
 import { getAnimeRecommendations } from '@/lib/anilist';
-import { getReanimeByAnilistId } from '@/lib/reanime';
 import { getMediaDetail } from '@/lib/data-api';
 import Header from '@/components/shared/Header';
 import AnimeDetailClient from './AnimeDetailClient';
+
+async function getMediaSafe(anilistId: number) {
+  try { return await getMediaDetail(anilistId); } catch { return null; }
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -31,15 +34,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
-  // reanime.to (milliseconds, sufficient for metadata)
   let media: any = null;
-  try { media = await getReanimeByAnilistId(anilistId); } catch {}
-
+  try { media = await getMediaDetail(anilistId); } catch {}
   if (!media) return {};
 
   const title = media.title?.english || media.title?.romaji || 'Anime';
   const description = media.description?.replace(/<[^>]*>/g, '').slice(0, 160) || '';
-  const image = media.coverImage?.large || media.coverImage?.medium || '';
+  const image = media.coverImage?.extraLarge || media.coverImage?.large || media.coverImage?.medium || '';
 
   return { title, description, openGraph: { title, description, images: image ? [{ url: image, width: 230, height: 325 }] : [], type: 'website' } };
 }
@@ -51,22 +52,14 @@ export default async function AnimeDetailPage({ params }: PageProps) {
   const anilistId = parseInt(id);
   if (isNaN(anilistId)) return notFound();
 
-  // reanime.to first (milliseconds)
-  let media: any = null;
-  try { media = await getReanimeByAnilistId(anilistId); } catch {}
-
-  // Fetch recommendations in parallel (5s timeout, lightweight standalone fetch)
-  if (media) {
-    try {
-      const recs = await getAnimeRecommendations(anilistId);
-      if (recs) media.recommendations = recs;
-    } catch {}
-  }
-
-  // data-api fallback (reanime → AniList, chars/staff/relations included)
-  if (!media) { try { media = await getMediaDetail(anilistId); } catch {} }
-
+  const media = await getMediaSafe(anilistId);
   if (!media) return notFound();
+
+  // Fetch recommendations in parallel (5s timeout)
+  try {
+    const recs = await getAnimeRecommendations(anilistId);
+    if (recs) (media as any).recommendations = recs;
+  } catch {}
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
