@@ -79,7 +79,7 @@
 
 .formGroup input,
 .formGroup textarea {
-  background-color: #1a1a24;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border);
   color: var(--text-primary);
   border-radius: 8px;
@@ -98,14 +98,14 @@
 .formGroup input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  background-color: #121217;
+  background-color: var(--bg-surface);
 }
 
 .saveBtn {
   background-color: var(--primary);
   border: none;
   border-radius: 30px;
-  color: #121217;
+  color: var(--bg-base);
   font-size: 14px;
   font-weight: 700;
   padding: 12px 24px;
@@ -165,7 +165,7 @@
 
 /* ─── Profile Card Preview ────────────────────── */
 .profilePreviewCard {
-  background-color: #1a1a24;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 36px 24px;
@@ -181,9 +181,9 @@
   height: 100px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.08);
+  border: 3px solid var(--border);
   margin-bottom: 20px;
-  background-color: #121217;
+  background-color: var(--bg-surface-hover);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -210,8 +210,8 @@
 
 .gotoProfileBtn {
   width: 100%;
-  background-color: #ffffff;
-  color: #121217;
+  background-color: var(--text-primary);
+  color: var(--bg-base);
   text-decoration: none;
   font-size: 14px;
   font-weight: 700;

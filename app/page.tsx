@@ -104,14 +104,14 @@ export default function HomePage() {
 
         if (homeData) {
           const allTrending = (homeData.trending || []).filter((m: HomeCardItem) => m.anilistId && m.anilistId > 0);
-          setCarouselMedia(allTrending.slice(0, 5).map((m: HomeCardItem): CarouselItem => ({
-            id: m.anilistId,
-            title: { english: m.titleEnglish ?? undefined, romaji: m.titleRomaji },
-            coverImage: { extraLarge: m.coverImage },
-            bannerImage: m.bannerImage ?? null,
-            description: m.synopsis ?? null,
+          setCarouselMedia(allTrending.slice(0, 5).map((m: any): CarouselItem => ({
+            id: m.anilistId || m.id,
+            title: { english: m.titleEnglish ?? m.title?.english ?? undefined, romaji: m.titleRomaji || m.title?.romaji },
+            coverImage: { extraLarge: m.coverImage || m.coverImage?.extraLarge },
+            bannerImage: m.bannerImage ?? m.banner_image ?? null,
+            description: m.synopsis ?? m.description ?? null,
             genres: m.genres ?? [],
-            trailer: m.trailer ?? null,
+            trailer: m.trailer?.id ?? m.trailer ?? null,
           })));
           setTrendingCards(allTrending.slice(5));
           setTabAnime(allTrending.slice(5));

@@ -123,6 +123,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
+  const [watchedEpisodes, setWatchedEpisodes] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!media.idMal && !media.id) return;
@@ -157,6 +158,19 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       })
       .catch(() => {});
   }, []);
+
+  // Fetch watched episodes for checkmark display
+  useEffect(() => {
+    if (!media.id) return;
+    fetch(`/api/progress/history?anilistId=${media.id}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.history) {
+          setWatchedEpisodes(new Set(data.history.map((h: any) => h.episode_number)));
+        }
+      })
+      .catch(() => {});
+  }, [media.id]);
 
   useEffect(() => {
     if (!media.id) return;
@@ -722,13 +736,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             {sortedEpisodes.map((epNum) => {
               const isCurrent = epNum === episodeNumber;
               return (
-                <Link
-                  key={epNum}
-                  href={`/watch/${media.id}/${epNum}`}
-                  className={`${styles.gridEpItem} ${isCurrent ? styles.activeGridEpItem : ''}`}
-                >
-                  {epNum}
-                </Link>
+                  <Link
+                    key={epNum}
+                    href={`/watch/${media.id}/${epNum}`}
+                    className={`${styles.gridEpItem} ${isCurrent ? styles.activeGridEpItem : ''}`}
+                  >
+                    {watchedEpisodes.has(epNum) && <span className={styles.epCheckmark}>✓</span>}
+                    {epNum}
+                  </Link>
               );
             })}
           </div>
@@ -755,7 +770,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                         onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                       />
                     )}
-                    <div className={styles.epNumOverlay}>Ep {epNum}</div>
+                    <div className={styles.epNumOverlay}>
+                      {watchedEpisodes.has(epNum) && <span className={styles.epCheckmark}>✓</span>}
+                      Ep {epNum}
+                    </div>
                   </div>
                   <div className={styles.epInfo}>
                     <div className={styles.epTitle}>{title}</div>

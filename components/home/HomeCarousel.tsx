@@ -24,8 +24,10 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredSlide, setHoveredSlide] = useState<number | null>(null);
   const [touchPlayed, setTouchPlayed] = useState<number | null>(null);
+  const [autoPlaying, setAutoPlaying] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isTouch = useRef(false);
+  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   useEffect(() => {
     isTouch.current = isTouchDevice();
@@ -35,7 +37,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % items.length);
-    }, 6000);
+    }, 12000);
   }, [items.length]);
 
   const stopTimer = useCallback(() => {
@@ -54,14 +56,31 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
     return stopTimer;
   }, [hoveredSlide, startTimer, stopTimer]);
 
+  // Auto-play trailer when slide becomes active
+  useEffect(() => {
+    if (!autoPlaying) return;
+    const current = items[activeIndex];
+    if (!current?.trailer) return;
+
+    // Stop all other iframes
+    iframeRefs.current.forEach((iframe, idx) => {
+      if (iframe && idx !== activeIndex) {
+        iframe.src = '';
+      }
+    });
+
+    // Start the active iframe
+    const iframe = iframeRefs.current[activeIndex];
+    if (iframe) {
+      iframe.src = `https://www.youtube.com/embed/${current.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist=${current.trailer}&rel=0&showinfo=0&enablejsapi=1`;
+    }
+  }, [activeIndex, items, autoPlaying]);
+
   if (items.length === 0) return null;
 
   const current = items[activeIndex];
   const bgImage = current.bannerImage || current.coverImage.extraLarge || '';
   const title = current.title.english || current.title.romaji || 'Unknown Anime';
-  const cleanDescription = current.description
-    ? current.description.replace(/<[^>]*>/g, '').slice(0, 160) + '...'
-    : 'No description available.';
 
   const handleMouseEnter = (idx: number) => {
     if (isTouch.current) return;
@@ -94,7 +113,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
         const isActive = idx === activeIndex;
         const isHovered = hoveredSlide === idx;
         const isTouchActive = touchPlayed === idx;
-        const showTrailer = (isHovered || isTouchActive) && item.trailer;
+        const showTrailer = (isActive && autoPlaying) || isHovered || isTouchActive;
         const slideBg = item.bannerImage || item.coverImage.extraLarge || '';
         const slideTitle = item.title.english || item.title.romaji || 'Unknown Anime';
 
@@ -108,8 +127,8 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             role="group"
             aria-label={`Slide ${idx + 1}: ${slideTitle}`}
           >
-            {/* Background Image */}
-            <div className={styles.imageContainer} suppressHydrationWarning={true}>
+            {/* Background Image (shown when trailer isn't active) */}
+            <div className={`${styles.imageContainer} ${showTrailer && item.trailer ? styles.imageHidden : ''}`} suppressHydrationWarning={true}>
               {slideBg && (
                 <Image
                   src={slideBg}
@@ -125,10 +144,11 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             </div>
 
             {/* YouTube Trailer Iframe */}
-            {showTrailer && (
-              <div className={styles.trailerContainer}>
+            {item.trailer && (
+              <div className={`${styles.trailerContainer} ${showTrailer ? styles.trailerVisible : ''}`}>
                 <iframe
-                  src={`https://www.youtube.com/embed/${item.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist=${item.trailer}&rel=0&showinfo=0&enablejsapi=1`}
+                  ref={(el) => { iframeRefs.current[idx] = el; }}
+                  data-src={`https://www.youtube.com/embed/${item.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist=${item.trailer}&rel=0&showinfo=0&enablejsapi=1`}
                   className={styles.trailerIframe}
                   allow="autoplay; encrypted-media"
                   allowFullScreen
@@ -140,11 +160,11 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             {/* Trailer Badge */}
             {item.trailer && (
               <div className={styles.trailerBadge}>
-                {isTouch.current && touchPlayed === idx ? '⏸ Pause' : '▶ Trailer'}
+                {showTrailer ? '▶ Playing' : '▶ Trailer'}
               </div>
             )}
 
-            {/* Info Block (only show for active slide) */}
+            {/* Info Block */}
             {isActive && !isTouchActive && (
               <div className={styles.content}>
                 <div className={styles.genres}>
@@ -164,7 +184,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
                     ▶ Watch Episode 1
                   </Link>
                   <Link href={`/anime/${item.id}`} className={styles.detailBtn}>
-                    ℹ️ Details
+                    Details
                   </Link>
                 </div>
               </div>

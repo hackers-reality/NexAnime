@@ -26,6 +26,7 @@ const DETAIL_TABS: Tab[] = [
 function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [activeTab, setActiveTab] = useState('episodes');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
@@ -269,6 +270,15 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
             >
               AL
             </a>
+            {media.trailer?.id && (
+              <button
+                className={styles.trailerBtn}
+                onClick={() => setShowTrailer(true)}
+                title="Watch Trailer"
+              >
+                ▶ Trailer
+              </button>
+            )}
           </div>
 
           {/* Synopsis */}
@@ -632,7 +642,22 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
         onSaveSuccess={handleWatchlistUpdate}
       />
 
-      {/* Trailer removed from detail page - trailers only play in homepage carousel */}
+      {/* Trailer Modal */}
+      {showTrailer && media.trailer && (
+        <div className={styles.trailerOverlay} onClick={() => setShowTrailer(false)}>
+          <div className={styles.trailerModal} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.trailerClose} onClick={() => setShowTrailer(false)}>✕</button>
+            <div className={styles.trailerEmbed}>
+              <iframe
+                src={`https://www.youtube.com/embed/${media.trailer.id}?autoplay=1&rel=0&showinfo=0`}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+                title="Trailer"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

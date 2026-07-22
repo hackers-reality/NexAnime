@@ -1,5 +1,5 @@
 .widget {
-  background-color: #121217;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
@@ -12,10 +12,10 @@
 .tabs {
   display: flex;
   overflow-x: auto;
-  background-color: #121217;
+  background-color: var(--bg-surface);
   padding: 12px;
   gap: 8px;
-  scrollbar-width: none; /* Hide scrollbar for clean visual */
+  scrollbar-width: none;
 }
 
 .tabs::-webkit-scrollbar {
@@ -24,8 +24,8 @@
 
 .tab {
   flex: 0 0 auto;
-  background-color: #1c1c24;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-surface-hover);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
   display: flex;
@@ -38,34 +38,57 @@
 }
 
 .tab:hover {
-  background-color: #24242e;
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-secondary);
 }
 
 .tabDayName {
   font-size: 11px;
-  color: #8f8f9e;
+  color: var(--text-secondary);
   text-transform: uppercase;
   font-weight: 600;
 }
 
 .tabDayNum {
   font-size: 12px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 700;
   margin-top: 2px;
 }
 
 .activeTab {
-  background-color: #ffffff;
-  border-color: #ffffff;
+  background-color: var(--bg-base);
+  border-color: var(--primary);
 }
 
 .activeTab .tabDayName {
-  color: #8f8f9e;
+  color: var(--primary);
 }
 
 .activeTab .tabDayNum {
-  color: #121217;
+  color: var(--text-primary);
+}
+
+.todayTab {
+  position: relative;
+}
+
+.todayDot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--accent-airing);
+  border-radius: 50%;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  box-shadow: 0 0 6px var(--accent-airing);
+  animation: todayPulse 1.5s infinite;
+}
+
+@keyframes todayPulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
 }
 
 .list {
@@ -73,7 +96,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background-color: #121217;
+  background-color: var(--bg-surface);
   max-height: 480px;
   overflow-y: auto;
 }
@@ -90,21 +113,34 @@
   align-items: center;
   text-decoration: none;
   padding: 10px 12px;
-  background-color: #1c1c24;
+  background-color: var(--bg-surface-hover);
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
   transition: all 0.2s ease;
   gap: 12px;
 }
 
 .item:hover {
-  background-color: #24242e;
-  border-color: rgba(255, 255, 255, 0.06);
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-secondary);
+}
+
+.itemAiring {
+  border-color: rgba(34, 197, 94, 0.3);
+  background-color: rgba(34, 197, 94, 0.05);
+}
+
+.itemCover {
+  width: 36px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .itemTime {
   font-size: 12px;
-  color: #8f8f9e;
+  color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
   width: 44px;
@@ -112,7 +148,7 @@
 
 .itemTitle {
   font-size: 13px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -123,10 +159,15 @@
 
 .itemBadge {
   font-size: 11px;
-  color: #8f8f9e;
-  background-color: #2a2a35;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
   padding: 4px 8px;
   border-radius: 6px;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.nowBadge {
+  color: var(--accent-airing);
+  background-color: rgba(34, 197, 94, 0.1);
 }
