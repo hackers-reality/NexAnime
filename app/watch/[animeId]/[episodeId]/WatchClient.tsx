@@ -8,6 +8,7 @@ import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
 import StackedAnimeCard from '@/components/cards/StackedAnimeCard';
 import EpisodeGrid from '@/components/watch/EpisodeGrid';
+import { useToast } from '@/components/ui/Toast';
 import styles from './WatchClient.module.css';
 
 interface ServerSource {
@@ -98,6 +99,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const { toast } = useToast();
 
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
   const [isDub, setIsDub] = useState(false);
@@ -120,6 +122,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [videoQuality, setVideoQuality] = useState('auto');
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
+  const [showEpisodeList, setShowEpisodeList] = useState(false);
 
   useEffect(() => {
     if (!media.idMal && !media.id) return;
@@ -224,40 +227,62 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     return () => clearInterval(interval);
   }, [media.id, episodeNumber, media.title?.english, media.title?.romaji]);
 
-  // ── Iframe postMessage progress tracking (Zoko/animeplay) ──
+  // ── Iframe postMessage progress tracking (Zoko + MegaPlay embeds) ──
   useEffect(() => {
     let lastSync = 0;
+    const syncProgress = (currentTime: number, duration: number) => {
+      const now = Date.now();
+      if (now - lastSync < 10000) return;
+      lastSync = now;
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anilistId: media.id,
+          episodeNumber,
+          secondsWatched: Math.floor(currentTime),
+          durationSeconds: Math.floor(duration),
+        }),
+      }).catch(() => {});
+    };
+    const markComplete = () => {
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anilistId: media.id,
+          episodeNumber,
+          secondsWatched: 99999,
+          durationSeconds: 99999,
+        }),
+      }).catch(() => {});
+    };
     const handleMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
-        if (!data || data.channel !== 'zokoanime') return;
-        if (data.type === 'timeupdate' && data.currentTime != null && data.duration != null) {
-          const now = Date.now();
-          if (now - lastSync < 10000) return; // sync every 10s
-          lastSync = now;
-          fetch('/api/progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              anilistId: media.id,
-              episodeNumber,
-              secondsWatched: Math.floor(data.currentTime),
-              durationSeconds: Math.floor(data.duration),
-            }),
-          }).catch(() => {});
+        if (!data) return;
+        // Zoko format: { channel: 'zokoanime', type: 'timeupdate', currentTime, duration }
+        if (data.channel === 'zokoanime') {
+          if (data.type === 'timeupdate' && data.currentTime != null && data.duration != null) {
+            syncProgress(data.currentTime, data.duration);
+          } else if (data.type === 'ended') {
+            markComplete();
+          }
+          return;
         }
-        if (data.type === 'ended') {
-          // Episode finished — mark as watched
-          fetch('/api/progress', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              anilistId: media.id,
-              episodeNumber,
-              secondsWatched: 99999,
-              durationSeconds: 99999,
-            }),
-          }).catch(() => {});
+        // MegaPlay format: { event: 'time', time, duration, percent }
+        if (data.event === 'time' && data.time != null && data.duration != null) {
+          syncProgress(data.time, data.duration);
+          return;
+        }
+        // MegaPlay complete
+        if (data.event === 'complete') {
+          markComplete();
+          return;
+        }
+        // MegaPlay watching-log: { type: 'watching-log', currentTime, duration }
+        if (data.type === 'watching-log' && data.currentTime != null && data.duration != null) {
+          syncProgress(data.currentTime, data.duration);
         }
       } catch {}
     };
@@ -294,17 +319,21 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         if (!isMounted) return;
         if (data.error) {
           setError(data.error);
+          toast(data.error, 'error');
         } else if (data.sources && data.sources.length > 0) {
           setSources(data.sources);
           setActiveServerId(data.sources[0].adapterId);
         } else {
           setError('No streaming sources found for this episode.');
+          toast('No streaming sources found for this episode.', 'error');
         }
         setLoading(false);
       })
       .catch(err => {
         if (!isMounted) return;
-        setError(err.message || 'Failed to fetch streams');
+        const msg = err.message || 'Failed to fetch streams';
+        setError(msg);
+        toast(msg, 'error');
         setLoading(false);
       });
 
@@ -580,7 +609,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         />
       </div>
 
-      <aside className={styles.rightRail}>
+      <button
+        className={styles.mobileEpToggle}
+        onClick={() => setShowEpisodeList(!showEpisodeList)}
+      >
+        {showEpisodeList ? '✕ Close Episodes' : `☰ Episodes (${episodeNumber}/${totalEpisodes || '?'})`}
+      </button>
+
+      {showEpisodeList && <div className={styles.railOverlay} onClick={() => setShowEpisodeList(false)} />}
+      <aside className={`${styles.rightRail} ${showEpisodeList ? styles.rightRailOpen : ''}`}>
         <div className={styles.upNextHeader}>
           <div>
             <h2>Up Next - {getEpisodeTitle(media, totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber, jikanEpisodes, reanimeEpisodes)}</h2>

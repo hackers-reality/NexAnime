@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/shared/Header';
+import EmptyState from '@/components/ui/EmptyState';
 import styles from './page.module.css';
 
 interface HistoryItem {
@@ -66,10 +67,12 @@ export default function WatchHistoryPage() {
         {loading ? (
           <div className={styles.loading}>Loading history...</div>
         ) : history.length === 0 ? (
-          <div className={styles.empty}>
-            <p>No watch history yet.</p>
-            <Link href="/browse" className={styles.browseLink}>Browse Anime</Link>
-          </div>
+          <EmptyState
+            icon="📋"
+            title="No watch history yet"
+            description="Start watching anime and your progress will appear here."
+            action={{ label: "Browse Anime", href: "/browse" }}
+          />
         ) : (
           <div className={styles.list}>
             {history.map((item, i) => {

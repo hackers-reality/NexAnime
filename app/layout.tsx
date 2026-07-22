@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UpdateBanner from '@/components/shared/UpdateBanner';
 import ShortcutsOverlay from '@/components/shared/ShortcutsOverlay';
+import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
   title: 'NexAnime — Your Anime, Your Way',
@@ -58,9 +59,12 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        {children}
-        <UpdateBanner />
-        <ShortcutsOverlay />
+        <a href="#main-content" className="skip-nav">Skip to content</a>
+        <ToastProvider>
+          {children}
+          <UpdateBanner />
+          <ShortcutsOverlay />
+        </ToastProvider>
       </body>
     </html>
   );

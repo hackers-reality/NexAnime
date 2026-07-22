@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonGrid } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 import type { ListStatus } from '@/types';
 
@@ -47,6 +49,7 @@ export default function WatchlistPage() {
   const [formatFilter, setFormatFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'recent' | 'title' | 'score' | 'progress'>('recent');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
@@ -182,9 +185,13 @@ export default function WatchlistPage() {
 
         <main className={styles.mainContent}>
           {loading ? (
-            <div className={styles.loading}>Loading watchlist...</div>
+            <SkeletonGrid count={8} />
           ) : filteredEntries.length === 0 ? (
-            <div className={styles.emptyState}>Your watchlist is empty.</div>
+            <EmptyState
+              title="Your watchlist is empty"
+              description="Start browsing anime and add titles to your watchlist to track your progress."
+              action={{ label: "Browse Anime", href: "/browse" }}
+            />
           ) : activeTab === 'all' ? (
             <div className={styles.categoriesList}>
               {CATEGORIES.filter(c => c.status !== 'all').map((cat) => {
@@ -235,6 +242,20 @@ export default function WatchlistPage() {
                   </button>
                 ))}
                 <div style={{ flex: 1 }} />
+                <button
+                  className={`${styles.viewToggle} ${viewMode === 'grid' ? styles.activeViewToggle : ''}`}
+                  onClick={() => setViewMode('grid')}
+                  title="Grid view"
+                >
+                  ⊞
+                </button>
+                <button
+                  className={`${styles.viewToggle} ${viewMode === 'list' ? styles.activeViewToggle : ''}`}
+                  onClick={() => setViewMode('list')}
+                  title="List view"
+                >
+                  ☰
+                </button>
                 {activeTab !== 'all' && (
                   <>
                     <button
@@ -254,23 +275,60 @@ export default function WatchlistPage() {
                   </>
                 )}
               </div>
-              <div className={styles.grid}>
-                {sortedEntries.map((entry) => (
-                  <div key={entry.id} className={styles.gridCardContainer}>
-                    <AnimeCard
-                      id={entry.anilistId}
-                      poster={entry.anime?.coverImage?.extraLarge || null}
-                      title={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
-                      format={entry.anime?.format as any}
-                      year={entry.anime?.seasonYear || null}
-                      score={entry.score || entry.anime?.averageScore}
-                      status={entry.anime?.status as any}
-                      synopsis={entry.anime?.synopsis}
-                      genres={entry.anime?.genres || []}
-                    />
-                  </div>
-                ))}
-              </div>
+              {viewMode === 'grid' ? (
+                <div className={styles.grid}>
+                  {sortedEntries.map((entry) => (
+                    <div key={entry.id} className={styles.gridCardContainer}>
+                      <AnimeCard
+                        id={entry.anilistId}
+                        poster={entry.anime?.coverImage?.extraLarge || null}
+                        title={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
+                        format={entry.anime?.format as any}
+                        year={entry.anime?.seasonYear || null}
+                        score={entry.score || entry.anime?.averageScore}
+                        status={entry.anime?.status as any}
+                        synopsis={entry.anime?.synopsis}
+                        genres={entry.anime?.genres || []}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.list}>
+                  {sortedEntries.map((entry) => {
+                    const title = entry.anime?.title?.english || entry.anime?.title?.romaji || 'Unknown';
+                    const totalEps = entry.anime?.episodes || 0;
+                    return (
+                      <Link
+                        key={entry.id}
+                        href={`/anime/${entry.anilistId}`}
+                        className={styles.listItem}
+                      >
+                        <img
+                          src={entry.anime?.coverImage?.extraLarge || '/placeholder.png'}
+                          alt={title}
+                          className={styles.listThumb}
+                        />
+                        <div className={styles.listInfo}>
+                          <span className={styles.listTitle}>{title}</span>
+                          <span className={styles.listMeta}>
+                            {entry.anime?.format?.replace('_', ' ')} · {entry.anime?.seasonYear}
+                            {totalEps > 0 && ` · ${entry.episodeWatched}/${totalEps} eps`}
+                          </span>
+                        </div>
+                        <div className={styles.listRight}>
+                          {entry.score ? (
+                            <span className={styles.listScore}>★ {entry.score}</span>
+                          ) : null}
+                          <span className={`${styles.listStatusBadge} ${styles[entry.listStatus]}`}>
+                            {entry.listStatus.replace('_', ' ')}
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </main>

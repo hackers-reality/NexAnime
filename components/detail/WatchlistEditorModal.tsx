@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { ListStatus } from '@/types';
+import { useToast } from '@/components/ui/Toast';
 import styles from './WatchlistEditorModal.module.css';
 
 interface WatchlistEditorModalProps {
@@ -25,6 +26,7 @@ export default function WatchlistEditorModal({
 }: WatchlistEditorModalProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   // Form states
   const [status, setStatus] = useState<ListStatus>('planning');
@@ -101,8 +103,9 @@ export default function WatchlistEditorModal({
 
       onSaveSuccess?.();
       onClose();
+      toast('Watchlist updated!', 'success');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Something went wrong');
+      toast(err instanceof Error ? err.message : 'Something went wrong', 'error');
     } finally {
       setSaving(false);
     }

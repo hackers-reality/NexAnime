@@ -111,7 +111,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
         >
           <div className={styles.thumb}>
             {result.coverImage?.large ? (
-              <img src={result.coverImage.large} alt="" className={styles.thumbImage} />
+              <img src={result.coverImage.large} alt="" className={styles.thumbImage} loading="lazy" />
             ) : (
               <div className={styles.thumbPlaceholder} />
             )}

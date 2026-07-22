@@ -124,7 +124,7 @@ export default function AnimeCardHoverPreview({
     >
       {bannerUrl && (
         <div className={styles.bannerWrap}>
-          <img src={bannerUrl} alt="" className={styles.bannerImage} aria-hidden="true" />
+          <img src={bannerUrl} alt="" className={styles.bannerImage} aria-hidden="true" loading="lazy" />
           <div className={styles.bannerFade} />
         </div>
       )}

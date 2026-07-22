@@ -875,3 +875,175 @@
   transition: width 0.3s ease;
 }
 
+/* ─── Mobile Toggle Button ─── */
+.mobileEpToggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.mobileEpToggle:hover {
+  background: var(--bg-surface-hover);
+}
+
+.mobileEpToggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─── Mobile Responsive ─── */
+@media (max-width: 1023px) {
+  .container {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .mobileEpToggle {
+    display: flex;
+  }
+
+  .rightRail {
+    display: none;
+  }
+
+  .rightRailOpen {
+    display: flex;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(380px, 90vw);
+    background: var(--bg-base);
+    z-index: 1000;
+    padding: 16px;
+    overflow-y: auto;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+    animation: slideInRight 0.25s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  .episodeTitle {
+    font-size: 18px;
+  }
+
+  .animeInfoCard {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .animeCover {
+    display: flex;
+    justify-content: center;
+  }
+
+  .episodeGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .epRow {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .epThumbContainer {
+    width: 100px;
+  }
+
+  .playerControlsBar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .playNavGroup {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .playSettingsGroup {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .navControlBtn {
+    flex: 1;
+    justify-content: center;
+    max-width: 160px;
+  }
+
+  .relationsSection .relRow {
+    gap: 8px;
+  }
+
+  .relThumbContainer {
+    width: 80px;
+  }
+
+  .episodeHeaderRow {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .episodeGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .epThumbContainer {
+    width: 80px;
+  }
+
+  .epTitle {
+    font-size: 13px;
+  }
+
+  .epSub {
+    font-size: 11px;
+  }
+
+  .animeMetaTitle {
+    font-size: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* ─── Overlay for mobile rail ─── */
+.railOverlay {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .railOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
