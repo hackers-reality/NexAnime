@@ -313,8 +313,20 @@ export default function WatchlistPage() {
                           <span className={styles.listTitle}>{title}</span>
                           <span className={styles.listMeta}>
                             {entry.anime?.format?.replace('_', ' ')} · {entry.anime?.seasonYear}
-                            {totalEps > 0 && ` · ${entry.episodeWatched}/${totalEps} eps`}
                           </span>
+                          {totalEps > 0 && (
+                            <div className={styles.listProgress}>
+                              <div className={styles.listProgressBar}>
+                                <div
+                                  className={styles.listProgressFill}
+                                  style={{ width: `${Math.min((entry.episodeWatched / totalEps) * 100, 100)}%` }}
+                                />
+                              </div>
+                              <span className={styles.listProgressText}>
+                                {entry.episodeWatched}/{totalEps}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className={styles.listRight}>
                           {entry.score ? (

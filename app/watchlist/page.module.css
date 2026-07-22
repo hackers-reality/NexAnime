@@ -364,6 +364,35 @@
   color: var(--text-secondary);
 }
 
+.listProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.listProgressBar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.listProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent-airing));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.listProgressText {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .listRight {
   display: flex;
   align-items: center;
