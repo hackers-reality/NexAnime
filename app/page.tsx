@@ -353,7 +353,7 @@ export default function HomePage() {
                       }).map((item: any) => {
                         const anime = item.media;
                         return (
-                          <div key={`recent-${anime.id}`} className={styles.gridCardWrap}>
+                          <div key={`recent-${anime.id}`} className={styles.cardWrapper}>
                             <AnimeCard
                               id={anime.id}
                               poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}

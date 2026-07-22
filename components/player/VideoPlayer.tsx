@@ -68,6 +68,8 @@ export default function VideoPlayer({
   const [showAmbient, setShowAmbient] = useState(false);
   const [doubleTapSide, setDoubleTapSide] = useState<'left' | 'right' | null>(null);
   const [doubleTapAmount, setDoubleTapAmount] = useState(0);
+  const [miniPos, setMiniPos] = useState({ x: 24, y: 24 });
+  const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; startPosX: number; startPosY: number }>({ dragging: false, startX: 0, startY: 0, startPosX: 0, startPosY: 0 });
   const autoPlayRef = useRef(true);
   const lastTapRef = useRef<{ time: number; x: number } | null>(null);
   const doubleTapTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,15 +110,7 @@ export default function VideoPlayer({
     }
 
     if (Hls.isSupported() && src.includes('.m3u8')) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        xhrSetup: (xhr) => {
-          if (src.includes('aniwatchtv.uk')) {
-            xhr.setRequestHeader('Referer', 'https://zokoanime.video/');
-          }
-        },
-      });
+      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -260,7 +254,7 @@ export default function VideoPlayer({
 
   // ── Mini player ────────────────────────────────────
   useEffect(() => {
-    if (isEmbed || !miniPlayerEnabled) return;
+    if (!miniPlayerEnabled) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) { setIsMini(false); setDismissedMini(false); }
@@ -378,31 +372,7 @@ export default function VideoPlayer({
 
   // ── Ambient mode ───────────────────────────────────
   useEffect(() => {
-    if (!showAmbient) return;
-
-    if (isEmbed) {
-      // For embeds: extract color from poster image instead
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = `https://img.anili.st/media/${animeId}`;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 16; canvas.height = 9;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0, 16, 9);
-        const data = ctx.getImageData(6, 3, 4, 3).data;
-        let r = 0, g = 0, b = 0, count = 0;
-        for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; count++; }
-        r = Math.round(r / count * 0.35);
-        g = Math.round(g / count * 0.35);
-        b = Math.round(b / count * 0.35);
-        setAmbientColor(`rgb(${r},${g},${b})`);
-      };
-      img.onerror = () => setAmbientColor('rgb(20,20,40)');
-      return;
-    }
-
+    if (!showAmbient || isEmbed) return;
     const video = videoRef.current;
     if (!video) return;
 
@@ -427,7 +397,7 @@ export default function VideoPlayer({
     };
     frameId = requestAnimationFrame(sample);
     return () => cancelAnimationFrame(frameId);
-  }, [showAmbient, isEmbed, animeId]);
+  }, [showAmbient, isEmbed]);
 
   // ── Controls ───────────────────────────────────────
   const togglePlay = () => {
@@ -495,6 +465,39 @@ export default function VideoPlayer({
     a.click();
   };
 
+  // ── Mini player drag ────────────────────────────────
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isMini) return;
+    e.preventDefault();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    dragRef.current = { dragging: true, startX: clientX, startY: clientY, startPosX: miniPos.x, startPosY: miniPos.y };
+
+    const onMove = (ev: MouseEvent | TouchEvent) => {
+      if (!dragRef.current.dragging) return;
+      const cx = 'touches' in ev ? ev.touches[0].clientX : ev.clientX;
+      const cy = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
+      const dx = cx - dragRef.current.startX;
+      const dy = cy - dragRef.current.startY;
+      const newX = Math.max(0, Math.min(window.innerWidth - 340, dragRef.current.startPosX - dx));
+      const newY = Math.max(0, Math.min(window.innerHeight - 191, dragRef.current.startPosY - dy));
+      setMiniPos({ x: newX, y: newY });
+    };
+
+    const onEnd = () => {
+      dragRef.current.dragging = false;
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+  };
+
   // ── Render ─────────────────────────────────────────
   return (
     <div
@@ -502,6 +505,9 @@ export default function VideoPlayer({
       className={`${styles.playerContainer} ${isMini && !dismissedMini ? styles.miniPlayer : ''}`}
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => { if (videoRef.current && !videoRef.current.paused) setShowControls(false); }}
+      style={isMini && !dismissedMini ? { bottom: miniPos.y, right: 'auto', left: miniPos.x, cursor: 'grab' } : undefined}
+      onMouseDown={isMini ? handleDragStart : undefined}
+      onTouchStart={isMini ? handleDragStart : undefined}
     >
       {/* Ambient glow */}
       {showAmbient && ambientColor && (
@@ -541,43 +547,7 @@ export default function VideoPlayer({
 
       {/* Embed */}
       {src && isEmbed ? (
-        <>
-          <iframe src={src} className={styles.iframe} allowFullScreen allow="autoplay; encrypted-media; picture-in-picture" />
-          {/* Minimal controls for embeds */}
-          <div className={styles.controlsOverlay} style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.85))' }}>
-            <div className={styles.topBar}>
-              <span className={styles.epLabel}>EP {episodeNumber}</span>
-              <div className={styles.topActions}>
-                <button className={styles.ctrlBtn} onClick={() => setShowAmbient(!showAmbient)} aria-label="Toggle ambient mode" style={{ color: showAmbient ? 'var(--primary)' : undefined }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                </button>
-              </div>
-            </div>
-            {showSkipIntro && (
-              <button className={styles.skipBtn} onClick={handleSkipIntro}>Skip Intro ▶▶</button>
-            )}
-            {showSkipOutro && (
-              <button className={styles.skipBtn} onClick={handleSkipOutro}>Skip Outro ▶▶</button>
-            )}
-            {showNextCountdown && (
-              <div className={styles.nextEpisodeOverlay}>
-                <p>Next episode in {nextCountdown}s...</p>
-                <button className={styles.nextBtn} onClick={() => router.push(`/watch/${animeId}/${episodeNumber + 1}`)}>
-                  Skip ▶
-                </button>
-              </div>
-            )}
-            {autoPlayNext && !showNextCountdown && (
-              <button
-                className={styles.skipBtn}
-                style={{ position: 'absolute', bottom: 50, right: 16, fontSize: 11, padding: '6px 12px' }}
-                onClick={() => router.push(`/watch/${animeId}/${episodeNumber + 1}`)}
-              >
-                Next Ep ▶
-              </button>
-            )}
-          </div>
-        </>
+        <iframe src={src} className={styles.iframe} allowFullScreen allow="autoplay; encrypted-media; picture-in-picture" />
       ) : (
         <>
           <video ref={videoRef} className={styles.video} crossOrigin="anonymous" onClick={togglePlay} />

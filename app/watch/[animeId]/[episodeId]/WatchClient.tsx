@@ -224,6 +224,47 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     return () => clearInterval(interval);
   }, [media.id, episodeNumber, media.title?.english, media.title?.romaji]);
 
+  // ── Iframe postMessage progress tracking (Zoko/animeplay) ──
+  useEffect(() => {
+    let lastSync = 0;
+    const handleMessage = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (!data || data.channel !== 'zokoanime') return;
+        if (data.type === 'timeupdate' && data.currentTime != null && data.duration != null) {
+          const now = Date.now();
+          if (now - lastSync < 10000) return; // sync every 10s
+          lastSync = now;
+          fetch('/api/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              anilistId: media.id,
+              episodeNumber,
+              secondsWatched: Math.floor(data.currentTime),
+              durationSeconds: Math.floor(data.duration),
+            }),
+          }).catch(() => {});
+        }
+        if (data.type === 'ended') {
+          // Episode finished — mark as watched
+          fetch('/api/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              anilistId: media.id,
+              episodeNumber,
+              secondsWatched: 99999,
+              durationSeconds: 99999,
+            }),
+          }).catch(() => {});
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [media.id, episodeNumber]);
+
   const fetchWatchlistStatus = async () => {
     if (!media.id) return;
     try {

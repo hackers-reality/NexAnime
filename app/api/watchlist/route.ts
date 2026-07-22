@@ -21,15 +21,19 @@ export async function GET(request: NextRequest) {
     const anilistId = searchParams.get('anilistId');
     const continueMode = searchParams.get('continue') === 'true';
     if (continueMode) {
-      // First try watch_progress table (native video sources)
+      // Deduplicate by anilist_id — only latest episode per anime
       const progress = await query<any>(
         `SELECT wp.anilist_id, wp.episode_number, wp.seconds_watched, wp.duration_seconds,
                 c.title_romaji, c.title_english, c.cover_image,
                 (SELECT thumbnail FROM episode_sources WHERE anilist_id = wp.anilist_id AND episode_number = wp.episode_number AND thumbnail IS NOT NULL LIMIT 1) as ep_thumbnail
          FROM watch_progress wp
          LEFT JOIN anime_cache c ON wp.anilist_id = c.anilist_id
-         WHERE (wp.duration_seconds = 0 OR wp.seconds_watched < wp.duration_seconds - 15)
-           AND wp.seconds_watched > 0
+         INNER JOIN (
+           SELECT anilist_id, MAX(episode_number) as max_ep
+           FROM watch_progress
+           GROUP BY anilist_id
+         ) latest ON wp.anilist_id = latest.anilist_id AND wp.episode_number = latest.max_ep
+         WHERE wp.seconds_watched > 0
          ORDER BY wp.last_watched_at DESC
          LIMIT 6`
       );

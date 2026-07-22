@@ -26,6 +26,12 @@
   border-radius: 12px;
   animation: slideIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   aspect-ratio: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.miniPlayer:active {
+  cursor: grabbing;
 }
 
 @keyframes slideIn {

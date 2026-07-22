@@ -120,6 +120,7 @@ export default function AnimeCardHoverPreview({
     <div
       className={`${styles.overlay} ${side === 'left' ? styles.left : styles.right}`}
       onMouseEnter={(e) => e.stopPropagation()}
+      style={{ '--banner-url': bannerUrl ? `url(${bannerUrl})` : 'none' } as React.CSSProperties}
     >
       {bannerUrl && (
         <div className={styles.bannerWrap}>
