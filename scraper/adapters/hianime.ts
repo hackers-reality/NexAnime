@@ -54,24 +54,49 @@ export class ZokoAdapter implements ScraperAdapter {
   id = 'nova';
   name = 'Nova';
 
+  private OBF_KEY = 'otaku-embed-v1';
+
+  private xorDec(str: string): string {
+    let out = '';
+    for (let i = 0; i < str.length; i++) {
+      out += String.fromCharCode(str.charCodeAt(i) ^ this.OBF_KEY.charCodeAt(i % this.OBF_KEY.length));
+    }
+    return out;
+  }
+
+  private deobfuscate(blob: string): { src?: string; subtitles?: Array<{ src: string; lang: string; label: string }> } {
+    return JSON.parse(decodeURIComponent(escape(this.xorDec(atob(blob)))));
+  }
+
   async resolveEpisodeSource(anilistId: number, episodeNumber: number, isDub?: boolean): Promise<ScraperSource | null> {
     const malId = await getMalId(anilistId);
     if (!malId) return null;
 
     const type = isDub ? 'dub' : 'sub';
-    const streamUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
+    const iframeUrl = `https://zokoanime.video/stream/mal/${malId}/${episodeNumber}/${type}?color=35d5bf`;
 
     try {
-      const res = await fetch(streamUrl, {
-        method: 'HEAD',
+      const res = await fetch(iframeUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': 'https://hianimes.se/' },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(8000),
       });
-      if (res.status === 200) {
-        return { adapterId: this.id, sourceName: this.name, streamUrl, subtitleUrl: null };
-      }
-    } catch {}
-    return null;
+      if (!res.ok) return null;
+      const html = await res.text();
+
+      // Extract __P token
+      const pMatch = html.match(/window\.__P\s*=\s*["']([^"']+)["']/);
+      if (!pMatch) return null;
+
+      const decoded = this.deobfuscate(pMatch[1]);
+      if (!decoded.src) return null;
+
+      const streamUrl = decoded.src;
+      const subtitleUrl = decoded.subtitles?.[0]?.src || null;
+
+      return { adapterId: this.id, sourceName: this.name, streamUrl, subtitleUrl };
+    } catch {
+      return null;
+    }
   }
 }
 

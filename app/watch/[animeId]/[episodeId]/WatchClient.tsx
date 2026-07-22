@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import VideoPlayer from '@/components/player/VideoPlayer';
 import ServerPicker from '@/components/player/ServerPicker';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
-import AnimeCard from '@/components/cards/AnimeCard';
+import StackedAnimeCard from '@/components/cards/StackedAnimeCard';
 import EpisodeGrid from '@/components/watch/EpisodeGrid';
 import styles from './WatchClient.module.css';
 
@@ -101,6 +101,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
   const [isDub, setIsDub] = useState(false);
+  const episodeListRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!episodeListRef.current) return;
+    const activeEl = episodeListRef.current.querySelector(`.${styles.activeEpRow}`);
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [episodeNumber]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isGridView, setIsGridView] = useState(false);
@@ -145,6 +154,75 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!media.id) return;
+
+    // Auto-track progress on page visit (works for embed sources too)
+    const trackProgress = () => {
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anilistId: media.id, episodeNumber, secondsWatched: 0, durationSeconds: 0 }),
+      }).catch(() => {});
+
+      // Also auto-add to watchlist with "watching" status if not already
+      fetch(`/api/watchlist?anilistId=${media.id}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.entry) {
+            fetch('/api/watchlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                anilistId: media.id,
+                listStatus: 'watching',
+                episodeWatched: episodeNumber,
+                animeTitle: media.title?.english || media.title?.romaji || '',
+              }),
+            }).catch(() => {});
+          } else if (data.entry.listStatus === 'planning') {
+            // Auto-move from "Plan to watch" to "Watching"
+            fetch('/api/watchlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                anilistId: media.id,
+                listStatus: 'watching',
+                episodeWatched: episodeNumber,
+                animeTitle: media.title?.english || media.title?.romaji || '',
+              }),
+            }).catch(() => {});
+          } else if (episodeNumber > (data.entry.episodeWatched || 0)) {
+            // Update episode_watched if higher
+            fetch('/api/watchlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                anilistId: media.id,
+                listStatus: data.entry.listStatus,
+                episodeWatched: episodeNumber,
+                animeTitle: media.title?.english || media.title?.romaji || '',
+              }),
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    };
+
+    trackProgress();
+
+    // Periodically update progress while on page (every 30s)
+    const interval = setInterval(() => {
+      fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anilistId: media.id, episodeNumber, secondsWatched: 0, durationSeconds: 0 }),
+      }).catch(() => {});
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [media.id, episodeNumber, media.title?.english, media.title?.romaji]);
 
   const fetchWatchlistStatus = async () => {
     if (!media.id) return;
@@ -233,7 +311,11 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
   const prequels = getRelationByType(media, 'PREQUEL');
   const sequels = getRelationByType(media, 'SEQUEL');
-  const hasRelations = prequels.length > 0 || sequels.length > 0;
+  const sideStories = getRelationByType(media, 'SIDE_STORY');
+  const alternatives = getRelationByType(media, 'ALTERNATIVE');
+  const spinOffs = getRelationByType(media, 'SPIN_OFF');
+  const summaries = getRelationByType(media, 'SUMMARY');
+  const hasRelations = prequels.length > 0 || sequels.length > 0 || sideStories.length > 0 || alternatives.length > 0 || spinOffs.length > 0 || summaries.length > 0;
 
   return (
     <main className={styles.container}>
@@ -507,7 +589,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             })}
           </div>
         ) : (
-          <div className={styles.episodeList}>
+          <div className={styles.episodeList} ref={episodeListRef}>
             {sortedEpisodes.map((epNum) => {
               const isCurrent = epNum === episodeNumber;
               const thumb = getEpisodeThumb(media, epNum, reanimeEpisodes);
@@ -550,11 +632,17 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
         {hasRelations && (
           <div className={styles.relationsSection}>
-            <h3 className={styles.relationsHeader}>Sequels & Prequels</h3>
+            <h3 className={styles.relationsHeader}>Related Anime</h3>
             <div className={styles.relationsList}>
-              {[...prequels, ...sequels].map((relMedia: any) => {
+              {[...prequels, ...sequels, ...sideStories, ...alternatives, ...spinOffs, ...summaries].map((relMedia: any) => {
                 const relTitle = relMedia.title?.english || relMedia.title?.romaji || 'Unknown';
-                const relType = prequels.includes(relMedia) ? 'PREQUEL' : 'SEQUEL';
+                let relType = 'RELATED';
+                if (prequels.includes(relMedia)) relType = 'PREQUEL';
+                else if (sequels.includes(relMedia)) relType = 'SEQUEL';
+                else if (sideStories.includes(relMedia)) relType = 'SIDE STORY';
+                else if (alternatives.includes(relMedia)) relType = 'ALTERNATIVE';
+                else if (spinOffs.includes(relMedia)) relType = 'SPIN OFF';
+                else if (summaries.includes(relMedia)) relType = 'SUMMARY';
                 return (
                   <Link
                     key={relMedia.id}
@@ -573,7 +661,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                           suppressHydrationWarning
                           onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                         />
-                        <span className={styles.relTypeBadge}>{relType}</span>
+                        <span className={styles.relTypeBadge} style={{
+                          backgroundColor: relType === 'PREQUEL' ? 'rgba(99,102,241,0.2)' : relType === 'SEQUEL' ? 'rgba(16,185,129,0.2)' : relType === 'SIDE STORY' ? 'rgba(245,158,11,0.2)' : relType === 'ALTERNATIVE' ? 'rgba(236,72,153,0.2)' : relType === 'SPIN OFF' ? 'rgba(139,92,246,0.2)' : 'rgba(107,114,128,0.2)',
+                          color: relType === 'PREQUEL' ? '#818cf8' : relType === 'SEQUEL' ? '#34d399' : relType === 'SIDE STORY' ? '#fbbf24' : relType === 'ALTERNATIVE' ? '#f472b6' : relType === 'SPIN OFF' ? '#a78bfa' : '#9ca3af',
+                        }}>{relType}</span>
                       </div>
                     )}
                     <div className={styles.relInfo}>
@@ -593,24 +684,23 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         {media.recommendations?.nodes?.length > 0 && (
           <div className={styles.recommendationsSection}>
             <h3 className={styles.recsHeader}>More Like This</h3>
-            <div className={styles.horizontalCardScroll}>
+            <div className={styles.stackedRecList}>
               {media.recommendations.nodes.slice(0, 10).map((rec: any) => {
                 const recMedia = rec.mediaRecommendation;
                 if (!recMedia) return null;
                 return (
-                  <div key={recMedia.id} className={styles.recCardWrapper}>
-                    <AnimeCard
-                      id={recMedia.id}
-                      poster={recMedia.coverImage?.extraLarge || recMedia.coverImage?.large || null}
-                      title={recMedia.title?.english || recMedia.title?.romaji || 'Untitled'}
-                      format={recMedia.format}
-                      year={recMedia.seasonYear}
-                      status={recMedia.status}
-                      score={recMedia.averageScore}
-                      synopsis={recMedia.description}
-                      genres={recMedia.genres || []}
-                    />
-                  </div>
+                  <StackedAnimeCard
+                    key={recMedia.id}
+                    id={recMedia.id}
+                    poster={recMedia.coverImage?.medium || recMedia.coverImage?.large || null}
+                    title={recMedia.title?.english || recMedia.title?.romaji || 'Untitled'}
+                    format={recMedia.format}
+                    year={recMedia.seasonYear}
+                    status={recMedia.status}
+                    score={recMedia.averageScore}
+                    synopsis={recMedia.description}
+                    genres={recMedia.genres || []}
+                  />
                 );
               })}
             </div>

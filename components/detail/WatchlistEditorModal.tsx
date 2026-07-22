@@ -114,7 +114,7 @@ export default function WatchlistEditorModal({
       return;
     }
     const num = parseInt(val);
-    if (!isNaN(num) && num >= 0 && num <= 100) {
+    if (!isNaN(num) && num >= 0 && num <= 10) {
       setScore(num);
     }
   };
@@ -148,7 +148,7 @@ export default function WatchlistEditorModal({
             <>
               {/* Form Grid */}
               <div className={styles.grid}>
-                {/* Status Selector */}
+                {/* Row 1: Status, Start date, End date */}
                 <div className={styles.field}>
                   <label className={styles.label}>Status</label>
                   <select
@@ -156,7 +156,7 @@ export default function WatchlistEditorModal({
                     value={status}
                     onChange={(e) => setStatus(e.target.value as ListStatus)}
                   >
-                    <option value="planning">Plan to Watch</option>
+                    <option value="planning">Plan to watch</option>
                     <option value="watching">Watching</option>
                     <option value="on_hold">On Hold</option>
                     <option value="dropped">Dropped</option>
@@ -165,23 +165,8 @@ export default function WatchlistEditorModal({
                   </select>
                 </div>
 
-                {/* Score */}
                 <div className={styles.field}>
-                  <label className={styles.label}>Score (0-100)</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    min="0"
-                    max="100"
-                    placeholder="None"
-                    value={score}
-                    onChange={(e) => handleScoreChange(e.target.value)}
-                  />
-                </div>
-
-                {/* Start Date */}
-                <div className={styles.field}>
-                  <label className={styles.label}>Start Date</label>
+                  <label className={styles.label}>Start date</label>
                   <input
                     type="date"
                     className={styles.input}
@@ -190,9 +175,8 @@ export default function WatchlistEditorModal({
                   />
                 </div>
 
-                {/* End Date */}
                 <div className={styles.field}>
-                  <label className={styles.label}>End Date</label>
+                  <label className={styles.label}>End date</label>
                   <input
                     type="date"
                     className={styles.input}
@@ -201,29 +185,41 @@ export default function WatchlistEditorModal({
                   />
                 </div>
 
-                {/* Episode Progress */}
+                {/* Row 2: Score, Episodes watched, Total rewatches */}
                 <div className={styles.field}>
-                  <label className={styles.label}>Episodes Watched</label>
-                  <div className={styles.inputWithSuffix}>
-                    <input
-                      type="number"
-                      className={styles.input}
-                      min="0"
-                      max={totalEpisodes || undefined}
-                      value={episodeWatched}
-                      onChange={(e) => setEpisodeWatched(Math.max(0, parseInt(e.target.value) || 0))}
-                    />
-                    <span className={styles.suffix}>/ {totalEpisodes || '?'}</span>
-                  </div>
-                </div>
-
-                {/* Rewatches */}
-                <div className={styles.field}>
-                  <label className={styles.label}>Total Rewatches</label>
+                  <label className={styles.label}>Score</label>
                   <input
                     type="number"
                     className={styles.input}
                     min="0"
+                    max="10"
+                    placeholder="0"
+                    value={score}
+                    onChange={(e) => handleScoreChange(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>Episode watched</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    min="0"
+                    max={totalEpisodes || undefined}
+                    placeholder="0"
+                    value={episodeWatched}
+                    onChange={(e) => setEpisodeWatched(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                  {totalEpisodes ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>/ {totalEpisodes}</span> : null}
+                </div>
+
+                <div className={styles.field}>
+                  <label className={styles.label}>Total rewatches</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    min="0"
+                    placeholder="0"
                     value={totalRewatches}
                     onChange={(e) => setTotalRewatches(Math.max(0, parseInt(e.target.value) || 0))}
                   />
@@ -235,7 +231,7 @@ export default function WatchlistEditorModal({
                 <label className={styles.label}>Notes</label>
                 <textarea
                   className={styles.textarea}
-                  placeholder="Add your thoughts or personal tracking notes here..."
+                  placeholder="Add a note."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />

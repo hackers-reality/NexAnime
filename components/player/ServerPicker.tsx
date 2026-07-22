@@ -17,7 +17,14 @@ interface ServerPickerProps {
 
 function formatName(id?: string): string {
   if (!id) return 'Loading...';
-  return id.charAt(0).toUpperCase() + id.slice(1);
+  const names: Record<string, string> = {
+    rapidstream: 'RapidStream',
+    nova: 'Nova',
+    megaplay: 'MegaPlay',
+    gogoanime: 'Gogoanime',
+    animepahe: 'Animepahe',
+  };
+  return names[id] || id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 export default function ServerPicker({ servers, activeServerId, onSelectServer }: ServerPickerProps) {

@@ -101,7 +101,7 @@
   color: var(--text-secondary);
 }
 
-/* Horizontal Scroll */
+/* Horizontal Scroll — only used on watch page and search dropdown */
 .horizontalScroll {
   display: flex;
   gap: 16px;
@@ -130,6 +130,57 @@
   width: 160px;
   flex-shrink: 0;
   scroll-snap-align: start;
+}
+
+/* Home page card grid — replaces horizontal scroll on home */
+.homeCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .homeCardGrid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+}
+
+/* Recently Updated / Upcoming limited grid with View All arrow */
+.homeCardGridLimited {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .homeCardGridLimited {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  }
+}
+
+/* Wrapper for grid cards — no fixed width, let grid control sizing */
+.gridCardWrap {
+  min-width: 0;
+}
+
+/* View All arrow button */
+.viewAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border: 1px solid var(--primary);
+  border-radius: 20px;
+  transition: all 0.2s;
+}
+
+.viewAllBtn:hover {
+  background: var(--primary);
+  color: #fff;
 }
 
 /* Split Columns */

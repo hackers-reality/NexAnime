@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import TabNav, { type Tab } from '@/components/shared/TabNav';
 import AnimeCard from '@/components/cards/AnimeCard';
@@ -23,7 +23,7 @@ const DETAIL_TABS: Tab[] = [
   { key: 'recommendations', label: 'More Like This' },
 ];
 
-export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
+function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [activeTab, setActiveTab] = useState('episodes');
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
@@ -238,7 +238,14 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
           {/* Action Row */}
           <div className={styles.actionRow}>
             <Link
-              href={`/watch/${media.id}/1`}
+              href={`/watch/${media.id}/${(() => {
+                const epNums = Object.keys(watchProgress).map(Number).filter(n => !isNaN(n));
+                if (epNums.length === 0) return 1;
+                const maxEp = Math.max(...epNums);
+                const maxProgress = watchProgress[maxEp];
+                if (maxProgress && maxProgress.secondsWatched / maxProgress.durationSeconds < 0.9) return maxEp;
+                return maxEp + 1;
+              })()}`}
               className="btn btn--primary btn--pill btn--lg"
               style={{ textDecoration: 'none', color: 'white' }}
             >
@@ -583,13 +590,13 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
               <div>
                 <h3 className={styles.sectionTitle}>More Like This</h3>
                 {media.recommendations?.nodes && media.recommendations.nodes.length > 0 ? (
-                  <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16 }}>
                     {media.recommendations.nodes
                       .filter((n) => n.mediaRecommendation !== null)
                       .map((n, index) => {
                         const rec = n.mediaRecommendation!;
                         return (
-                          <div key={`${rec.id}-${index}`} style={{ width: 160, flexShrink: 0 }}>
+                          <div key={`${rec.id}-${index}`}>
                             <AnimeCard
                               id={rec.id}
                               poster={rec.coverImage?.extraLarge || rec.coverImage?.large}
@@ -627,5 +634,13 @@ export default function AnimeDetailClient({ media }: AnimeDetailClientProps) {
 
       {/* Trailer removed from detail page - trailers only play in homepage carousel */}
     </div>
+  );
+}
+
+export default function AnimeDetailClient(props: AnimeDetailClientProps) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '60vh' }} />}>
+      <AnimeDetailClientInner {...props} />
+    </Suspense>
   );
 }

@@ -108,7 +108,15 @@ export default function VideoPlayer({
     }
 
     if (Hls.isSupported() && src.includes('.m3u8')) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        xhrSetup: (xhr) => {
+          if (src.includes('aniwatchtv.uk')) {
+            xhr.setRequestHeader('Referer', 'https://zokoanime.video/');
+          }
+        },
+      });
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -370,7 +378,31 @@ export default function VideoPlayer({
 
   // ── Ambient mode ───────────────────────────────────
   useEffect(() => {
-    if (!showAmbient || isEmbed) return;
+    if (!showAmbient) return;
+
+    if (isEmbed) {
+      // For embeds: extract color from poster image instead
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = `https://img.anili.st/media/${animeId}`;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 16; canvas.height = 9;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 16, 9);
+        const data = ctx.getImageData(6, 3, 4, 3).data;
+        let r = 0, g = 0, b = 0, count = 0;
+        for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; count++; }
+        r = Math.round(r / count * 0.35);
+        g = Math.round(g / count * 0.35);
+        b = Math.round(b / count * 0.35);
+        setAmbientColor(`rgb(${r},${g},${b})`);
+      };
+      img.onerror = () => setAmbientColor('rgb(20,20,40)');
+      return;
+    }
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -395,7 +427,7 @@ export default function VideoPlayer({
     };
     frameId = requestAnimationFrame(sample);
     return () => cancelAnimationFrame(frameId);
-  }, [showAmbient, isEmbed]);
+  }, [showAmbient, isEmbed, animeId]);
 
   // ── Controls ───────────────────────────────────────
   const togglePlay = () => {
@@ -509,7 +541,43 @@ export default function VideoPlayer({
 
       {/* Embed */}
       {src && isEmbed ? (
-        <iframe src={src} className={styles.iframe} allowFullScreen allow="autoplay; encrypted-media; picture-in-picture" />
+        <>
+          <iframe src={src} className={styles.iframe} allowFullScreen allow="autoplay; encrypted-media; picture-in-picture" />
+          {/* Minimal controls for embeds */}
+          <div className={styles.controlsOverlay} style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.85))' }}>
+            <div className={styles.topBar}>
+              <span className={styles.epLabel}>EP {episodeNumber}</span>
+              <div className={styles.topActions}>
+                <button className={styles.ctrlBtn} onClick={() => setShowAmbient(!showAmbient)} aria-label="Toggle ambient mode" style={{ color: showAmbient ? 'var(--primary)' : undefined }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                </button>
+              </div>
+            </div>
+            {showSkipIntro && (
+              <button className={styles.skipBtn} onClick={handleSkipIntro}>Skip Intro ▶▶</button>
+            )}
+            {showSkipOutro && (
+              <button className={styles.skipBtn} onClick={handleSkipOutro}>Skip Outro ▶▶</button>
+            )}
+            {showNextCountdown && (
+              <div className={styles.nextEpisodeOverlay}>
+                <p>Next episode in {nextCountdown}s...</p>
+                <button className={styles.nextBtn} onClick={() => router.push(`/watch/${animeId}/${episodeNumber + 1}`)}>
+                  Skip ▶
+                </button>
+              </div>
+            )}
+            {autoPlayNext && !showNextCountdown && (
+              <button
+                className={styles.skipBtn}
+                style={{ position: 'absolute', bottom: 50, right: 16, fontSize: 11, padding: '6px 12px' }}
+                onClick={() => router.push(`/watch/${animeId}/${episodeNumber + 1}`)}
+              >
+                Next Ep ▶
+              </button>
+            )}
+          </div>
+        </>
       ) : (
         <>
           <video ref={videoRef} className={styles.video} crossOrigin="anonymous" onClick={togglePlay} />

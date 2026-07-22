@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const anilistId = searchParams.get('anilistId');
     const continueMode = searchParams.get('continue') === 'true';
     if (continueMode) {
+      // First try watch_progress table (native video sources)
       const progress = await query<any>(
         `SELECT wp.anilist_id, wp.episode_number, wp.seconds_watched, wp.duration_seconds,
                 c.title_romaji, c.title_english, c.cover_image,
@@ -32,7 +33,24 @@ export async function GET(request: NextRequest) {
          ORDER BY wp.last_watched_at DESC
          LIMIT 6`
       );
-      return NextResponse.json({ progress });
+
+      if (progress.length >= 1) {
+        return NextResponse.json({ progress });
+      }
+
+      // Fallback: use watchlist entries with "watching" status (for embed sources)
+      const watching = await query<any>(
+        `SELECT w.anilist_id, w.episode_watched as episode_number, 0 as seconds_watched, 0 as duration_seconds,
+                c.title_romaji, c.title_english, c.cover_image,
+                NULL as ep_thumbnail
+         FROM watchlist w
+         LEFT JOIN anime_cache c ON w.anilist_id = c.anilist_id
+         WHERE w.list_status = 'watching' AND w.episode_watched > 0
+         ORDER BY w.updated_at DESC
+         LIMIT 6`
+      );
+
+      return NextResponse.json({ progress: watching });
     }
 
     if (anilistId && anilistId !== 'undefined' && anilistId !== 'null') {

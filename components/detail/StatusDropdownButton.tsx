@@ -132,36 +132,42 @@ export default function StatusDropdownButton({
             className={`${styles.item} ${status === 'planning' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('planning')}
           >
-            📋 Plan to watch
+            <span className={styles.itemIcon}>📋</span>
+            <span>Plan to watch</span>
           </button>
           <button
             className={`${styles.item} ${status === 'watching' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('watching')}
           >
-            ▶ Watching
+            <span className={styles.itemIcon}>▶</span>
+            <span>Watching</span>
           </button>
           <button
             className={`${styles.item} ${status === 'finished' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('finished')}
           >
-            ✓ Completed
+            <span className={styles.itemIcon}>✓</span>
+            <span>Completed</span>
           </button>
           <button
             className={`${styles.item} ${status === 'on_hold' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('on_hold')}
           >
-            ⏸ On hold
+            <span className={styles.itemIcon}>⏸</span>
+            <span>On Hold</span>
           </button>
           <button
             className={`${styles.item} ${status === 'dropped' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('dropped')}
           >
-            🗑 Dropped
+            <span className={styles.itemIcon}>🗑</span>
+            <span>Dropped</span>
           </button>
 
           {status && (
             <button className={styles.item} onClick={handleRemove}>
-              ✖ Remove entry
+              <span className={styles.itemIcon}>✖</span>
+              <span>Remove</span>
             </button>
           )}
 
@@ -174,7 +180,8 @@ export default function StatusDropdownButton({
               onOpenEditor();
             }}
           >
-            📝 Open full editor
+            <span className={styles.itemIcon}>📝</span>
+            <span>Open editor</span>
           </button>
         </div>
       )}

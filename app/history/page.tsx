@@ -74,7 +74,7 @@ export default function WatchHistoryPage() {
           <div className={styles.list}>
             {history.map((item, i) => {
               const title = item.title_english || item.title_romaji || 'Unknown';
-              const watched = Math.round((item.seconds_watched / item.duration_seconds) * 100);
+              const watched = item.duration_seconds > 0 ? Math.round((item.seconds_watched / item.duration_seconds) * 100) : 0;
               return (
                 <Link
                   key={`${item.anilist_id}-${item.episode_number}-${i}`}
@@ -94,13 +94,21 @@ export default function WatchHistoryPage() {
                     <div className={styles.cardTitle}>{title}</div>
                     <div className={styles.cardMeta}>
                       {item.format && <span className={styles.format}>{item.format.replace('_', ' ')}</span>}
-                      <span>{formatDuration(item.seconds_watched)} watched</span>
+                      {item.seconds_watched > 0 ? (
+                        <span>{formatDuration(item.seconds_watched)} watched</span>
+                      ) : (
+                        <span>Ep {item.episode_number}</span>
+                      )}
                       <span className={styles.timeAgo}>{timeAgo(item.last_watched_at)}</span>
                     </div>
-                    <div className={styles.progressBar}>
-                      <div className={styles.progressFill} style={{ width: `${Math.min(watched, 100)}%` }} />
-                    </div>
-                    <div className={styles.progressLabel}>{watched}% watched</div>
+                    {item.duration_seconds > 0 && (
+                      <div className={styles.progressBar}>
+                        <div className={styles.progressFill} style={{ width: `${Math.min(watched, 100)}%` }} />
+                      </div>
+                    )}
+                    {item.duration_seconds > 0 && (
+                      <div className={styles.progressLabel}>{watched}% watched</div>
+                    )}
                   </div>
                 </Link>
               );

@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { anilistId, episodeNumber, secondsWatched, durationSeconds } = body;
 
-    if (!anilistId || episodeNumber === undefined || secondsWatched === undefined || durationSeconds === undefined) {
+    if (!anilistId || episodeNumber === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -20,7 +20,10 @@ export async function POST(req: NextRequest) {
     if (settingsRes.rows.length > 0 && settingsRes.rows[0].pause_history === 1) {
       return NextResponse.json({ success: true });
     }
-    
+
+    const safeSeconds = secondsWatched ?? 0;
+    const safeDuration = durationSeconds ?? 0;
+
     // Check if progress already exists
     const existing = await db.execute({
       sql: 'SELECT id FROM watch_progress WHERE anilist_id = ? AND episode_number = ?',
@@ -28,23 +31,21 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing.rows.length > 0) {
-      // Update
       await db.execute({
         sql: `
           UPDATE watch_progress 
           SET seconds_watched = ?, duration_seconds = ?, last_watched_at = datetime('now')
           WHERE anilist_id = ? AND episode_number = ?
         `,
-        args: [secondsWatched, durationSeconds, anilistId, episodeNumber]
+        args: [safeSeconds, safeDuration, anilistId, episodeNumber]
       });
     } else {
-      // Insert
       await db.execute({
         sql: `
           INSERT INTO watch_progress (anilist_id, episode_number, seconds_watched, duration_seconds, last_watched_at)
           VALUES (?, ?, ?, ?, datetime('now'))
         `,
-        args: [anilistId, episodeNumber, secondsWatched, durationSeconds]
+        args: [anilistId, episodeNumber, safeSeconds, safeDuration]
       });
     }
 

@@ -118,10 +118,13 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          return NextResponse.json({
-            media: reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m.anilistId),
-            pageInfo: { total: reanimeResult.total, lastPage: Math.ceil(reanimeResult.total / limit), currentPage: page },
-          });
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          if (mapped.length > 0) {
+            return NextResponse.json({
+              media: mapped,
+              pageInfo: { total: reanimeResult.total, lastPage: Math.ceil(reanimeResult.total / limit), currentPage: page },
+            });
+          }
         }
 
         // AniList fallback (10s timeout)
@@ -193,10 +196,13 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          return NextResponse.json({
-            media: reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m.anilistId),
-            pageInfo: { total: reanimeResult.total, lastPage: Math.ceil(reanimeResult.total / limit), currentPage: page },
-          });
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          if (mapped.length > 0) {
+            return NextResponse.json({
+              media: mapped,
+              pageInfo: { total: reanimeResult.total, lastPage: Math.ceil(reanimeResult.total / limit), currentPage: page },
+            });
+          }
         }
         const alResult = await getTopRated(page, limit);
         return NextResponse.json({ media: alResult.media.map(mapMedia) });

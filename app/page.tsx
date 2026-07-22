@@ -186,12 +186,11 @@ export default function HomePage() {
                 <h2 className={styles.sectionTitle}>Dive Back In</h2>
                 <div className={styles.continueGrid}>
                   {continueWatching.map((item) => {
-                    const percent = Math.min(
-                      100,
-                      Math.round((item.seconds_watched / (item.duration_seconds || 1)) * 100)
-                    );
+                    const percent = item.duration_seconds > 0
+                      ? Math.min(100, Math.round((item.seconds_watched / item.duration_seconds) * 100))
+                      : 0;
                     const title = item.title_romaji || item.title_english || 'Anime';
-                    const remaining = item.duration_seconds
+                    const remaining = item.duration_seconds > 0
                       ? Math.floor((item.duration_seconds - item.seconds_watched) / 60)
                       : null;
                     return (
@@ -213,9 +212,14 @@ export default function HomePage() {
                           {remaining != null && (
                             <div className={styles.durationBadge}>{remaining}m left</div>
                           )}
-                          <div className={styles.progressBar}>
-                            <div className={styles.progressFill} style={{ width: `${percent}%` }} />
-                          </div>
+                          {remaining == null && item.episode_number && (
+                            <div className={styles.durationBadge}>Ep {item.episode_number}</div>
+                          )}
+                          {item.duration_seconds > 0 && (
+                            <div className={styles.progressBar}>
+                              <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+                            </div>
+                          )}
                         </div>
                         <div className={styles.continueInfo}>
                           <h4 className={styles.continueTitle}>{title}</h4>
@@ -267,8 +271,8 @@ export default function HomePage() {
                 </button>
               </div>
               <div className={styles.horizontalScroll}>
-                {tabAnime.filter((a: HomeCardItem) => a.anilistId && a.anilistId > 0).map((anime: HomeCardItem, idx: number) => (
-                  <div key={`${anime.anilistId}-${idx}`} className={styles.cardWrapper}>
+                {tabAnime.filter((a: HomeCardItem) => a.anilistId && a.anilistId > 0).map((anime: HomeCardItem) => (
+                  <div key={`trend-${anime.anilistId}-${activeTrendTab}`} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
                       poster={anime.coverImage}
@@ -296,7 +300,7 @@ export default function HomePage() {
                 </div>
                 <div className={styles.horizontalScroll}>
                   {thisSeasonCards.map((anime: HomeCardItem) => (
-                    <div key={anime.anilistId} className={styles.cardWrapper}>
+                    <div key={`season-${anime.anilistId}`} className={styles.cardWrapper}>
                       <AnimeCard
                         id={anime.anilistId}
                         poster={anime.coverImage}
@@ -332,27 +336,39 @@ export default function HomePage() {
             <div className={styles.splitGrid}>
               <div className={styles.leftCol}>
                 <section className={styles.section}>
-                  <h2 className={styles.sectionTitle}>Recently Updated</h2>
-                  <div className={styles.horizontalScroll}>
-                    {recentlyUpdatedCards.map((item: any, idx: number) => {
-                      const anime = item.media;
-                      if (!anime?.id) return null;
-                      return (
-                        <div key={`${anime.id}-${item.episode}-${idx}`} className={styles.cardWrapper}>
-                          <AnimeCard
-                            id={anime.id}
-                            poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}
-                            title={anime.title?.english || anime.title?.romaji || 'Unknown'}
-                            format={anime.format}
-                            year={anime.seasonYear}
-                            status={anime.status}
-                            score={anime.averageScore}
-                            synopsis={anime.description}
-                            genres={anime.genres || []}
-                          />
-                        </div>
-                      );
-                    })}
+                  <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle}>Recently Updated</h2>
+                    <Link href="/browse?sort=UPDATED_AT_DESC" className={styles.viewAllBtn}>
+                      View All →
+                    </Link>
+                  </div>
+                  <div className={styles.homeCardGridLimited}>
+                    {(() => {
+                      const seen = new Set<number>();
+                      return recentlyUpdatedCards.slice(0, 12).filter((item: any) => {
+                        const anime = item.media;
+                        if (!anime?.id || seen.has(anime.id)) return false;
+                        seen.add(anime.id);
+                        return true;
+                      }).map((item: any) => {
+                        const anime = item.media;
+                        return (
+                          <div key={`recent-${anime.id}`} className={styles.gridCardWrap}>
+                            <AnimeCard
+                              id={anime.id}
+                              poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}
+                              title={anime.title?.english || anime.title?.romaji || 'Unknown'}
+                              format={anime.format}
+                              year={anime.seasonYear}
+                              status={anime.status}
+                              score={anime.averageScore}
+                              synopsis={anime.description}
+                              genres={anime.genres || []}
+                            />
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </section>
               </div>
@@ -368,13 +384,13 @@ export default function HomePage() {
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Top Upcoming</h2>
-                <Link href="/browse?status=NOT_YET_RELEASED&sort=POPULARITY_DESC" className={styles.viewAllLink}>
-                  →
+                <Link href="/browse?status=NOT_YET_RELEASED&sort=POPULARITY_DESC" className={styles.viewAllBtn}>
+                  View All →
                 </Link>
               </div>
-              <div className={styles.horizontalScroll}>
-                {upcomingCards.map((anime: HomeCardItem) => (
-                  <div key={anime.anilistId} className={styles.cardWrapper}>
+              <div className={styles.homeCardGridLimited}>
+                {upcomingCards.slice(0, 12).map((anime: HomeCardItem) => (
+                  <div key={`upcoming-${anime.anilistId}`} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
                       poster={anime.coverImage}

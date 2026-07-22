@@ -796,31 +796,54 @@
   color: var(--text-secondary);
 }
 
-/* ─── Horizontal card scroll for recommendations ─── */
-.horizontalCardScroll {
+/* ─── Stacked recommendation list (like search dropdown) ─── */
+.stackedRecList {
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  scroll-snap-type: x mandatory;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.horizontalCardScroll::-webkit-scrollbar {
-  height: 4px;
+.stackedRecItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: background-color 0.15s;
 }
 
-.horizontalCardScroll::-webkit-scrollbar-track {
-  background: transparent;
+.stackedRecItem:hover {
+  background-color: var(--bg-surface-hover);
 }
 
-.horizontalCardScroll::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
+.stackedRecThumb {
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.recCardWrapper {
-  flex: 0 0 150px;
-  scroll-snap-align: start;
+.stackedRecInfo {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stackedRecTitle {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stackedRecMeta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 /* Series Progress Bar */
