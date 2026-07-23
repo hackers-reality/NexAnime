@@ -193,6 +193,30 @@ export async function getMediaDetail(anilistId: number): Promise<AniListMedia | 
       const alDetail = await getAnilistDetail(anilistId);
       if (alDetail) mergeAnilistFields(media, alDetail);
     }
+    // Cache reanime.to result to DB for instant subsequent loads
+    try {
+      const { execute } = await import('./db');
+      await execute(
+        `INSERT INTO anime_cache (anilist_id, mal_id, title_romaji, title_english, synopsis, cover_image, full_data)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(anilist_id) DO UPDATE SET
+           mal_id = COALESCE(excluded.mal_id, mal_id),
+           title_romaji = COALESCE(excluded.title_romaji, title_romaji),
+           title_english = COALESCE(excluded.title_english, title_english),
+           synopsis = COALESCE(excluded.synopsis, synopsis),
+           cover_image = COALESCE(excluded.cover_image, cover_image),
+           full_data = excluded.full_data`,
+        [
+          anilistId,
+          reanimeDetail.mal_id || null,
+          media.title?.romaji || null,
+          media.title?.english || null,
+          media.description || null,
+          media.coverImage?.extraLarge || media.coverImage?.large || null,
+          JSON.stringify(media),
+        ]
+      );
+    } catch {}
     return media;
   }
   // Fallback to AniList
