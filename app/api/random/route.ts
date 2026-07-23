@@ -25,7 +25,7 @@ export async function GET() {
     const sortOptions = ['SCORE_DESC', 'POPULARITY_DESC', 'START_DATE_DESC', 'FAVOURITES_DESC'];
     const sort = sortOptions[Math.floor(Math.random() * sortOptions.length)];
 
-    const query = `query ($genre: String, $sort: [MediaSort]) {
+    const gqlQuery = `query ($genre: String, $sort: [MediaSort]) {
       Page(perPage: 1, page: ${Math.floor(Math.random() * 10) + 1}) {
         media(genre: $genre, sort: $sort, type: ANIME) {
           id
@@ -36,7 +36,7 @@ export async function GET() {
     const res = await fetch('https://graphql.anilist.co', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { genre, sort } }),
+      body: JSON.stringify({ query: gqlQuery, variables: { genre, sort } }),
     });
 
     if (!res.ok) {
