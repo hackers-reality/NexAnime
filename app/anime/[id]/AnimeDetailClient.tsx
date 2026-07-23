@@ -42,12 +42,15 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
 
     setCharsLoading(true);
 
-    // Fetch episodes, characters, and staff in parallel
+    // Fetch episodes (reanime.to + Jikan synopses) and characters/staff in parallel
     Promise.allSettled([
-      // Reanime.to episodes (thumbnails)
-      fetch(`/api/meta?action=episodes&id=${media.id}`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.episodes?.length) setReanimeEpisodes(d.episodes); }),
-      // Jikan episodes (titles, filler flags, air dates)
-      media.idMal ? fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.data) setJikanEpisodes(d.data); }) : Promise.resolve(),
+      // Episodes via meta endpoint (reanime.to thumbnails + Jikan synopses)
+      fetch(`/api/meta?action=episodes&id=${media.id}${media.idMal ? `&malId=${media.idMal}` : ''}`)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(d => {
+          if (d.episodes?.length) setReanimeEpisodes(d.episodes);
+          if (d.jikanEpisodes?.length) setJikanEpisodes(d.jikanEpisodes);
+        }),
       // Characters with voice actors
       media.idMal ? getMediaCharacters(media.idMal).then(setJikanCharacters) : Promise.resolve(),
       // Staff

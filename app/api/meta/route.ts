@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, getReanimeSchedule, buildSlugMapping } from '@/lib/reanime';
 import { searchMedia, getAiringSchedule } from '@/lib/data-api';
+import { getJikanEpisodes } from '@/lib/jikan-api';
 import {
   getTrending,
   getPopular,
@@ -257,13 +258,41 @@ export async function GET(request: NextRequest) {
         const id = request.nextUrl.searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
         const anilistId = parseInt(id);
+        let episodes: any[] = [];
+        let jikanEpisodes: any[] = [];
+
         if (!isNaN(anilistId)) {
           try {
             const eps = await getReanimeEpisodesByAnilistId(anilistId);
-            if (eps?.length) return NextResponse.json({ episodes: eps });
+            if (eps?.length) episodes = eps;
           } catch {}
         }
-        return NextResponse.json({ episodes: [] });
+
+        // Fetch Jikan episodes for synopses (fetches up to 3 pages / 300 eps)
+        try {
+          const mediaIdMal = request.nextUrl.searchParams.get('malId');
+          if (mediaIdMal) {
+            const jikan = await getJikanEpisodes(parseInt(mediaIdMal));
+            if (jikan?.length) jikanEpisodes = jikan;
+          }
+        } catch {}
+
+        // If no malId param, try to find it from our DB cache
+        if (jikanEpisodes.length === 0) {
+          try {
+            const { queryOne } = await import('@/lib/db');
+            const cached = await queryOne<{ mal_id: number }>(
+              'SELECT mal_id FROM anime_cache WHERE anilist_id = ? AND mal_id IS NOT NULL',
+              [anilistId]
+            );
+            if (cached?.mal_id) {
+              const jikan = await getJikanEpisodes(cached.mal_id);
+              if (jikan?.length) jikanEpisodes = jikan;
+            }
+          } catch {}
+        }
+
+        return NextResponse.json({ episodes, jikanEpisodes });
       }
 
       case 'schedule': {

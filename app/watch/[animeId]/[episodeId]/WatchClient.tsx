@@ -129,22 +129,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   useEffect(() => {
     if (!media.idMal && !media.id) return;
 
-    // Fetch reanime episodes (thumbnails) and Jikan episodes in parallel
-    Promise.allSettled([
-      fetch(`/api/meta?action=episodes&id=${media.id}`).then(r => r.ok ? r.json() : Promise.reject()).then(d => { if (d.episodes?.length) setReanimeEpisodes(d.episodes); }),
-      media.idMal ? fetch(`https://api.jikan.moe/v4/anime/${media.idMal}/episodes`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Jikan API rate limit');
-          return res.json();
-        })
-        .then((data) => {
-          if (data.data) {
-            setJikanEpisodes(data.data);
-          }
-        })
-        .catch((err) => console.warn('[Jikan] Fallback episode titles unavailable:', err))
-        : Promise.resolve(),
-    ]);
+    // Episodes via meta endpoint (reanime.to thumbnails + Jikan synopses)
+    fetch(`/api/meta?action=episodes&id=${media.id}${media.idMal ? `&malId=${media.idMal}` : ''}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => {
+        if (d.episodes?.length) setReanimeEpisodes(d.episodes);
+        if (d.jikanEpisodes?.length) setJikanEpisodes(d.jikanEpisodes);
+      })
+      .catch(err => console.warn('[Meta] Episode fetch failed:', err));
   }, [media.idMal, media.id]);
 
   useEffect(() => {
