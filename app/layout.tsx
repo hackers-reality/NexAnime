@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UpdateBanner from '@/components/shared/UpdateBanner';
 import ShortcutsOverlay from '@/components/shared/ShortcutsOverlay';
+import ScrollToTop from '@/components/ui/ScrollToTop';
 import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default async function RootLayout({
           {children}
           <UpdateBanner />
           <ShortcutsOverlay />
+          <ScrollToTop />
         </ToastProvider>
       </body>
     </html>

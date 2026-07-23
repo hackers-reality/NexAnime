@@ -88,6 +88,7 @@ export default function HomePage() {
   const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'popular' | 'topRated'>('trending');
   const [tabAnime, setTabAnime] = useState<HomeCardItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [randomLoading, setRandomLoading] = useState(false);
 
   const loadAttempt = useRef(0);
 
@@ -254,17 +255,20 @@ export default function HomePage() {
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button
                     onClick={async () => {
+                      setRandomLoading(true);
                       try {
                         const res = await fetch('/api/random');
                         const data = await res.json();
                         if (data.id) router.push(`/anime/${data.id}`);
                       } catch {}
+                      setRandomLoading(false);
                     }}
                     className={styles.viewAllLink}
                     title="Surprise Me"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--primary)', fontWeight: 500, whiteSpace: 'nowrap' }}
+                    disabled={randomLoading}
+                    style={{ background: 'none', border: 'none', cursor: randomLoading ? 'wait' : 'pointer', fontSize: 14, color: 'var(--primary)', fontWeight: 500, whiteSpace: 'nowrap', opacity: randomLoading ? 0.6 : 1 }}
                   >
-                    🎲 Surprise Me
+                    {randomLoading ? '...' : '🎲 Surprise Me'}
                   </button>
                   <Link href="/browse?sort=POPULARITY_DESC" className={styles.viewAllLink}>
                     →
