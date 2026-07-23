@@ -116,6 +116,7 @@ export async function getHomeData(): Promise<HomePayload> {
 
   // Build schedule from reanime.to
   if (reanimeSchedule.status === 'fulfilled' && reanimeSchedule.value) {
+    const seenKeys = new Set<string>();
     schedule = reanimeSchedule.value
       .map(item => {
         const mapped = mapScheduleItem(item);
@@ -128,7 +129,13 @@ export async function getHomeData(): Promise<HomePayload> {
           media: mapped.media,
         } as AniListAiringSchedule;
       })
-      .filter(Boolean) as AniListAiringSchedule[];
+      .filter((e): e is AniListAiringSchedule => {
+        if (!e) return false;
+        const key = `${e.mediaId}::${e.episode}`;
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        return true;
+      });
   }
 
   // Step 2: Only fire AniList queries if reanime.to failed or returned too little
@@ -188,7 +195,7 @@ export async function getHomeData(): Promise<HomePayload> {
     }
   }
 
-  // Step 3: Use hianime for recentlyUpdated if available, else skip
+  // Step 3: Use hianime for recentlyUpdated if available, else fall back to recent schedule
   try {
     const hianimeHome = await fetch('https://aniwatchbackend.cfd/api/home', {
       signal: AbortSignal.timeout(5000),
@@ -196,19 +203,48 @@ export async function getHomeData(): Promise<HomePayload> {
     });
     if (hianimeHome.ok) {
       const data = await hianimeHome.json();
-      if (data?.latestEpisodes?.length) {
-        recentlyUpdated = data.latestEpisodes.slice(0, 10).map((ep: any) => ({
-          id: 0,
-          airingAt: Math.floor(Date.now() / 1000),
-          episode: ep.episodeNumber || ep.episode || 0,
-          mediaId: ep.animeId || ep.id || 0,
-          media: {
-            id: ep.animeId || ep.id || 0,
-            title: { romaji: ep.title || '', english: ep.title || '' },
-            coverImage: { large: ep.image || ep.thumbnail || null, medium: ep.image || ep.thumbnail || null, extraLarge: null },
-          },
-        } as AniListAiringSchedule));
+      // hianime returns latestEpisodes as an array of {episodes: [...]} groups; flatten and extract
+      const groups: any[] = Array.isArray(data?.latestEpisodes) ? data.latestEpisodes : [];
+      const flat: any[] = [];
+      for (const g of groups) {
+        const arr = Array.isArray(g?.episodes) ? g.episodes : (Array.isArray(g) ? g : []);
+        flat.push(...arr);
       }
+      const nowSec = Math.floor(Date.now() / 1000);
+      const seenMal = new Set<number>();
+      recentlyUpdated = flat
+        .filter((ep: any) => {
+          const info = ep?.anime_info;
+          if (!info) return false;
+          const malId = info.mal_id;
+          if (!malId || seenMal.has(malId)) return false;
+          // Exclude not-yet-aired anime — they shouldn't appear under "recently updated" until they actually air
+          const status = String(info.Status || '').toLowerCase();
+          if (status.includes('not yet') || status.includes('upcoming')) return false;
+          seenMal.add(malId);
+          return true;
+        })
+        .slice(0, 10)
+        .map((ep: any) => {
+          const info = ep.anime_info;
+          const malId = info.mal_id;
+          // hianime doesn't return AniList ID; the cover-image URL parsing is unreliable
+          // so we use malId as both mediaId and (temporarily) the AniList id. The home page
+          // will look up the proper mapping via the AnimeCard's link click.
+          return {
+            id: 0,
+            airingAt: ep.createdAt ? Math.floor(new Date(ep.createdAt).getTime() / 1000) : nowSec,
+            episode: ep.episodeNumber || 0,
+            mediaId: malId,
+            media: {
+              id: malId, // MAL id used as fallback; client resolves to anilist on click
+              idMal: malId,
+              title: { romaji: info.Japanese || info.English || info.title || '', english: info.English || info.title || '' },
+              coverImage: { large: info.image || null, medium: info.image || null, extraLarge: info.image || null },
+              status: /airing|releas/i.test(String(info.Status || '')) ? 'RELEASING' : 'FINISHED',
+            },
+          } as AniListAiringSchedule;
+        });
     }
   } catch {}
 

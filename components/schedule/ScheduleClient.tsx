@@ -35,9 +35,14 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
 
   const scheduleByDay = useMemo(() => {
     const byDay: AniListAiringSchedule[][] = Array.from({ length: 7 }, () => []);
+    const seenByDay: Set<string>[] = Array.from({ length: 7 }, () => new Set<string>());
     for (const entry of initialSchedule) {
       const airDate = new Date(entry.airingAt * 1000);
       const dayIndex = (airDate.getDay() + 6) % 7;
+      // Dedupe by "<mediaId>::<episode>" so the same episode airing twice doesn't appear twice
+      const key = `${entry.mediaId}::${entry.episode}`;
+      if (seenByDay[dayIndex].has(key)) continue;
+      seenByDay[dayIndex].add(key);
       byDay[dayIndex].push(entry);
     }
     // Sort each day by airing time
