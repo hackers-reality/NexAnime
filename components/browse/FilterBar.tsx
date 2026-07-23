@@ -87,6 +87,8 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
   const [tags, setTags] = useState<string[]>(initialFilters.tags ?? []);
   const [country, setCountry] = useState<string>(initialFilters.countryOfOrigin ?? '');
   const [source, setSource] = useState<string>(initialFilters.source ?? '');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
 
   const [showGenrePopover, setShowGenrePopover] = useState(false);
   const [showTagPopover, setShowTagPopover] = useState(false);
@@ -98,10 +100,22 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
   useEffect(() => {
     const handler = setTimeout(() => {
       triggerChange({ search: search || undefined });
+      if (search.trim()) {
+        const stored = JSON.parse(localStorage.getItem('nexanime_search_history') || '[]') as string[];
+        const updated = [search.trim(), ...stored.filter(s => s !== search.trim())].slice(0, 8);
+        localStorage.setItem('nexanime_search_history', JSON.stringify(updated));
+        setRecentSearches(updated);
+      }
     }, 450);
 
     return () => clearTimeout(handler);
   }, [search]);
+
+  // Load recent searches on mount
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('nexanime_search_history') || '[]') as string[];
+    setRecentSearches(stored);
+  }, []);
 
   // Click outside to close popovers
   useEffect(() => {
@@ -173,7 +187,7 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
   return (
     <div className={styles.filterBar}>
       {/* Search Input Row */}
-      <div className={styles.searchRow}>
+      <div className={styles.searchRow} style={{ position: 'relative' }}>
         <span className={styles.searchIcon}>⌕</span>
         <input
           type="text"
@@ -181,7 +195,34 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
           placeholder="Search for anime..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onFocus={() => setShowRecent(true)}
+          onBlur={() => setTimeout(() => setShowRecent(false), 200)}
         />
+        {showRecent && !search && recentSearches.length > 0 && (
+          <div className={styles.recentSearches}>
+            <div className={styles.recentHeader}>
+              <span>Recent</span>
+              <button
+                type="button"
+                onClick={() => { localStorage.removeItem('nexanime_search_history'); setRecentSearches([]); }}
+                className={styles.clearRecentBtn}
+              >
+                Clear
+              </button>
+            </div>
+            {recentSearches.map((term, i) => (
+              <button
+                key={`${term}-${i}`}
+                type="button"
+                className={styles.recentItem}
+                onMouseDown={() => { setSearch(term); setShowRecent(false); }}
+              >
+                <span style={{ opacity: 0.5, marginRight: 6 }}>⌕</span>
+                {term}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Grid of Dropdowns */}
