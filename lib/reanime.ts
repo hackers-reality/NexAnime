@@ -579,14 +579,14 @@ export async function getReanimeEpisodesByAnilistId(anilistId: number): Promise<
   // Check DB cache first (valid for 30 min)
   try {
     const { queryOne } = await import('./db');
-    const cached = await queryOne<{ full_data: string; cached_at: string }>(
-      'SELECT full_data, cached_at FROM anime_cache WHERE anilist_id = ? AND full_data IS NOT NULL',
+    const cached = await queryOne<{ episodes_data: string; cached_at: string }>(
+      'SELECT episodes_data, cached_at FROM anime_cache WHERE anilist_id = ? AND episodes_data IS NOT NULL',
       [anilistId]
     );
-    if (cached?.full_data) {
+    if (cached?.episodes_data) {
       const cacheAge = Date.now() - new Date(cached.cached_at + 'Z').getTime();
       if (cacheAge < 30 * 60 * 1000) { // 30 min
-        const parsed = JSON.parse(cached.full_data);
+        const parsed = JSON.parse(cached.episodes_data);
         if (Array.isArray(parsed)) return parsed as ReanimeEpisode[];
       }
     }
@@ -620,8 +620,8 @@ async function cacheEpisodesInDb(anilistId: number, episodes: ReanimeEpisode[]):
   try {
     const { execute } = await import('./db');
     await execute(
-      `INSERT INTO anime_cache (anilist_id, full_data, cached_at) VALUES (?, ?, datetime('now'))
-       ON CONFLICT(anilist_id) DO UPDATE SET full_data = excluded.full_data, cached_at = datetime('now')`,
+      `INSERT INTO anime_cache (anilist_id, episodes_data, cached_at) VALUES (?, ?, datetime('now'))
+       ON CONFLICT(anilist_id) DO UPDATE SET episodes_data = excluded.episodes_data, cached_at = datetime('now')`,
       [anilistId, JSON.stringify(episodes)]
     );
   } catch {}

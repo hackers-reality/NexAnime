@@ -134,6 +134,27 @@ export async function getHomeData(): Promise<HomePayload> {
   // Step 2: Only fire AniList queries if reanime.to failed or returned too little
   const needsAniListFallback = trending.length < 6 || reanimeHome.status !== 'fulfilled';
 
+  // Always try reanime.to for thisSeason + upcoming (cheap search calls)
+  try {
+    const currentYear = new Date().getFullYear();
+    const currentSeason = ['WINTER', 'SPRING', 'SUMMER', 'FALL'][Math.floor((new Date().getMonth() / 12) * 4)] || 'WINTER';
+    const seasonResults = await searchReanime({ season: currentSeason, year: currentYear, limit: 12 });
+    if (seasonResults?.results?.length) {
+      thisSeason = seasonResults.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
+      const existingIds = new Set(trending.map(m => m.id));
+      thisSeason = thisSeason.filter(m => !existingIds.has(m.id)).slice(0, 12);
+    }
+  } catch {}
+
+  try {
+    const upcomingResults = await searchReanime({ status: 'NOT_YET_RELEASED', limit: 12 });
+    if (upcomingResults?.results?.length) {
+      upcoming = upcomingResults.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
+      const existingIds = new Set([...trending.map(m => m.id), ...thisSeason.map(m => m.id)]);
+      upcoming = upcoming.filter(m => !existingIds.has(m.id)).slice(0, 12);
+    }
+  } catch {}
+
   if (needsAniListFallback) {
     // Fire AniList queries sequentially (not parallel) to avoid rate limits
     try {
@@ -156,10 +177,26 @@ export async function getHomeData(): Promise<HomePayload> {
       } catch {}
     }
 
-    try {
-      const upcomingData = await getUpcoming(1, 10);
-      if (upcomingData?.media) upcoming = upcomingData.media;
-    } catch {}
+    if (thisSeason.length === 0) {
+      try {
+        const seasonData = await getThisSeason(1, 12);
+        if (seasonData?.media) {
+          const existingIds = new Set(trending.map(m => m.id));
+          thisSeason = seasonData.media.filter(m => !existingIds.has(m.id)).slice(0, 12);
+        }
+      } catch {}
+    }
+
+    if (upcoming.length < 6) {
+      try {
+        const upcomingData = await getUpcoming(1, 10);
+        if (upcomingData?.media) {
+          const existingIds = new Set([...trending.map(m => m.id), ...thisSeason.map(m => m.id), ...upcoming.map(m => m.id)]);
+          const fillers = upcomingData.media.filter(m => !existingIds.has(m.id));
+          upcoming = [...upcoming, ...fillers].slice(0, 12);
+        }
+      } catch {}
+    }
   }
 
   // Step 3: Use hianime for recentlyUpdated if available, else skip

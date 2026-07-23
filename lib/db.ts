@@ -141,6 +141,7 @@ export async function initializeDb(): Promise<void> {
   try { await db.execute('ALTER TABLE anime_cache ADD COLUMN mal_id INTEGER'); } catch {}
   try { await db.execute('ALTER TABLE anime_cache ADD COLUMN streaming_episodes TEXT'); } catch {}
   try { await db.execute('ALTER TABLE anime_cache ADD COLUMN full_data TEXT'); } catch {}
+  try { await db.execute('ALTER TABLE anime_cache ADD COLUMN episodes_data TEXT'); } catch {}
 
   try {
     await db.execute(`DELETE FROM episode_sources WHERE source_adapter NOT IN ('rapidstream', 'nova', 'megaplay', 'gogoanime', 'animepahe')`);
