@@ -367,7 +367,15 @@ export async function getMediaEpisodes(malId: number): Promise<any[]> {
 // ─── Recommendations ───────────────────────────────────────
 
 export async function getMediaRecommendations(anilistId: number): Promise<AniListMedia[]> {
-  // Try reanime.to recommendations first (faster, has cover images + scores)
+  // Try AniList recommendations first (gives proper AniList IDs for linking)
+  const recs = await getAnilistRecommendations(anilistId);
+  if (recs?.nodes && recs.nodes.length > 0) {
+    return recs.nodes
+      .map(n => n.mediaRecommendation)
+      .filter((m): m is AniListMedia => m !== null);
+  }
+
+  // Fallback to reanime.to recommendations (cover images + scores, but no AniList IDs)
   const { queryOne } = await import('./db');
   const cached = await queryOne<{ mal_id: number }>(
     'SELECT mal_id FROM anime_cache WHERE anilist_id = ? AND mal_id IS NOT NULL',
@@ -377,20 +385,13 @@ export async function getMediaRecommendations(anilistId: number): Promise<AniLis
     const { getSlugByMalId } = await import('./reanime');
     const slug = await getSlugByMalId(cached.mal_id);
     if (slug) {
-      const recs = await getReanimeRecommendations(slug);
-      if (recs && recs.length > 0) {
-        return recs.map(r => mapReanimeRecommendation(r)).filter((m): m is AniListMedia => m !== null);
+      const reanimeRecs = await getReanimeRecommendations(slug);
+      if (reanimeRecs && reanimeRecs.length > 0) {
+        return reanimeRecs.map(r => mapReanimeRecommendation(r)).filter((m): m is AniListMedia => m !== null);
       }
     }
   }
 
-  // Fallback to AniList recommendations
-  const recs = await getAnilistRecommendations(anilistId);
-  if (recs?.nodes) {
-    return recs.nodes
-      .map(n => n.mediaRecommendation)
-      .filter((m): m is AniListMedia => m !== null);
-  }
   return [];
 }
 

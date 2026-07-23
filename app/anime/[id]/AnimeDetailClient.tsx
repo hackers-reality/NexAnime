@@ -202,6 +202,43 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                 <span className={styles.metaValue}>{media.source.replace('_', ' ')}</span>
               </div>
             )}
+            {media.rating && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Rating</span>
+                <span className={styles.metaValue}>{media.rating}</span>
+              </div>
+            )}
+            {media.duration && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Duration</span>
+                <span className={styles.metaValue}>{media.duration} min</span>
+              </div>
+            )}
+            {(media.subbed || media.dubbed) && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Available</span>
+                <span className={styles.metaValue}>
+                  {media.subbed ? `${media.subbed} Sub` : ''}
+                  {media.subbed && media.dubbed ? ' | ' : ''}
+                  {media.dubbed ? `${media.dubbed} Dub` : ''}
+                </span>
+              </div>
+            )}
+            {media.hashtag && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Hashtag</span>
+                <span className={styles.metaValue}>{media.hashtag}</span>
+              </div>
+            )}
+            {media.startDate && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Aired</span>
+                <span className={styles.metaValue}>
+                  {media.startDate.month}/{media.startDate.day}/{media.startDate.year}
+                  {media.endDate ? ` - ${media.endDate.month}/${media.endDate.day}/${media.endDate.year}` : ''}
+                </span>
+              </div>
+            )}
             {anime.studios.length > 0 && (
               <div className={styles.metaItem}>
                 <span className={styles.metaLabel}>Studios</span>
@@ -210,6 +247,25 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     <span key={studio} className={styles.metaChip}>
                       {studio}
                     </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {media.externalLinks && media.externalLinks.length > 0 && (
+              <div className={styles.metaItem}>
+                <span className={styles.metaLabel}>Links</span>
+                <div className={styles.chipGrid}>
+                  {media.externalLinks.filter(l => l.type !== 'INFO' || l.site === 'Official Site').slice(0, 6).map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.metaChip}
+                      style={{ textDecoration: 'none', color: 'var(--text-primary)' }}
+                    >
+                      {link.site}
+                    </a>
                   ))}
                 </div>
               </div>
@@ -610,21 +666,22 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                       .filter((n) => n.mediaRecommendation !== null)
                       .map((n, index) => {
                         const rec = n.mediaRecommendation!;
-                        return (
-                          <div key={`${rec.id}-${index}`}>
-                            <AnimeCard
-                              id={rec.id}
-                              poster={rec.coverImage?.extraLarge || rec.coverImage?.large}
-                              title={rec.title.english || rec.title.romaji || 'Untitled'}
-                              format={rec.format}
-                              year={rec.seasonYear}
-                              status={rec.status}
-                              score={rec.averageScore}
-                              synopsis={rec.description}
-                              genres={rec.genres || []}
-                            />
-                          </div>
+                        const hasValidId = rec.id > 0;
+                        const card = (
+                          <AnimeCard
+                            id={rec.id}
+                            poster={rec.coverImage?.extraLarge || rec.coverImage?.large}
+                            title={rec.title.english || rec.title.romaji || 'Untitled'}
+                            format={rec.format}
+                            year={rec.seasonYear}
+                            status={rec.status}
+                            score={rec.averageScore}
+                            synopsis={rec.description}
+                            genres={rec.genres || []}
+                          />
                         );
+                        if (!hasValidId) return <div key={`${rec.id}-${index}`}>{card}</div>;
+                        return <div key={`${rec.id}-${index}`}>{card}</div>;
                       })}
                   </div>
                 ) : (
