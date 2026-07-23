@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADAPTERS } from '@/scraper/adapters';
-import { execute, query } from '@/lib/db';
+import { execute, query, queryOne } from '@/lib/db';
 
 interface RouteParams {
   params: Promise<{ animeId: string; ep: string }>;
+}
+
+// Fetch cached episode metadata (title, thumbnail) from anime_cache.episodes_data
+async function getEpisodeMeta(anilistId: number, epNum: number): Promise<{ title: string | null; thumbnail: string | null }> {
+  try {
+    const row = await queryOne<{ episodes_data: string }>(
+      'SELECT episodes_data FROM anime_cache WHERE anilist_id = ? AND episodes_data IS NOT NULL',
+      [anilistId]
+    );
+    if (row?.episodes_data) {
+      const eps = JSON.parse(row.episodes_data) as Array<{ episode_number: number; title: string | null; thumbnail: string | null }>;
+      const ep = eps.find(e => e.episode_number === epNum);
+      if (ep) return { title: ep.title, thumbnail: ep.thumbnail };
+    }
+  } catch {}
+  return { title: null, thumbnail: null };
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -16,13 +32,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
-    const isDub = request.nextUrl.searchParams.get('dub') === 'true';
-    const all = request.nextUrl.searchParams.get('all') === 'true';
-    const quality = request.nextUrl.searchParams.get('quality');
+  const isDub = request.nextUrl.searchParams.get('dub') === 'true';
+  const all = request.nextUrl.searchParams.get('all') === 'true';
+  const quality = request.nextUrl.searchParams.get('quality');
 
-    if (quality) {
-      console.log(`[Stream] Quality preference "${quality}" requested for anime ${anilistId} ep ${episodeNumber} — adapters do not support quality selection yet`);
-    }
+  if (quality) {
+    console.log(`[Stream] Quality preference "${quality}" requested for anime ${anilistId} ep ${episodeNumber} — adapters do not support quality selection yet`);
+  }
+
+  // Look up episode metadata for cache enrichment
+  const epMeta = await getEpisodeMeta(anilistId, episodeNumber);
 
     // Check episode_sources cache first
     const cachedSources = await query<{
@@ -65,9 +84,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
         if (source) {
           await execute(
-            `INSERT OR IGNORE INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
-             VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-            [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
+            `INSERT OR IGNORE INTO episode_sources
+             (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+            [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
           );
         }
         return source;
@@ -87,9 +107,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
           if (source) {
             await execute(
-              `INSERT OR IGNORE INTO episode_sources (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, resolved_at)
-               VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl]
+              `INSERT OR IGNORE INTO episode_sources
+               (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+              [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
             );
           }
           return source;

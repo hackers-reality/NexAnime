@@ -486,7 +486,7 @@ export async function getReanimeByAnilistId(anilistId: number): Promise<ReanimeA
       if (malId) {
         const { execute } = await import('./db');
         await execute(
-          'INSERT OR REPLACE INTO anime_cache (anilist_id, mal_id) VALUES (?, ?) ON CONFLICT(anilist_id) DO UPDATE SET mal_id = excluded.mal_id',
+          'INSERT INTO anime_cache (anilist_id, mal_id) VALUES (?, ?) ON CONFLICT(anilist_id) DO UPDATE SET mal_id = excluded.mal_id',
           [anilistId, malId]
         );
       }
@@ -805,7 +805,7 @@ export function mapHomeItem(item: ReanimeAnimeItem): AniListMedia | null {
     popularity: item.popularity || null,
     favourites: item.favourites || null,
     studios: { nodes: [] },
-    genres: item.genres || [],
+    genres: Array.isArray(item.genres) ? item.genres : (item.genres ? (item.genres as unknown as string).split(',').map((g: string) => g.trim()).filter(Boolean) : []),
     tags: [],
     coverImage: {
       extraLarge: item.cover_image?.extra_large || null,
@@ -829,7 +829,7 @@ export function mapHomeItem(item: ReanimeAnimeItem): AniListMedia | null {
     stats: null,
     synonyms: item.synonyms || [],
     rating: item.rating || null,
-    duration: item.duration || null,
+    duration: typeof item.duration === 'number' ? item.duration : null,
     subbed: typeof item.subbed === 'number' ? item.subbed : null,
     dubbed: typeof item.dubbed === 'number' ? item.dubbed : null,
     trending: item.trending || null,

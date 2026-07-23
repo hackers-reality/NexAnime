@@ -134,68 +134,57 @@ export async function getHomeData(): Promise<HomePayload> {
   // Step 2: Only fire AniList queries if reanime.to failed or returned too little
   const needsAniListFallback = trending.length < 6 || reanimeHome.status !== 'fulfilled';
 
-  // Always try reanime.to for thisSeason + upcoming (cheap search calls)
+  // Always try reanime.to for thisSeason + upcoming (cheap search calls, run in parallel)
   try {
     const currentYear = new Date().getFullYear();
     const currentSeason = ['WINTER', 'SPRING', 'SUMMER', 'FALL'][Math.floor((new Date().getMonth() / 12) * 4)] || 'WINTER';
-    const seasonResults = await searchReanime({ season: currentSeason, year: currentYear, limit: 12 });
-    if (seasonResults?.results?.length) {
-      thisSeason = seasonResults.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
+    const [seasonSettled, upcomingSettled] = await Promise.allSettled([
+      searchReanime({ season: currentSeason.toLowerCase(), year: currentYear, limit: 12 }),
+      searchReanime({ status: 'not yet released', limit: 12 }),
+    ]);
+
+    if (seasonSettled.status === 'fulfilled' && seasonSettled.value?.results?.length) {
+      thisSeason = seasonSettled.value.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
       const existingIds = new Set(trending.map(m => m.id));
       thisSeason = thisSeason.filter(m => !existingIds.has(m.id)).slice(0, 12);
     }
-  } catch {}
 
-  try {
-    const upcomingResults = await searchReanime({ status: 'NOT_YET_RELEASED', limit: 12 });
-    if (upcomingResults?.results?.length) {
-      upcoming = upcomingResults.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
+    if (upcomingSettled.status === 'fulfilled' && upcomingSettled.value?.results?.length) {
+      upcoming = upcomingSettled.value.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
       const existingIds = new Set([...trending.map(m => m.id), ...thisSeason.map(m => m.id)]);
       upcoming = upcoming.filter(m => !existingIds.has(m.id)).slice(0, 12);
     }
   } catch {}
 
   if (needsAniListFallback) {
-    // Fire AniList queries sequentially (not parallel) to avoid rate limits
-    try {
-      const anilistTrending = await getTrending(1, 15);
-      if (anilistTrending?.media) {
-        const existingIds = new Set(trending.map(m => m.id));
-        const fillers = anilistTrending.media.filter(m => !existingIds.has(m.id));
-        trending = [...trending, ...fillers].slice(0, 20);
-      }
-    } catch { /* AniList rate limited — use what we have */ }
+    // Fire AniList queries in parallel — the in-process rate limiter handles throttling
+    const [trendingSettled, seasonSettled, upcomingSettled] = await Promise.allSettled([
+      getTrending(1, 15),
+      getThisSeason(1, 12),
+      getUpcoming(1, 10),
+    ]);
 
-    if (trending.length < 6) {
-      try {
-        const seasonData = await getThisSeason(1, 10);
-        if (seasonData?.media) {
-          const existingIds = new Set(trending.map(m => m.id));
-          const fillers = seasonData.media.filter(m => !existingIds.has(m.id));
-          trending = [...trending, ...fillers].slice(0, 20);
-        }
-      } catch {}
+    if (trendingSettled.status === 'fulfilled' && trendingSettled.value?.media) {
+      const existingIds = new Set(trending.map(m => m.id));
+      const fillers = trendingSettled.value.media.filter(m => !existingIds.has(m.id));
+      trending = [...trending, ...fillers].slice(0, 20);
     }
 
-    if (thisSeason.length === 0) {
-      try {
-        const seasonData = await getThisSeason(1, 12);
-        if (seasonData?.media) {
-          const existingIds = new Set(trending.map(m => m.id));
-          thisSeason = seasonData.media.filter(m => !existingIds.has(m.id)).slice(0, 12);
-        }
-      } catch {}
+    if (trending.length < 6 && seasonSettled.status === 'fulfilled' && seasonSettled.value?.media) {
+      const existingIds = new Set(trending.map(m => m.id));
+      const fillers = seasonSettled.value.media.filter(m => !existingIds.has(m.id));
+      trending = [...trending, ...fillers].slice(0, 20);
     }
 
-    if (upcoming.length < 6) {
-      try {
-        const upcomingData = await getUpcoming(1, 10);
-        if (upcomingData?.media) {
-          const existingIds = new Set([...trending.map(m => m.id), ...thisSeason.map(m => m.id), ...upcoming.map(m => m.id)]);
-          const fillers = upcomingData.media.filter(m => !existingIds.has(m.id));
-          upcoming = [...upcoming, ...fillers].slice(0, 12);
-        }
-      } catch {}
+    if (thisSeason.length === 0 && seasonSettled.status === 'fulfilled' && seasonSettled.value?.media) {
+      const existingIds = new Set(trending.map(m => m.id));
+      thisSeason = seasonSettled.value.media.filter(m => !existingIds.has(m.id)).slice(0, 12);
+    }
+
+    if (upcoming.length < 6 && upcomingSettled.status === 'fulfilled' && upcomingSettled.value?.media) {
+      const existingIds = new Set([...trending.map(m => m.id), ...thisSeason.map(m => m.id), ...upcoming.map(m => m.id)]);
+      const fillers = upcomingSettled.value.media.filter(m => !existingIds.has(m.id));
+      upcoming = [...upcoming, ...fillers].slice(0, 12);
     }
   }
 
@@ -306,8 +295,7 @@ function hasIncompleteFields(media: AniListMedia): boolean {
     !media.relations ||
     media.relations.edges?.length === 0 ||
     !hasVA ||
-    (!media.stats?.scoreDistribution?.length && !media.rating) ||
-    !media.streamingEpisodes?.length
+    (!media.stats?.scoreDistribution?.length && !media.rating)
   );
 }
 

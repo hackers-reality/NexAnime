@@ -327,8 +327,9 @@ export async function GET(request: NextRequest) {
       default:
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
-  } catch (err: any) {
-    console.error('[Meta API]', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[Meta API]', message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

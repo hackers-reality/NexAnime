@@ -379,21 +379,41 @@ export async function getAnimeDetail(id: number): Promise<AniListMedia | null> {
   return media;
 }
 
+const queuedDetailMedia = new Map<number, AniListMedia>();
+
 function queueDetailCache(media: AniListMedia): void {
-  if (queuedDetailIds.has(media.id)) return;
-  queuedDetailIds.add(media.id);
+  if (queuedDetailMedia.has(media.id)) return;
+  queuedDetailMedia.set(media.id, media);
   if (detailCacheTimer) clearTimeout(detailCacheTimer);
   detailCacheTimer = setTimeout(async () => {
-    const idsToCache = [...queuedDetailIds];
-    queuedDetailIds.clear();
-    for (const aid of idsToCache) {
-      const m = media.id === aid ? media : null;
-      if (!m) continue;
+    const idsToCache = [...queuedDetailMedia.keys()];
+    const itemsToCache = idsToCache.map(id => queuedDetailMedia.get(id)!);
+    queuedDetailMedia.clear();
+    for (const m of itemsToCache) {
       try {
         await execute(
-          `INSERT OR REPLACE INTO anime_cache
+          `INSERT INTO anime_cache
            (anilist_id, mal_id, title_romaji, title_english, title_native, synopsis, format, status, season, season_year, average_score, mean_score, genres, cover_image, banner_image, episode_count, next_airing_at, streaming_episodes, full_data)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(anilist_id) DO UPDATE SET
+             mal_id = COALESCE(excluded.mal_id, mal_id),
+             title_romaji = COALESCE(excluded.title_romaji, title_romaji),
+             title_english = COALESCE(excluded.title_english, title_english),
+             title_native = COALESCE(excluded.title_native, title_native),
+             synopsis = COALESCE(excluded.synopsis, synopsis),
+             format = COALESCE(excluded.format, format),
+             status = COALESCE(excluded.status, status),
+             season = COALESCE(excluded.season, season),
+             season_year = COALESCE(excluded.season_year, season_year),
+             average_score = COALESCE(excluded.average_score, average_score),
+             mean_score = COALESCE(excluded.mean_score, mean_score),
+             genres = COALESCE(excluded.genres, genres),
+             cover_image = COALESCE(excluded.cover_image, cover_image),
+             banner_image = COALESCE(excluded.banner_image, banner_image),
+             episode_count = COALESCE(excluded.episode_count, episode_count),
+             next_airing_at = COALESCE(excluded.next_airing_at, next_airing_at),
+             streaming_episodes = COALESCE(excluded.streaming_episodes, streaming_episodes),
+             full_data = COALESCE(excluded.full_data, full_data)`,
           [
             m.id, m.idMal || null,
             m.title?.romaji || null, m.title?.english || null, m.title?.native || null,
