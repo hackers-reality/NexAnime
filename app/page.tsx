@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
 import HomeCarousel from '@/components/home/HomeCarousel';
@@ -72,6 +73,7 @@ interface HomeCardItem {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [carouselMedia, setCarouselMedia] = useState<CarouselItem[]>([]);
   const [trendingCards, setTrendingCards] = useState<HomeCardItem[]>([]);
   const [continueWatching, setContinueWatching] = useState<ProgressItem[]>([]);
@@ -249,9 +251,25 @@ export default function HomePage() {
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
                 <h2 className={styles.sectionTitle}>Trending Now</h2>
-                <Link href="/browse?sort=POPULARITY_DESC" className={styles.viewAllLink}>
-                  →
-                </Link>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/random');
+                        const data = await res.json();
+                        if (data.id) router.push(`/anime/${data.id}`);
+                      } catch {}
+                    }}
+                    className={styles.viewAllLink}
+                    title="Surprise Me"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--primary)', fontWeight: 500, whiteSpace: 'nowrap' }}
+                  >
+                    🎲 Surprise Me
+                  </button>
+                  <Link href="/browse?sort=POPULARITY_DESC" className={styles.viewAllLink}>
+                    →
+                  </Link>
+                </div>
               </div>
               <div className={styles.trendTabs}>
                 <button

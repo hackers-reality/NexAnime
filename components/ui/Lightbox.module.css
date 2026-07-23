@@ -1,0 +1,147 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.imageWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 200px;
+  min-height: 200px;
+}
+
+.imageSpinner {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--primary, #818cf8);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.image {
+  max-width: 85vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.navBtn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.navBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.prevBtn {
+  position: absolute;
+  left: 12px;
+}
+
+.nextBtn {
+  position: absolute;
+  right: 12px;
+}
+
+.counter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+  .navBtn {
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+  }
+
+  .prevBtn {
+    left: 4px;
+  }
+
+  .nextBtn {
+    right: 4px;
+  }
+
+  .image {
+    max-width: 95vw;
+    max-height: 80vh;
+  }
+}

@@ -6,6 +6,7 @@ import TabNav, { type Tab } from '@/components/shared/TabNav';
 import AnimeCard from '@/components/cards/AnimeCard';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
+import Lightbox from '@/components/ui/Lightbox';
 import { anilistMediaToAnime, getMediaCharacters, getMediaStaff } from '@/lib/data-api';
 import type { AniListMedia, CharacterWithVA, StaffEntry } from '@/types';
 import styles from './page.module.css';
@@ -34,6 +35,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [jikanStaff, setJikanStaff] = useState<StaffEntry[]>([]);
   const [charsLoading, setCharsLoading] = useState(false);
   const [watchProgress, setWatchProgress] = useState<Record<number, { secondsWatched: number; durationSeconds: number }>>({});
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!media.idMal && !media.id) return;
@@ -353,9 +355,12 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     key={i}
                     src={url}
                     alt=""
-                    style={{ height: 120, borderRadius: 8, objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0, border: '1px solid var(--border-color)' }}
+                    style={{ height: 120, borderRadius: 8, objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0, border: '1px solid var(--border-color)', cursor: 'pointer', transition: 'transform 0.2s' }}
                     loading="lazy"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    onClick={() => setLightboxIndex(i)}
+                    onMouseEnter={(e) => { (e.target as HTMLImageElement).style.transform = 'scale(1.05)'; }}
+                    onMouseLeave={(e) => { (e.target as HTMLImageElement).style.transform = ''; }}
                   />
                 ))}
               </div>
@@ -711,6 +716,16 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Artworks Lightbox */}
+      {lightboxIndex !== null && media.artworks && (
+        <Lightbox
+          images={media.artworks.slice(0, 10)}
+          initialIndex={lightboxIndex}
+          alt={anime.titleEnglish || anime.titleRomaji || ''}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
 
       {/* Watchlist Editor Dialog Modal */}
       <WatchlistEditorModal
