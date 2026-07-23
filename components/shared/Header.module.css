@@ -331,3 +331,98 @@
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+/* ─── Mobile Hamburger ───────────────────────── */
+.hamburgerBtn {
+  display: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.mobileOverlay {
+  display: none;
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: none;
+  }
+
+  .searchWrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .shortcutsHint {
+    display: none;
+  }
+
+  .hamburgerBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.15s ease;
+  }
+
+  .mobileNav {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    z-index: 201;
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-4) var(--space-6);
+    gap: var(--space-1);
+    animation: slideDown 0.15s ease;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .mobileNav .navLink {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    border-radius: var(--radius-md);
+  }
+
+  .mobileNav .randomBtn {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    text-align: left;
+  }
+
+  .mobileNav .shortcutsHint {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

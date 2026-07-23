@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { queryAll } from '@/lib/db';
+import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ const GENRES = [
 export async function GET() {
   try {
     // Try DB cache first - pick a random anime from the cache
-    const cached = await queryAll<{ anilist_id: number }>(
+    const cached = await query<{ anilist_id: number }>(
       'SELECT anilist_id FROM anime_cache ORDER BY RANDOM() LIMIT 1'
     );
 

@@ -11,6 +11,7 @@ export default function Header() {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
   
   // Dynamic header state
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -159,6 +160,21 @@ export default function Header() {
         </button>
       </nav>
 
+      {/* Hamburger (mobile) */}
+      <button
+        className={styles.hamburgerBtn}
+        onClick={() => setShowMobileNav(!showMobileNav)}
+        aria-label="Toggle navigation"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="22" height="22">
+          {showMobileNav ? (
+            <path d="M18 6L6 18M6 6l12 12" />
+          ) : (
+            <path d="M3 12h18M3 6h18M3 18h18" />
+          )}
+        </svg>
+      </button>
+
       {/* Search */}
       <div className={styles.searchWrap}>
         <span className={styles.searchIcon}>⌕</span>
@@ -305,6 +321,43 @@ export default function Header() {
           )}
         </div>
       </div>
+
+      {/* Mobile Nav Overlay */}
+      {showMobileNav && (
+        <>
+          <div className={styles.mobileOverlay} onClick={() => setShowMobileNav(false)} />
+          <nav className={styles.mobileNav}>
+            <Link href="/" className={styles.navLink} onClick={() => setShowMobileNav(false)}>
+              🏠 Home
+            </Link>
+            <Link href="/browse" className={`${styles.navLink} ${isActive('/browse') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+              🔍 Browse
+            </Link>
+            <Link href="/watchlist" className={`${styles.navLink} ${isActive('/watchlist') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+              📋 Watchlist
+            </Link>
+            <Link href="/schedule" className={`${styles.navLink} ${isActive('/schedule') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+              📅 Schedule
+            </Link>
+            <Link href="/history" className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+              🕐 History
+            </Link>
+            <button
+              className={styles.randomBtn}
+              onClick={async () => {
+                setShowMobileNav(false);
+                try {
+                  const res = await fetch('/api/random');
+                  const data = await res.json();
+                  if (data.id) window.location.href = `/anime/${data.id}`;
+                } catch {}
+              }}
+            >
+              🎲 Random
+            </button>
+          </nav>
+        </>
+      )}
     </header>
   );
 }

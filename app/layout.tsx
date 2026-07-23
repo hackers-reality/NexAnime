@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import UpdateBanner from '@/components/shared/UpdateBanner';
 import ShortcutsOverlay from '@/components/shared/ShortcutsOverlay';
 import ScrollToTop from '@/components/ui/ScrollToTop';
+import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration';
 import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
@@ -52,6 +53,8 @@ export default async function RootLayout({
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icon-512.png" />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#3b82f6" />
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{
@@ -66,6 +69,7 @@ export default async function RootLayout({
           <UpdateBanner />
           <ShortcutsOverlay />
           <ScrollToTop />
+          <ServiceWorkerRegistration />
         </ToastProvider>
       </body>
     </html>

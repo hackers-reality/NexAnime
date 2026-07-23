@@ -1,13 +1,16 @@
 {
-  "name": "NexAnime",
+  "name": "NexAnime — Your Anime, Your Way",
   "short_name": "NexAnime",
-  "description": "Self-hosted anime streaming & tracking",
+  "description": "Self-hosted anime streaming & tracking app. Browse, watch, track progress, maintain a watchlist.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
   "theme_color": "#3b82f6",
+  "orientation": "any",
+  "scope": "/",
+  "categories": ["entertainment", "media"],
   "icons": [
-    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
