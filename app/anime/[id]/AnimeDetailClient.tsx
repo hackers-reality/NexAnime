@@ -422,6 +422,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                   <div className={styles.charactersGrid}>
                     {media.characters.edges.map((edge, index) => {
                       const character = edge.node;
+                      const va = edge.voiceActors?.find(v => v.languageV2 === 'Japanese') || edge.voiceActors?.[0];
                       return (
                         <div key={`${character.id}-${index}`} className={styles.charCard}>
                           <div className={styles.charHalf}>
@@ -434,8 +435,12 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                             </div>
                           </div>
                           <div className={styles.vaHalf}>
+                            {va?.image?.large && (
+                              <img src={va.image.large} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                            )}
                             <div className={styles.vaMeta}>
-                              <span className={styles.vaName}>N/A</span>
+                              <span className={styles.vaName}>{va ? va.name?.full : 'N/A'}</span>
+                              <span className={styles.vaLang}>{va ? (va.languageV2 || '') : ''}</span>
                             </div>
                           </div>
                         </div>
@@ -643,7 +648,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
       />
 
       {/* Trailer Modal */}
-      {showTrailer && media.trailer && (
+      {showTrailer && media.trailer?.id && (
         <div className={styles.trailerOverlay} onClick={() => setShowTrailer(false)}>
           <div className={styles.trailerModal} onClick={(e) => e.stopPropagation()}>
             <button className={styles.trailerClose} onClick={() => setShowTrailer(false)}>✕</button>

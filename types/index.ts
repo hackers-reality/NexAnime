@@ -230,6 +230,19 @@ export interface AniListMedia {
       };
     }>;
   };
+  rating?: string | null;
+  duration?: number | null;
+  subbed?: number | null;
+  dubbed?: number | null;
+  trending?: number | null;
+  artworks?: string[];
+  externalLinks?: Array<{ id: number; site: string; url: string; type?: string; language?: string }>;
+  startDate?: { year: number; month: number; day: number } | null;
+  endDate?: { year: number; month: number; day: number } | null;
+  countryOfOrigin?: string | null;
+  hashtag?: string | null;
+  isLicensed?: boolean | null;
+  canWatch?: boolean | null;
 }
 
 export interface AniListPageInfo {

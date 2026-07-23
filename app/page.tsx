@@ -111,7 +111,7 @@ export default function HomePage() {
             bannerImage: m.bannerImage ?? m.banner_image ?? null,
             description: m.synopsis ?? m.description ?? null,
             genres: m.genres ?? [],
-            trailer: m.trailer?.id ?? m.trailer ?? null,
+            trailer: m.trailer?.id || m.trailer || null,
           })));
           setTrendingCards(allTrending.slice(5));
           setTabAnime(allTrending.slice(5));

@@ -1,6 +1,6 @@
 // NexAnime — Unified metadata API (reanime.to / hianime / AniList)
 import { NextRequest, NextResponse } from 'next/server';
-import { searchReanime, getReanimeEpisodes, buildSlugMapping } from '@/lib/reanime';
+import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, buildSlugMapping } from '@/lib/reanime';
 import { searchMedia } from '@/lib/data-api';
 import {
   getTrending,
@@ -233,12 +233,8 @@ export async function GET(request: NextRequest) {
         const anilistId = parseInt(id);
         if (!isNaN(anilistId)) {
           try {
-            const mapping = await buildSlugMapping();
-            const entry = mapping.get(anilistId);
-            if (entry?.slug) {
-              const eps = await getReanimeEpisodes(entry.slug);
-              if (eps?.length) return NextResponse.json({ episodes: eps });
-            }
+            const eps = await getReanimeEpisodesByAnilistId(anilistId);
+            if (eps?.length) return NextResponse.json({ episodes: eps });
           } catch {}
         }
         return NextResponse.json({ episodes: [] });

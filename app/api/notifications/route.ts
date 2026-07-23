@@ -32,3 +32,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const id = req.nextUrl.searchParams.get('id');
+    if (id) {
+      await execute('DELETE FROM notifications WHERE id = ?', [id]);
+    } else {
+      await execute('DELETE FROM notifications WHERE read = 1');
+    }
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Failed to delete notifications:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

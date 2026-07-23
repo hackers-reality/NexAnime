@@ -46,7 +46,7 @@ function mapMedia(m: AniListMedia): HomeMediaItem {
     titleEnglish: m.title?.english ?? null,
     coverImage: m.coverImage?.extraLarge || m.coverImage?.large || null,
     bannerImage: m.bannerImage ?? null,
-    trailer: m.trailer?.id ?? null,
+    trailer: m.trailer?.id || null,
     format: m.format ?? '',
     seasonYear: m.seasonYear ?? null,
     status: m.status ?? '',
@@ -80,7 +80,13 @@ export async function GET() {
       thisSeason: data.thisSeason.map(mapMedia),
       upcoming: data.upcoming.map(mapMedia),
       recentlyUpdated: data.recentlyUpdated,
-      schedule: data.schedule.map(mapSchedule),
+      schedule: data.schedule.reduce((acc: HomeScheduleItem[], s) => {
+        const dupKey = `${s.mediaId}-${s.episode}`;
+        if (!acc.some((existing) => `${existing.mediaId}-${existing.episode}` === dupKey)) {
+          acc.push(mapSchedule(s));
+        }
+        return acc;
+      }, []),
     };
 
     homeCache = { data: payload, expiry: Date.now() + HOME_CACHE_TTL };

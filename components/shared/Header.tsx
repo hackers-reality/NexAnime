@@ -86,6 +86,8 @@ export default function Header() {
   useEffect(() => {
     fetchProfile();
     fetchNotificationCount();
+    // Auto-generate notifications from schedule on mount
+    fetch('/api/notifications/generate', { method: 'POST' }).catch(() => {});
   }, []);
 
   // Close dropdowns on click outside

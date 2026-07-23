@@ -568,6 +568,8 @@
 .activeGridEpItem .epCheckmark {
   color: white;
 }
+
+.epInfo {
   display: flex;
   flex-direction: column;
   justify-content: center;

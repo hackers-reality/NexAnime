@@ -6,7 +6,9 @@ import {
   getReanimeSchedule,
   searchReanime,
   getReanimeRecommendations,
+  mapReanimeRecommendation,
   getReanimeEpisodes,
+  getReanimeEpisodesByAnilistId,
   buildSlugMapping,
   mapAnimeDetail,
   mapHomeItem,
@@ -26,6 +28,7 @@ import {
   quickSearch,
   anilistMediaToAnime,
   getAnimeRecommendations as getAnilistRecommendations,
+  getTrending,
 } from './anilist';
 
 export interface HomePayload {
@@ -38,18 +41,48 @@ export interface HomePayload {
 
 // ─── Home ──────────────────────────────────────────────────
 
+async function batchFetchTrailers(ids: number[]): Promise<Map<number, string>> {
+  const result = new Map<number, string>();
+  if (ids.length === 0) return result;
+  const BATCH = 50;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const batch = ids.slice(i, i + BATCH);
+    try {
+      const res = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `query ($ids: [Int]) { Page(page: 1, perPage: 50) { media(id_in: $ids, type: ANIME) { id trailer { id site } } } }`,
+          variables: { ids: batch },
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        for (const m of json?.data?.Page?.media || []) {
+          if (m.trailer?.id && m.trailer?.site === 'youtube') {
+            result.set(m.id, m.trailer.id);
+          }
+        }
+      }
+    } catch {}
+  }
+  return result;
+}
+
 export async function getHomeData(): Promise<HomePayload> {
   const now = Math.floor(Date.now() / 1000);
   const sevenDaysSec = 7 * 24 * 60 * 60;
 
   // Try reanime.to API v1 first for trending/upcoming
-  const [reanimeHome, reanimeSchedule, seasonRes, upcomingRes, recentlyUpdatedRes, anilistSchedule] = await Promise.allSettled([
+  const [reanimeHome, reanimeSchedule, seasonRes, upcomingRes, recentlyUpdatedRes, anilistSchedule, anilistTrendingRes] = await Promise.allSettled([
     getReanimeHome(),
     getReanimeSchedule(),
     getThisSeason(1, 10),
     getUpcoming(1, 10),
     getRecentlyUpdated(1, 10),
     getAnilistSchedule(now - 12 * 3600, now + sevenDaysSec, 1, 100),
+    getTrending(1, 20),
   ]);
 
   let trending: AniListMedia[] = [];
@@ -70,7 +103,25 @@ export async function getHomeData(): Promise<HomePayload> {
       seen.add(m.id);
       return true;
     }).slice(0, 20);
+
+    // Merge trailer data from AniList (reanime.to home doesn't return trailers)
+    const missingTrailers = trending.filter(m => !m.trailer?.id).map(m => m.id).filter(Boolean);
+    if (missingTrailers.length > 0) {
+      const trailerMap = await batchFetchTrailers(missingTrailers);
+      for (const m of trending) {
+        if (!m.trailer?.id && trailerMap.has(m.id)) {
+          m.trailer = { id: trailerMap.get(m.id)!, site: 'youtube' };
+        }
+      }
+    }
   }
+
+  // Also merge trailers for thisSeason and upcoming from AniList
+  const allBatches = [
+    [trending, trending],
+    seasonRes.status === 'fulfilled' ? seasonRes.value.media : [],
+    upcomingRes.status === 'fulfilled' ? upcomingRes.value.media : [],
+  ].flat();
 
   // Build schedule from reanime.to if available
   let schedule: AniListAiringSchedule[] = [];
@@ -120,16 +171,99 @@ export async function getMediaDetail(anilistId: number): Promise<AniListMedia | 
   );
   if (cached?.full_data) {
     try {
-      const parsed = JSON.parse(cached.full_data);
-      if (parsed?.id) return parsed as AniListMedia;
+      const parsed = JSON.parse(cached.full_data) as AniListMedia;
+      if (parsed?.id) {
+        // If cached data is missing key fields, try to supplement from AniList
+        if (hasIncompleteFields(parsed)) {
+          const alDetail = await getAnilistDetail(anilistId);
+          if (alDetail) mergeAnilistFields(parsed, alDetail);
+        }
+        return parsed;
+      }
     } catch {}
   }
 
   // Try reanime.to first (fast MAL ID path)
   const reanimeDetail = await getReanimeByAnilistId(anilistId);
-  if (reanimeDetail) return mapAnimeDetail(reanimeDetail);
+  if (reanimeDetail) {
+    const media = mapAnimeDetail(reanimeDetail);
+    // Reanime.to data is missing some fields (voice actors, recommendations, streaming eps, etc.)
+    // Merge missing fields from AniList
+    if (hasIncompleteFields(media)) {
+      const alDetail = await getAnilistDetail(anilistId);
+      if (alDetail) mergeAnilistFields(media, alDetail);
+    }
+    return media;
+  }
   // Fallback to AniList
   return getAnilistDetail(anilistId);
+}
+
+function hasIncompleteFields(media: AniListMedia): boolean {
+  const firstChar = media.characters?.edges?.[0];
+  const hasVA = firstChar ? (firstChar.voiceActors?.length ?? 0) > 0 : true;
+  return (
+    !media.recommendations ||
+    (media.recommendations.nodes?.length === 0 && !media.rating) ||
+    !media.relations ||
+    media.relations.edges?.length === 0 ||
+    !hasVA ||
+    (!media.stats?.scoreDistribution?.length && !media.rating) ||
+    !media.streamingEpisodes?.length
+  );
+}
+
+function mergeAnilistFields(target: AniListMedia, source: AniListMedia): void {
+  if (!target.trailer?.id && source.trailer?.id) target.trailer = source.trailer;
+  if (!target.recommendations?.nodes?.length && source.recommendations?.nodes?.length) {
+    target.recommendations = source.recommendations;
+  }
+  if (!target.relations?.edges?.length && source.relations?.edges?.length) {
+    target.relations = source.relations;
+  }
+  if (!target.stats?.scoreDistribution?.length && source.stats?.scoreDistribution?.length) {
+    target.stats = source.stats;
+  }
+  if (!target.streamingEpisodes?.length && source.streamingEpisodes?.length) {
+    target.streamingEpisodes = source.streamingEpisodes;
+  }
+  // Merge character voice actors and images
+  if (target.characters?.edges && source.characters?.edges) {
+    const srcMap = new Map(source.characters.edges.map(e => [e.node?.id, e]));
+    for (const edge of target.characters.edges) {
+      if (edge.node?.id) {
+        const src = srcMap.get(edge.node.id);
+        if (src) {
+          if (!edge.voiceActors?.length) edge.voiceActors = src.voiceActors || [];
+          if (!edge.node?.image?.large && src.node?.image?.large) {
+            edge.node.image = src.node.image;
+          }
+        }
+      }
+    }
+  }
+  // Merge staff images
+  if (target.staff?.edges && source.staff?.edges) {
+    const srcMap = new Map(source.staff.edges.map(e => [e.node?.id, e]));
+    for (const edge of target.staff.edges) {
+      if (edge.node?.id) {
+        const src = srcMap.get(edge.node.id);
+        if (src && !edge.node?.image?.large && src.node?.image?.large) {
+          edge.node.image = src.node.image;
+        }
+      }
+    }
+  }
+  if (!target.averageScore && source.averageScore) target.averageScore = source.averageScore;
+  if (!target.popularity && source.popularity) target.popularity = source.popularity;
+  if (!target.favourites && source.favourites) target.favourites = source.favourites;
+  // Merge new metadata from AniList if reanime.to didn't have it
+  if (!target.rating && source.rating) target.rating = source.rating;
+  if (!target.duration && source.duration) target.duration = source.duration;
+  if (!target.startDate && source.startDate) target.startDate = source.startDate;
+  if (!target.endDate && source.endDate) target.endDate = source.endDate;
+  if (!target.countryOfOrigin && source.countryOfOrigin) target.countryOfOrigin = source.countryOfOrigin;
+  if (!target.hashtag && source.hashtag) target.hashtag = source.hashtag;
 }
 
 // ─── Search ────────────────────────────────────────────────
@@ -233,7 +367,24 @@ export async function getMediaEpisodes(malId: number): Promise<any[]> {
 // ─── Recommendations ───────────────────────────────────────
 
 export async function getMediaRecommendations(anilistId: number): Promise<AniListMedia[]> {
-  // Try AniList recommendations
+  // Try reanime.to recommendations first (faster, has cover images + scores)
+  const { queryOne } = await import('./db');
+  const cached = await queryOne<{ mal_id: number }>(
+    'SELECT mal_id FROM anime_cache WHERE anilist_id = ? AND mal_id IS NOT NULL',
+    [anilistId]
+  );
+  if (cached?.mal_id) {
+    const { getSlugByMalId } = await import('./reanime');
+    const slug = await getSlugByMalId(cached.mal_id);
+    if (slug) {
+      const recs = await getReanimeRecommendations(slug);
+      if (recs && recs.length > 0) {
+        return recs.map(r => mapReanimeRecommendation(r)).filter((m): m is AniListMedia => m !== null);
+      }
+    }
+  }
+
+  // Fallback to AniList recommendations
   const recs = await getAnilistRecommendations(anilistId);
   if (recs?.nodes) {
     return recs.nodes
@@ -251,5 +402,5 @@ export async function getSlugForAnilistId(anilistId: number): Promise<string | n
 }
 
 // Re-exports
-export { getReanimeAnimeDetail, getReanimeHome, buildSlugMapping, searchAnime, getAnilistDetail as getAnimeDetail, getAnilistIdByMalId, getHianimeAnimeList, getHianimeCategory, quickSearch, anilistMediaToAnime, searchReanime, getReanimeSchedule, getReanimeRecommendations, getReanimeEpisodes };
+export { getReanimeAnimeDetail, getReanimeHome, buildSlugMapping, searchAnime, getAnilistDetail as getAnimeDetail, getAnilistIdByMalId, getHianimeAnimeList, getHianimeCategory, quickSearch, anilistMediaToAnime, searchReanime, getReanimeSchedule, getReanimeRecommendations, getReanimeEpisodes, getReanimeEpisodesByAnilistId };
 export type { BrowseFilters, AnimeFormat };

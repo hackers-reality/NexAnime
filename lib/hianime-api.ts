@@ -64,6 +64,8 @@ interface HianimeAnime {
   Members?: string;
   totalEpisodes?: number | string | null;
   slugs?: string[];
+  alternateTitle?: string;
+  score?: number;
 }
 
 interface HianimeCategoryMeta {
@@ -286,17 +288,18 @@ async function mapAnime(anime: HianimeAnime): Promise<AniListMedia | null> {
       english: anime.English || anime.title || null,
       native: anime.Japanese || null,
     },
-    synonyms: [],
+    synonyms: anime.alternateTitle ? [anime.alternateTitle] : [],
     description: anime.synopsis || '',
     format: mapHianimeType(anime.Type),
     status: mapHianimeStatus(anime.Status),
-    season: null,
+    season: anime.Premiered ? extractSeason(anime.Premiered) : null,
     seasonYear: anime.Premiered ? extractSeasonYear(anime.Premiered) : null,
     averageScore: parseScore(anime.Score),
     meanScore: parseScore(anime.Score),
     source: anime.Source ? anime.Source.replace(/[_-]/g, ' ') : null,
     popularity: anime.Popularity ? parseInt(anime.Popularity) || null : null,
-    studios: { nodes: [] },
+    favourites: anime.Favorites ? parseInt(anime.Favorites) || null : null,
+    studios: { nodes: anime.Producers ? anime.Producers.split(/\s*,\s*/).filter(Boolean).map(p => ({ name: p.trim(), isAnimationStudio: false })) : [] },
     genres: parseGenres(anime.genres),
     tags: [],
     coverImage: {
@@ -309,6 +312,7 @@ async function mapAnime(anime: HianimeAnime): Promise<AniListMedia | null> {
     nextAiringEpisode: null,
     streamingEpisodes: [],
     trailer: null,
+    rating: anime.Rating || null,
   } as unknown as AniListMedia;
 }
 
@@ -316,6 +320,16 @@ function extractSeasonYear(premiered: string): number | null {
   if (!premiered) return null;
   const m = premiered.match(/\b(\d{4})\b/);
   return m ? parseInt(m[1], 10) : null;
+}
+
+function extractSeason(premiered: string): string | null {
+  if (!premiered) return null;
+  const lower = premiered.toLowerCase();
+  if (lower.includes('spring')) return 'SPRING';
+  if (lower.includes('summer')) return 'SUMMER';
+  if (lower.includes('fall') || lower.includes('autumn')) return 'FALL';
+  if (lower.includes('winter')) return 'WINTER';
+  return null;
 }
 
 function extractAnilistId(imageUrl: string): number | null {

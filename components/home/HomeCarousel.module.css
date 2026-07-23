@@ -21,11 +21,6 @@
   z-index: 1;
 }
 
-.imageHidden {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-
 .bgImage {
   object-fit: cover;
   object-position: center 25%;
@@ -37,6 +32,7 @@
   left: 0;
   width: 100%;
   height: 100%;
+  z-index: 4;
   background: linear-gradient(
     to bottom,
     rgba(10, 10, 15, 0.2) 0%,
@@ -211,20 +207,19 @@
   height: 100%;
   z-index: 3;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-
-.trailerVisible {
-  opacity: 1;
+  overflow: hidden;
 }
 
 .trailerIframe {
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
   border: none;
-  object-fit: cover;
   pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
 }
 
 /* ─── Trailer badge ───────────────────────────────────────── */

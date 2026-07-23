@@ -24,13 +24,25 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoveredSlide, setHoveredSlide] = useState<number | null>(null);
   const [touchPlayed, setTouchPlayed] = useState<number | null>(null);
-  const [autoPlaying, setAutoPlaying] = useState(true);
+  const [trailerActive, setTrailerActive] = useState(true);
+  const trailerEnabledRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isTouch = useRef(false);
-  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   useEffect(() => {
     isTouch.current = isTouchDevice();
+  }, []);
+
+  // Read autoplay_trailers setting
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        const enabled = data.settings?.autoplay_trailers === 1;
+        trailerEnabledRef.current = enabled;
+        setTrailerActive(enabled);
+      })
+      .catch(() => {});
   }, []);
 
   const startTimer = useCallback(() => {
@@ -55,26 +67,6 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
     }
     return stopTimer;
   }, [hoveredSlide, startTimer, stopTimer]);
-
-  // Auto-play trailer when slide becomes active
-  useEffect(() => {
-    if (!autoPlaying) return;
-    const current = items[activeIndex];
-    if (!current?.trailer) return;
-
-    // Stop all other iframes
-    iframeRefs.current.forEach((iframe, idx) => {
-      if (iframe && idx !== activeIndex) {
-        iframe.src = '';
-      }
-    });
-
-    // Start the active iframe
-    const iframe = iframeRefs.current[activeIndex];
-    if (iframe) {
-      iframe.src = `https://www.youtube.com/embed/${current.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist=${current.trailer}&rel=0&showinfo=0&enablejsapi=1`;
-    }
-  }, [activeIndex, items, autoPlaying]);
 
   if (items.length === 0) return null;
 
@@ -113,7 +105,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
         const isActive = idx === activeIndex;
         const isHovered = hoveredSlide === idx;
         const isTouchActive = touchPlayed === idx;
-        const showTrailer = (isActive && autoPlaying) || isHovered || isTouchActive;
+        const showTrailer = (isActive && trailerActive && item.trailer) || isHovered || isTouchActive;
         const slideBg = item.bannerImage || item.coverImage.extraLarge || '';
         const slideTitle = item.title.english || item.title.romaji || 'Unknown Anime';
 
@@ -127,8 +119,8 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             role="group"
             aria-label={`Slide ${idx + 1}: ${slideTitle}`}
           >
-            {/* Background Image (shown when trailer isn't active) */}
-            <div className={`${styles.imageContainer} ${showTrailer && item.trailer ? styles.imageHidden : ''}`} suppressHydrationWarning={true}>
+            {/* Background Image */}
+            <div className={styles.imageContainer} suppressHydrationWarning={true}>
               {slideBg && (
                 <Image
                   src={slideBg}
@@ -140,15 +132,13 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
                   suppressHydrationWarning={true}
                 />
               )}
-              <div className={styles.gradientOverlay} />
             </div>
 
             {/* YouTube Trailer Iframe */}
-            {item.trailer && (
-              <div className={`${styles.trailerContainer} ${showTrailer ? styles.trailerVisible : ''}`}>
+            {showTrailer && (
+              <div className={styles.trailerContainer}>
                 <iframe
-                  ref={(el) => { iframeRefs.current[idx] = el; }}
-                  data-src={`https://www.youtube.com/embed/${item.trailer}?autoplay=1&mute=1&controls=0&loop=1&playlist=${item.trailer}&rel=0&showinfo=0&enablejsapi=1`}
+                  src={`https://www.youtube.com/embed/${item.trailer}?autoplay=1&mute=0&controls=0&loop=1&playlist=${item.trailer}&rel=0&showinfo=0&enablejsapi=1`}
                   className={styles.trailerIframe}
                   allow="autoplay; encrypted-media"
                   allowFullScreen
@@ -156,6 +146,9 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
                 />
               </div>
             )}
+
+            {/* Gradient overlay (on top of both image and trailer) */}
+            <div className={styles.gradientOverlay} />
 
             {/* Trailer Badge */}
             {item.trailer && (

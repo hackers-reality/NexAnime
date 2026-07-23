@@ -52,9 +52,13 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
       keys.push(dayKey);
     }
 
+    const seen = new Set<string>();
     schedules.forEach((entry) => {
       const airingDate = new Date(entry.airingAt * 1000);
       const airingKey = airingDate.toDateString();
+      const dedupKey = `${entry.mediaId}-${entry.episode}`;
+      if (seen.has(dedupKey)) return;
+      seen.add(dedupKey);
 
       if (localGrouped[airingKey]) {
         localGrouped[airingKey].entries.push(entry);
@@ -106,17 +110,33 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
         {activeEntries.length === 0 ? (
           <div className={styles.empty}>No anime airing today.</div>
         ) : (
-          activeEntries.map((entry) => (
-            <Link
-              key={`${entry.mediaId}-${entry.episode}`}
-              href={`/anime/${entry.mediaId}`}
-              className={styles.item}
-            >
-              <span className={styles.itemTime}>{formatLocalTime(entry.airingAt)}</span>
-              <span className={styles.itemTitle}>{entry.title}</span>
-              <span className={styles.itemBadge}>Ep {entry.episode}</span>
-            </Link>
-          ))
+          activeEntries.map((entry) => {
+            const now = Math.floor(Date.now() / 1000);
+            const isAiring = entry.airingAt <= now && now < entry.airingAt + 1800;
+            const isToday = new Date(entry.airingAt * 1000).toDateString() === new Date().toDateString();
+            const isNow = isAiring && isToday;
+            return (
+              <Link
+                key={`${entry.mediaId}-${entry.episode}`}
+                href={`/anime/${entry.mediaId}`}
+                className={`${styles.item} ${isNow ? styles.itemAiring : ''}`}
+              >
+                {entry.coverImage && (
+                  <img
+                    src={entry.coverImage}
+                    alt=""
+                    className={styles.itemCover}
+                    loading="lazy"
+                  />
+                )}
+                <span className={styles.itemTime}>{formatLocalTime(entry.airingAt)}</span>
+                <span className={styles.itemTitle}>{entry.title}</span>
+                <span className={`${styles.itemBadge} ${isNow ? styles.nowBadge : ''}`}>
+                  {isNow ? 'NOW' : `Ep ${entry.episode}`}
+                </span>
+              </Link>
+            );
+          })
         )}
       </div>
     </div>

@@ -76,8 +76,8 @@ export interface ReanimeAnimeItem {
   episodes_total: number | null;
   chapters: number | null;
   volumes: number | null;
-  start_date: string | null;
-  end_date: string | null;
+  start_date: { day: number; month: number; year: number } | null;
+  end_date: { day: number; month: number; year: number } | null;
   last_episode: number | null;
   last_episode_aired_at: string | null;
   genres: string[];
@@ -85,20 +85,37 @@ export interface ReanimeAnimeItem {
   tags: Array<{ id: number; name: string; description: string; category: string; rank: number; is_spoiler: boolean; is_adult: boolean }>;
   studios: Array<{ id: number; name: string; is_main: boolean }>;
   relations: Array<{
-    anime: ReanimeAnimeItem;
+    anime_id: string;
     relation_type: string;
+    title: { english?: string | null; native?: string | null; romaji?: string | null; user_preferred?: string | null };
+    cover_image: { color?: string; extra_large?: string | null; large?: string | null };
+    format: string;
+    season?: string | null;
+    season_year?: number | null;
+    status?: string | null;
+    episodes_total?: number | null;
   }>;
   characters: Array<{ id: number; name: string; role: string; image?: string }>;
   staff: Array<{ id: number; name: string; role: string; image?: string }>;
-  score_distribution: Array<{ score: number; amount: number }>;
-  status_distribution: Array<{ status: string; amount: number }>;
-  rankings: Array<{ rank: number; type: string; context: string; format: string; season: string; all_time: boolean }>;
-  external_links: Array<{ id: number; site: string; url: string }>;
-  artworks: string[];
+  score_distribution: Array<{ score: number; amount: number }> | null;
+  status_distribution: Array<{ status: string; amount: number }> | null;
+  rankings: Array<{ rank: number; type: string; context: string; format: string; season: string; all_time: boolean; id?: number; year?: number }>;
+  external_links: Array<{ id: number; site: string; url: string; type?: string; language?: string }>;
+  artworks: Array<{ height: number; image_type: string; source: string; url: string }> | string[];
   youtube_trailer_id: string | null;
   trailer: { id: string; site: string; thumbnail: string } | null;
   next_airing_episode: { airing_at: number; episode: number; time_until_airing: number } | null;
   sub_release: { airing_at: number; episode: number } | null;
+  recommendation_ids: string[];
+  subbed: number;
+  dubbed: number;
+  is_licensed: boolean;
+  is_locked: boolean;
+  can_watch: boolean;
+  can_request: boolean;
+  requested: boolean;
+  last_updated: string;
+  updated_at: string;
   anidb_id: number | null;
   kitsu_id: number | null;
   livechart_id: number | null;
@@ -108,15 +125,8 @@ export interface ReanimeAnimeItem {
   imdb_id: string | null;
   anime_planet_id: string | null;
   animecountdown_id: number | null;
-  animenewnetwork_id: number | null;
+  animenewsnetwork_id: number | null;
   anisearch_id: number | null;
-  subbed: boolean;
-  dubbed: boolean;
-  is_licensed: boolean;
-  is_locked: boolean;
-  can_watch: boolean;
-  can_request: boolean;
-  requested: boolean;
 }
 
 export interface ReanimeHomeSection {
@@ -134,8 +144,16 @@ export interface ReanimeSearchResult {
 }
 
 export interface ReanimeRecommendation {
-  anime: ReanimeAnimeItem;
-  score: number;
+  id: string;
+  title: { english: string | null; romaji: string | null };
+  cover_image: { color: string | null; extra_large: string | null; large: string | null; medium: string | null };
+  format: string;
+  year: number | null;
+  status: string;
+  episodeCount: number;
+  genres: string[];
+  average_score: number;
+  rating: string | null;
 }
 
 export interface ReanimeEpisode {
@@ -290,8 +308,51 @@ export async function getReanimeSchedule(): Promise<ReanimeScheduleItem[] | null
 // ─── Recommendations ───────────────────────────────────────
 
 export async function getReanimeRecommendations(slug: string): Promise<ReanimeRecommendation[] | null> {
-  const data = await apiFetch<ReanimeRecommendation[]>(`/anime/${slug}/recommendations`);
-  return data;
+  const data = await apiFetch<{ recommendations: ReanimeRecommendation[] }>(`/anime/${slug}/recommendations`);
+  return data?.recommendations || null;
+}
+
+export function mapReanimeRecommendation(rec: ReanimeRecommendation, targetId?: string): AniListMedia | null {
+  if (!rec) return null;
+  return {
+    id: 0,
+    title: {
+      romaji: rec.title?.romaji || 'Unknown',
+      english: rec.title?.english || null,
+      native: null,
+    },
+    synonyms: [],
+    description: '',
+    format: rec.format || 'TV',
+    status: mapStatus(rec.status),
+    season: null,
+    seasonYear: rec.year || null,
+    averageScore: rec.average_score || null,
+    meanScore: rec.average_score || null,
+    source: null,
+    popularity: null,
+    favourites: null,
+    studios: { nodes: [] },
+    genres: rec.genres || [],
+    tags: [],
+    coverImage: {
+      extraLarge: rec.cover_image?.extra_large || null,
+      large: rec.cover_image?.large || null,
+      medium: rec.cover_image?.medium || null,
+    },
+    bannerImage: null,
+    episodes: rec.episodeCount || null,
+    lastEpisode: null,
+    nextAiringEpisode: null,
+    streamingEpisodes: [],
+    trailer: null,
+    characters: { edges: [] },
+    staff: { edges: [] },
+    relations: null,
+    recommendations: null,
+    stats: null,
+    rating: rec.rating || null,
+  } as unknown as AniListMedia;
 }
 
 // ─── Episodes (paginated) ──────────────────────────────────
@@ -494,6 +555,11 @@ export async function getSlugByMalId(malId: number): Promise<string | null> {
 // ─── Map ReanimeAnimeItem → AniListMedia ───────────────────
 
 export function mapAnimeDetail(anime: ReanimeAnimeItem): AniListMedia {
+  // Extract artworks as string URLs
+  const artworkUrls = (anime.artworks || [])
+    .map(a => typeof a === 'string' ? a : a?.url)
+    .filter(Boolean) as string[];
+
   return {
     id: anime.anilist_id,
     idMal: anime.mal_id || null,
@@ -554,35 +620,35 @@ export function mapAnimeDetail(anime: ReanimeAnimeItem): AniListMedia {
       })),
     },
     relations: Array.isArray(anime.relations) ? {
-      edges: anime.relations.map(r => ({
+      edges: anime.relations.filter(r => r.anime_id !== anime.anime_id).map(r => ({
         relationType: r.relation_type || 'UNKNOWN',
-        node: r.anime ? {
-          id: r.anime.anilist_id || 0,
-          idMal: r.anime.mal_id || null,
+        node: {
+          id: 0,
+          idMal: null,
           title: {
-            romaji: r.anime.title?.romaji || '',
-            english: r.anime.title?.english || null,
-            native: r.anime.title?.native || null,
+            romaji: r.title?.romaji || '',
+            english: r.title?.english || null,
+            native: r.title?.native || null,
           },
-          format: r.anime.type || r.anime.format || 'TV',
-          status: mapStatus(r.anime.status),
-          season: r.anime.season || null,
-          seasonYear: r.anime.season_year || null,
-          averageScore: r.anime.average_score || null,
-          meanScore: r.anime.mean_score || null,
-          source: r.anime.source || null,
-          popularity: r.anime.popularity || null,
-          favourites: r.anime.favourites || null,
-          studios: { nodes: [] },
-          genres: r.anime.genres || [],
-          tags: [],
+          format: r.format || 'TV',
+          status: (r as any).status || 'FINISHED',
+          season: r.season || null,
+          seasonYear: r.season_year || null,
+          episodes: r.episodes_total || null,
           coverImage: {
-            extraLarge: r.anime.cover_image?.extra_large || null,
-            large: r.anime.cover_image?.large || null,
-            medium: r.anime.cover_image?.medium || null,
+            extraLarge: r.cover_image?.extra_large || null,
+            large: r.cover_image?.large || null,
+            medium: null,
           },
-          bannerImage: r.anime.banner_image || null,
-          episodes: r.anime.episodes_total || null,
+          bannerImage: null,
+          averageScore: null,
+          meanScore: null,
+          source: null,
+          popularity: null,
+          favourites: null,
+          studios: { nodes: [] },
+          genres: [],
+          tags: [],
           nextAiringEpisode: null,
           streamingEpisodes: [],
           trailer: null,
@@ -592,14 +658,41 @@ export function mapAnimeDetail(anime: ReanimeAnimeItem): AniListMedia {
           recommendations: null,
           stats: null,
           synonyms: [],
-          description: r.anime.description || '',
-        } as unknown as AniListMedia : null,
-      })).filter(e => e.node),
+          description: '',
+        } as unknown as AniListMedia,
+      })),
     } : null,
     recommendations: null,
-    stats: anime.score_distribution ? {
+    stats: anime.score_distribution?.length ? {
       scoreDistribution: anime.score_distribution.map(sd => ({ score: sd.score, amount: sd.amount })),
     } : null,
+    rating: anime.rating || null,
+    duration: anime.duration || null,
+    subbed: typeof anime.subbed === 'number' ? anime.subbed : null,
+    dubbed: typeof anime.dubbed === 'number' ? anime.dubbed : null,
+    trending: anime.trending || null,
+    artworks: artworkUrls,
+    externalLinks: (anime.external_links || []).map(l => ({
+      id: l.id,
+      site: l.site,
+      url: l.url,
+      type: l.type,
+      language: l.language,
+    })),
+    startDate: anime.start_date ? {
+      year: anime.start_date.year,
+      month: anime.start_date.month,
+      day: anime.start_date.day,
+    } : null,
+    endDate: anime.end_date ? {
+      year: anime.end_date.year,
+      month: anime.end_date.month,
+      day: anime.end_date.day,
+    } : null,
+    countryOfOrigin: anime.country_of_origin || null,
+    hashtag: anime.hashtag || null,
+    isLicensed: anime.is_licensed || null,
+    canWatch: anime.can_watch || null,
   } as unknown as AniListMedia;
 }
 
@@ -624,6 +717,7 @@ export function mapHomeItem(item: ReanimeAnimeItem): AniListMedia | null {
     averageScore: item.average_score || null,
     meanScore: item.mal_score || item.average_score || null,
     popularity: item.popularity || null,
+    favourites: item.favourites || null,
     studios: { nodes: [] },
     genres: item.genres || [],
     tags: [],
@@ -640,13 +734,19 @@ export function mapHomeItem(item: ReanimeAnimeItem): AniListMedia | null {
       episode: item.next_airing_episode.episode,
     } : null,
     streamingEpisodes: [],
-    trailer: item.youtube_trailer_id ? { id: item.youtube_trailer_id, site: 'youtube' } : null,
+    trailer: item.youtube_trailer_id ? { id: item.youtube_trailer_id, site: 'youtube' }
+      : item.trailer ? { id: item.trailer.id, site: item.trailer.site } : null,
     characters: { edges: [] },
     staff: { edges: [] },
     relations: null,
     recommendations: null,
     stats: null,
     synonyms: item.synonyms || [],
+    rating: item.rating || null,
+    duration: item.duration || null,
+    subbed: typeof item.subbed === 'number' ? item.subbed : null,
+    dubbed: typeof item.dubbed === 'number' ? item.dubbed : null,
+    trending: item.trending || null,
   } as unknown as AniListMedia;
 }
 
