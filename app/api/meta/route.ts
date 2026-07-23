@@ -217,19 +217,39 @@ export async function GET(request: NextRequest) {
       case 'season': {
         const seasonParam = request.nextUrl.searchParams.get('season') || 'SUMMER';
         const yearParam = parseInt(request.nextUrl.searchParams.get('year') || String(new Date().getFullYear()));
-        const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
         const limit = parseInt(request.nextUrl.searchParams.get('limit') || '15');
+        // Try reanime.to first
+        try {
+          const reResult = await withTimeout(
+            searchReanime({ season: seasonParam.toLowerCase() as any, year: yearParam, sort: 'popularity', limit }),
+            8000
+          );
+          if (reResult?.results?.length) {
+            return NextResponse.json({ media: reResult.results.map(mapReanimeMedia) });
+          }
+        } catch {}
+        // Fallback to AniList
         const alResult = await withTimeout(
-          searchAnime({ season: seasonParam as any, seasonYear: yearParam, sort: ['POPULARITY_DESC'], page, perPage: limit }),
+          searchAnime({ season: seasonParam as any, seasonYear: yearParam, sort: ['POPULARITY_DESC'], page: 1, perPage: limit }),
           10000
         );
         return NextResponse.json({ media: alResult ? alResult.media.map(mapMedia) : [] });
       }
 
       case 'upcoming': {
-        const page = parseInt(request.nextUrl.searchParams.get('page') || '1');
         const limit = parseInt(request.nextUrl.searchParams.get('limit') || '15');
-        const alResult = await withTimeout(getUpcoming(page, limit), 10000);
+        // Try reanime.to first
+        try {
+          const reResult = await withTimeout(
+            searchReanime({ status: 'not yet released', sort: 'popularity', limit }),
+            8000
+          );
+          if (reResult?.results?.length) {
+            return NextResponse.json({ media: reResult.results.map(mapReanimeMedia) });
+          }
+        } catch {}
+        // Fallback to AniList
+        const alResult = await withTimeout(getUpcoming(1, limit), 10000);
         return NextResponse.json({ media: alResult ? alResult.media.map(mapMedia) : [] });
       }
 

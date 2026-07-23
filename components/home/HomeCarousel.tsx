@@ -25,8 +25,10 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
   const [hoveredSlide, setHoveredSlide] = useState<number | null>(null);
   const [touchPlayed, setTouchPlayed] = useState<number | null>(null);
   const [trailerActive, setTrailerActive] = useState(true);
+  const [trailerFade, setTrailerFade] = useState(false);
   const trailerEnabledRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTouch = useRef(false);
 
   useEffect(() => {
@@ -77,26 +79,35 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
   const handleMouseEnter = (idx: number) => {
     if (isTouch.current) return;
     setHoveredSlide(idx);
+    // Start fade immediately — CSS transitions handle the slow timing
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    fadeTimerRef.current = setTimeout(() => setTrailerFade(true), 100);
   };
 
   const handleMouseLeave = () => {
     if (isTouch.current) return;
     setHoveredSlide(null);
+    setTrailerFade(false);
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
   };
 
   const handleTouchToggle = (idx: number) => {
     if (!isTouch.current) return;
     if (touchPlayed === idx) {
       setTouchPlayed(null);
+      setTrailerFade(false);
     } else {
       setTouchPlayed(idx);
       stopTimer();
+      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = setTimeout(() => setTrailerFade(true), 100);
     }
   };
 
   const handleDotClick = (idx: number) => {
     setActiveIndex(idx);
     setTouchPlayed(null);
+    setTrailerFade(false);
   };
 
   return (
@@ -106,6 +117,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
         const isHovered = hoveredSlide === idx;
         const isTouchActive = touchPlayed === idx;
         const showTrailer = (isActive && trailerActive && item.trailer) || isHovered || isTouchActive;
+        const fading = showTrailer && trailerFade;
         const slideBg = item.bannerImage || item.coverImage.extraLarge || '';
         const slideTitle = item.title.english || item.title.romaji || 'Unknown Anime';
 
@@ -120,7 +132,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             aria-label={`Slide ${idx + 1}: ${slideTitle}`}
           >
             {/* Background Image */}
-            <div className={styles.imageContainer} suppressHydrationWarning={true}>
+            <div className={`${styles.imageContainer} ${fading ? styles.imageFaded : ''}`} suppressHydrationWarning={true}>
               {slideBg && (
                 <Image
                   src={slideBg}
@@ -136,7 +148,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
 
             {/* YouTube Trailer Iframe */}
             {showTrailer && (
-              <div className={styles.trailerContainer}>
+              <div className={`${styles.trailerContainer} ${fading ? styles.trailerFull : ''}`}>
                 <iframe
                   src={`https://www.youtube.com/embed/${item.trailer}?autoplay=1&mute=0&controls=0&loop=1&playlist=${item.trailer}&rel=0&showinfo=0&enablejsapi=1`}
                   className={styles.trailerIframe}
@@ -147,19 +159,19 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
               </div>
             )}
 
-            {/* Gradient overlay (on top of both image and trailer) */}
-            <div className={styles.gradientOverlay} />
+            {/* Gradient overlay */}
+            <div className={`${styles.gradientOverlay} ${fading ? styles.overlayFaded : ''}`} />
 
             {/* Trailer Badge */}
             {item.trailer && (
-              <div className={styles.trailerBadge}>
+              <div className={`${styles.trailerBadge} ${fading ? styles.badgeHidden : ''}`}>
                 {showTrailer ? '▶ Playing' : '▶ Trailer'}
               </div>
             )}
 
             {/* Info Block */}
             {isActive && !isTouchActive && (
-              <div className={styles.content}>
+              <div className={`${styles.content} ${fading ? styles.contentFaded : ''}`}>
                 <div className={styles.genres}>
                   {item.genres.slice(0, 3).map((g) => (
                     <span key={g} className={styles.genrePill}>{g}</span>

@@ -74,20 +74,19 @@ export async function getHomeData(): Promise<HomePayload> {
   const now = Math.floor(Date.now() / 1000);
   const sevenDaysSec = 7 * 24 * 60 * 60;
 
-  // Try reanime.to API v1 first for trending/upcoming
-  const [reanimeHome, reanimeSchedule, seasonRes, upcomingRes, recentlyUpdatedRes, anilistSchedule, anilistTrendingRes] = await Promise.allSettled([
+  // Step 1: Try reanime.to only (no AniList parallel calls)
+  const [reanimeHome, reanimeSchedule] = await Promise.allSettled([
     getReanimeHome(),
     getReanimeSchedule(),
-    getThisSeason(1, 10),
-    getUpcoming(1, 10),
-    getRecentlyUpdated(1, 10),
-    getAnilistSchedule(now - 12 * 3600, now + sevenDaysSec, 1, 100),
-    getTrending(1, 20),
   ]);
 
   let trending: AniListMedia[] = [];
+  let schedule: AniListAiringSchedule[] = [];
+  let thisSeason: AniListMedia[] = [];
+  let upcoming: AniListMedia[] = [];
+  let recentlyUpdated: AniListAiringSchedule[] = [];
 
-  // Prefer reanime.to for trending
+  // Build trending from reanime.to
   if (reanimeHome.status === 'fulfilled' && reanimeHome.value) {
     const home = reanimeHome.value;
     trending = [
@@ -95,16 +94,15 @@ export async function getHomeData(): Promise<HomePayload> {
       ...(home.latest_aired || []).map(mapHomeItem).filter(Boolean),
       ...(home.new_on_site || []).map(mapHomeItem).filter(Boolean),
     ] as AniListMedia[];
-    // Filter out items with invalid IDs and deduplicate
     trending = trending.filter(m => m && m.id > 0);
-    const seen = new Set<number>();
+    const seenIds = new Set<number>();
     trending = trending.filter(m => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
+      if (seenIds.has(m.id)) return false;
+      seenIds.add(m.id);
       return true;
     }).slice(0, 20);
 
-    // Merge trailer data from AniList (reanime.to home doesn't return trailers)
+    // Batch-fetch missing trailers
     const missingTrailers = trending.filter(m => !m.trailer?.id).map(m => m.id).filter(Boolean);
     if (missingTrailers.length > 0) {
       const trailerMap = await batchFetchTrailers(missingTrailers);
@@ -116,15 +114,7 @@ export async function getHomeData(): Promise<HomePayload> {
     }
   }
 
-  // Also merge trailers for thisSeason and upcoming from AniList
-  const allBatches = [
-    [trending, trending],
-    seasonRes.status === 'fulfilled' ? seasonRes.value.media : [],
-    upcomingRes.status === 'fulfilled' ? upcomingRes.value.media : [],
-  ].flat();
-
-  // Build schedule from reanime.to if available
-  let schedule: AniListAiringSchedule[] = [];
+  // Build schedule from reanime.to
   if (reanimeSchedule.status === 'fulfilled' && reanimeSchedule.value) {
     schedule = reanimeSchedule.value
       .map(item => {
@@ -140,24 +130,71 @@ export async function getHomeData(): Promise<HomePayload> {
       })
       .filter(Boolean) as AniListAiringSchedule[];
   }
-  if (schedule.length === 0 && anilistSchedule.status === 'fulfilled') {
-    schedule = anilistSchedule.value;
+
+  // Step 2: Only fire AniList queries if reanime.to failed or returned too little
+  const needsAniListFallback = trending.length < 6 || reanimeHome.status !== 'fulfilled';
+
+  if (needsAniListFallback) {
+    // Fire AniList queries sequentially (not parallel) to avoid rate limits
+    try {
+      const anilistTrending = await getTrending(1, 15);
+      if (anilistTrending?.media) {
+        const existingIds = new Set(trending.map(m => m.id));
+        const fillers = anilistTrending.media.filter(m => !existingIds.has(m.id));
+        trending = [...trending, ...fillers].slice(0, 20);
+      }
+    } catch { /* AniList rate limited — use what we have */ }
+
+    if (trending.length < 6) {
+      try {
+        const seasonData = await getThisSeason(1, 10);
+        if (seasonData?.media) {
+          const existingIds = new Set(trending.map(m => m.id));
+          const fillers = seasonData.media.filter(m => !existingIds.has(m.id));
+          trending = [...trending, ...fillers].slice(0, 20);
+        }
+      } catch {}
+    }
+
+    try {
+      const upcomingData = await getUpcoming(1, 10);
+      if (upcomingData?.media) upcoming = upcomingData.media;
+    } catch {}
   }
 
-  // If reanime trending is empty/short, fill from AniList
-  if (trending.length < 10 && seasonRes.status === 'fulfilled' && seasonRes.value.media) {
-    const existingIds = new Set(trending.map(m => m.id));
-    const fillers = seasonRes.value.media.filter(m => !existingIds.has(m.id));
-    trending = [...trending, ...fillers].slice(0, 20);
+  // Step 3: Use hianime for recentlyUpdated if available, else skip
+  try {
+    const hianimeHome = await fetch('https://aniwatchbackend.cfd/api/home', {
+      signal: AbortSignal.timeout(5000),
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    if (hianimeHome.ok) {
+      const data = await hianimeHome.json();
+      if (data?.latestEpisodes?.length) {
+        recentlyUpdated = data.latestEpisodes.slice(0, 10).map((ep: any) => ({
+          id: 0,
+          airingAt: Math.floor(Date.now() / 1000),
+          episode: ep.episodeNumber || ep.episode || 0,
+          mediaId: ep.animeId || ep.id || 0,
+          media: {
+            id: ep.animeId || ep.id || 0,
+            title: { romaji: ep.title || '', english: ep.title || '' },
+            coverImage: { large: ep.image || ep.thumbnail || null, medium: ep.image || ep.thumbnail || null, extraLarge: null },
+          },
+        } as AniListAiringSchedule));
+      }
+    }
+  } catch {}
+
+  // Step 4: Fill schedule from AniList only if reanime.to failed
+  if (schedule.length === 0) {
+    try {
+      const anilistSchedule = await getAnilistSchedule(now - 12 * 3600, now + sevenDaysSec, 1, 50);
+      if (anilistSchedule?.length) schedule = anilistSchedule;
+    } catch {}
   }
 
-  return {
-    trending,
-    thisSeason: seasonRes.status === 'fulfilled' ? seasonRes.value.media : [],
-    upcoming: upcomingRes.status === 'fulfilled' ? upcomingRes.value.media : [],
-    recentlyUpdated: recentlyUpdatedRes.status === 'fulfilled' ? recentlyUpdatedRes.value : [],
-    schedule,
-  };
+  return { trending, thisSeason, upcoming, recentlyUpdated, schedule };
 }
 
 // ─── Media detail ──────────────────────────────────────────

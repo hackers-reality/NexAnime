@@ -19,6 +19,12 @@
   width: 100%;
   height: 100%;
   z-index: 1;
+  opacity: 1;
+  transition: opacity 2.5s ease;
+}
+
+.imageFaded {
+  opacity: 0;
 }
 
 .bgImage {
@@ -45,6 +51,12 @@
     rgba(10, 10, 15, 0.3) 50%,
     rgba(10, 10, 15, 0.1) 100%
   );
+  opacity: 1;
+  transition: opacity 2.5s ease;
+}
+
+.overlayFaded {
+  opacity: 0;
 }
 
 .content {
@@ -57,6 +69,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 2.5s ease, transform 2.5s ease;
 }
 
 @media (min-width: 768px) {
@@ -208,18 +223,18 @@
   z-index: 3;
   pointer-events: none;
   overflow: hidden;
+  transition: z-index 2.5s ease;
+}
+
+.trailerFull {
+  z-index: 5 !important;
 }
 
 .trailerIframe {
   width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   border: none;
   pointer-events: none;
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
 }
 
 /* ─── Trailer badge ───────────────────────────────────────── */
@@ -237,6 +252,8 @@
   backdrop-filter: blur(4px);
   letter-spacing: 0.3px;
   pointer-events: none;
+  opacity: 1;
+  transition: opacity 2s ease;
 }
 
 /* ─── Touch device tap-to-play overlay ────────────────────── */
@@ -262,6 +279,25 @@
   padding: 14px 28px;
   border-radius: 8px;
   backdrop-filter: blur(4px);
+}
+
+/* ─── Trailer fade animations ──────────────────────────── */
+.imageFaded {
+  opacity: 0;
+}
+
+.overlayFaded {
+  opacity: 0;
+}
+
+.contentFaded {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+
+.badgeHidden {
+  opacity: 0;
 }
 
 

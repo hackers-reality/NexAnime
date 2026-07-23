@@ -387,9 +387,12 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                 
                 <div className={styles.episodesGrid}>
                   {(() => {
-                    const epCount = media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || reanimeEpisodes.length || jikanEpisodes.length || 0;
+                    // Use actual fetched episode data first. Don't trust planned episode counts for unreleased anime.
+                    const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
+                    const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
+                    const epCount = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
                     if (epCount === 0 && !media.streamingEpisodes?.length) {
-                      return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>No episode data available yet.</p>;
+                      return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>{isNotYetReleased ? 'This anime has not been released yet. No episodes available.' : 'No episode data available yet.'}</p>;
                     }
                     return Array.from({ length: epCount || media.streamingEpisodes?.length || 0 }, (_, i) => {
                     const epNum = i + 1;

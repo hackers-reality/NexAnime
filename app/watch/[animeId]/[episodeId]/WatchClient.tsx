@@ -312,7 +312,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }
 
   const nextEpisode = media.nextAiringEpisode?.episode;
-  const totalEpisodes = media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 0;
+  const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
+  const totalEpisodes = isNotYetReleased ? 0 : (media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 0);
   const hasNextEp = totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes;
 
   const [showAutoAdvance, setShowAutoAdvance] = useState(false);
