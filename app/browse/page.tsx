@@ -225,6 +225,9 @@ function BrowseContent() {
                   score={anime.averageScore}
                   synopsis={anime.description}
                   genres={anime.genres}
+                  rating={anime.rating}
+                  subbed={anime.subbed}
+                  dubbed={anime.dubbed}
                   airDate={
                     anime.nextAiringEpisode
                       ? `Ep ${anime.nextAiringEpisode.episode} airing soon`
