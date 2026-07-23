@@ -25,6 +25,9 @@ interface HomeMediaItem {
   synopsis: string;
   genres: string[];
   trailer: string | null;
+  rating: string | null;
+  subbed: number | null;
+  dubbed: number | null;
 }
 
 interface HomeScheduleItem {
@@ -53,6 +56,9 @@ function mapMedia(m: AniListMedia): HomeMediaItem {
     averageScore: m.averageScore ?? null,
     synopsis: m.description ?? '',
     genres: m.genres ?? [],
+    rating: m.rating ?? null,
+    subbed: m.subbed ?? null,
+    dubbed: m.dubbed ?? null,
   };
 }
 

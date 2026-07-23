@@ -343,6 +343,25 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
             <p className={styles.synopsisText}>{cleanSynopsis}</p>
           </div>
 
+          {/* Artworks Gallery */}
+          {media.artworks && media.artworks.length > 1 && (
+            <div>
+              <h3 className={styles.sectionTitle}>Gallery</h3>
+              <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8, scrollSnapType: 'x mandatory' }}>
+                {media.artworks.slice(0, 10).map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt=""
+                    style={{ height: 120, borderRadius: 8, objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0, border: '1px solid var(--border-color)' }}
+                    loading="lazy"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tab bar Navigation */}
           <div className={styles.tabsContainer}>
             <TabNav

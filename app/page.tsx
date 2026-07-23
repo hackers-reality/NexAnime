@@ -66,6 +66,9 @@ interface HomeCardItem {
   synopsis: string;
   genres: string[];
   trailer: string | null;
+  rating: string | null;
+  subbed: number | null;
+  dubbed: number | null;
 }
 
 export default function HomePage() {
@@ -283,6 +286,9 @@ export default function HomePage() {
                       score={anime.averageScore}
                       synopsis={anime.synopsis}
                       genres={anime.genres}
+                      rating={anime.rating}
+                      subbed={anime.subbed}
+                      dubbed={anime.dubbed}
                     />
                   </div>
                 ))}
@@ -311,6 +317,9 @@ export default function HomePage() {
                         score={anime.averageScore}
                         synopsis={anime.synopsis}
                         genres={anime.genres}
+                        rating={anime.rating}
+                        subbed={anime.subbed}
+                        dubbed={anime.dubbed}
                       />
                     </div>
                   ))}
@@ -364,6 +373,9 @@ export default function HomePage() {
                               score={anime.averageScore}
                               synopsis={anime.description}
                               genres={anime.genres || []}
+                              rating={(anime as any).rating}
+                              subbed={(anime as any).subbed}
+                              dubbed={(anime as any).dubbed}
                             />
                           </div>
                         );
@@ -401,6 +413,9 @@ export default function HomePage() {
                       score={anime.averageScore}
                       synopsis={anime.synopsis}
                       genres={anime.genres}
+                      rating={anime.rating}
+                      subbed={anime.subbed}
+                      dubbed={anime.dubbed}
                     />
                   </div>
                 ))}

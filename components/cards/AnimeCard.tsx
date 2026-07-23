@@ -24,6 +24,9 @@ export interface AnimeCardWithPreviewProps extends AnimeCardProps {
   genres?: string[];
   formatLabel?: string | null;
   statusLabel?: string | null;
+  rating?: string | null;
+  subbed?: number | null;
+  dubbed?: number | null;
 }
 
 export default function AnimeCard({
@@ -39,6 +42,9 @@ export default function AnimeCard({
   runtime,
   airDate,
   genres,
+  rating,
+  subbed,
+  dubbed,
 }: AnimeCardWithPreviewProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [previewSide, setPreviewSide] = useState<'left' | 'right'>('right');
@@ -127,7 +133,15 @@ export default function AnimeCard({
             {format && <span className={styles.format}>{format.replace('_', ' ')}</span>}
             {format && year && <span className={styles.dot} />}
             {year && <span>{year}</span>}
+            {rating && <><span className={styles.dot} /><span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{rating}</span></>}
           </div>
+          {(subbed || dubbed) && (
+            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
+              {subbed ? `${subbed} Sub` : ''}
+              {subbed && dubbed ? ' · ' : ''}
+              {dubbed ? `${dubbed} Dub` : ''}
+            </div>
+          )}
         </div>
       </Link>
 
