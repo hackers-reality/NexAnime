@@ -308,7 +308,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
               className="btn btn--primary btn--pill btn--lg"
               style={{ textDecoration: 'none', color: 'white' }}
             >
-              ▶ Watch Now
+              {Object.keys(watchProgress).length > 0 ? '▶ Continue Watching' : '▶ Watch Now'}
             </Link>
 
             <StatusDropdownButton
