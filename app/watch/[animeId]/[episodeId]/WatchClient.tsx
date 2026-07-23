@@ -123,6 +123,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [watchedEpisodes, setWatchedEpisodes] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -399,10 +400,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       if (e.key === 'Escape') {
         if (showEditor) setShowEditor(false);
         if (showEpisodeList) setShowEpisodeList(false);
+        if (showShortcuts) setShowShortcuts(false);
         if (showAutoAdvance) {
           setShowAutoAdvance(false);
           if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
         }
+      }
+      if (e.key === '?' && !e.shiftKey && e.keyCode === 191) {
+        setShowShortcuts(p => !p);
       }
       if (e.key === 'ArrowLeft' && episodeNumber > 1) {
         window.location.href = `/watch/${media.id}/${episodeNumber - 1}`;
@@ -413,7 +418,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [showEditor, showEpisodeList, showAutoAdvance, media.id, episodeNumber, hasNextEp]);
+  }, [showEditor, showEpisodeList, showShortcuts, showAutoAdvance, media.id, episodeNumber, hasNextEp]);
 
   const rawEpisodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
   const filteredEpisodes = rawEpisodes.filter(epNum =>
@@ -881,6 +886,23 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           totalEpisodes={media.episodes}
           onSaveSuccess={fetchWatchlistStatus}
         />
+      )}
+
+      {showShortcuts && (
+        <div className={styles.shortcutsOverlay} onClick={() => setShowShortcuts(false)}>
+          <div className={styles.shortcutsModal} onClick={e => e.stopPropagation()}>
+            <div className={styles.shortcutsHeader}>
+              <h2>Keyboard Shortcuts</h2>
+              <button onClick={() => setShowShortcuts(false)}>✕</button>
+            </div>
+            <div className={styles.shortcutsList}>
+              <div className={styles.shortcutRow}><kbd>←</kbd><span>Previous episode</span></div>
+              <div className={styles.shortcutRow}><kbd>→</kbd><span>Next episode</span></div>
+              <div className={styles.shortcutRow}><kbd>Esc</kbd><span>Close modals / overlays</span></div>
+              <div className={styles.shortcutRow}><kbd>?</kbd><span>Toggle this shortcuts overlay</span></div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
