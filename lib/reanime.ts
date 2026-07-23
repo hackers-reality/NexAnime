@@ -442,7 +442,14 @@ export async function buildSlugMapping(): Promise<Map<number, { slug: string; ma
 // ─── Get detail by AniList ID (fast: uses MAL ID lookup) ───
 
 export async function getReanimeByAnilistId(anilistId: number): Promise<ReanimeAnimeItem | null> {
-  // Try to get MAL ID from DB cache first (fastest)
+  // Try anilist slug cache first (fastest)
+  const cachedSlug = await getSlugByAnilistIdCached(anilistId);
+  if (cachedSlug) {
+    const detail = await getReanimeAnimeDetail(cachedSlug);
+    if (detail) return detail;
+  }
+
+  // Try to get MAL ID from DB cache first (fast)
   const { queryOne } = await import('./db');
   const cached = await queryOne<{ mal_id: number }>(
     'SELECT mal_id FROM anime_cache WHERE anilist_id = ? AND mal_id IS NOT NULL',
@@ -452,37 +459,58 @@ export async function getReanimeByAnilistId(anilistId: number): Promise<ReanimeA
     const slug = await getSlugByMalIdCached(cached.mal_id);
     if (slug) {
       const detail = await getReanimeAnimeDetail(slug);
-      if (detail) return detail;
+      if (detail) {
+        cacheSlugMapping(anilistId, cached.mal_id, slug);
+        return detail;
+      }
     }
   }
 
-  // Fallback: try AniList to get MAL ID (fast GraphQL query)
+  // Try AniList to get title + MAL ID, then search reanime.to by title
   try {
-    const { getAnilistIdByMalId: _noop } = await import('./anilist');
-    // Reverse lookup: query AniList for MAL ID
     const res = await fetch('https://graphql.anilist.co', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: `query ($id: Int!) { Media(id: $id, type: ANIME) { idMal } }`,
+        query: `query ($id: Int!) { Media(id: $id, type: ANIME) { idMal title { romaji english } } }`,
         variables: { id: anilistId },
       }),
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {
       const json = await res.json();
-      const malId = json?.data?.Media?.idMal;
+      const media = json?.data?.Media;
+      const malId = media?.idMal;
+      const title = media?.title?.romaji || media?.title?.english;
+      
       if (malId) {
-        // Cache for future lookups
         const { execute } = await import('./db');
         await execute(
           'INSERT OR REPLACE INTO anime_cache (anilist_id, mal_id) VALUES (?, ?) ON CONFLICT(anilist_id) DO UPDATE SET mal_id = excluded.mal_id',
           [anilistId, malId]
         );
-        const slug = await getSlugByMalIdCached(malId);
-        if (slug) {
-          const detail = await getReanimeAnimeDetail(slug);
-          if (detail) return detail;
+      }
+
+      // Search reanime.to by title (much more reliable than MAL ID lookup)
+      if (title) {
+        const searchResult = await searchReanime({ q: title, limit: 10 });
+        if (searchResult?.results) {
+          // Find exact match by anilist_id
+          const match = searchResult.results.find(r => Number(r.anilist_id) === anilistId);
+          if (match?.anime_id) {
+            cacheSlugMapping(anilistId, malId, match.anime_id);
+            const detail = await getReanimeAnimeDetail(match.anime_id);
+            if (detail) return detail;
+          }
+          // If no exact match, try MAL ID match
+          if (malId) {
+            const malMatch = searchResult.results.find(r => r.mal_id === malId);
+            if (malMatch?.anime_id) {
+              cacheSlugMapping(anilistId, malId, malMatch.anime_id);
+              const detail = await getReanimeAnimeDetail(malMatch.anime_id);
+              if (detail) return detail;
+            }
+          }
         }
       }
     }
@@ -492,13 +520,29 @@ export async function getReanimeByAnilistId(anilistId: number): Promise<ReanimeA
   const mapping = await buildSlugMapping();
   const entry = mapping.get(anilistId);
   if (!entry?.slug) return null;
-  return getReanimeAnimeDetail(entry.slug);
+  const detail = await getReanimeAnimeDetail(entry.slug);
+  if (detail) {
+    cacheSlugMapping(anilistId, entry.malId || null, entry.slug);
+  }
+  return detail;
 }
 
 // ─── MAL ID → slug cache (small targeted search) ──────────
 
 const malSlugCache = new Map<number, string | null>();
 const malSlugCacheExpiry = new Map<number, number>();
+const anilistSlugCache = new Map<number, string | null>();
+const anilistSlugCacheExpiry = new Map<number, number>();
+
+export function cacheSlugMapping(anilistId: number, malId: number | null, slug: string): void {
+  const now = Date.now();
+  anilistSlugCache.set(anilistId, slug);
+  anilistSlugCacheExpiry.set(anilistId, now + 3600_000);
+  if (malId) {
+    malSlugCache.set(malId, slug);
+    malSlugCacheExpiry.set(malId, now + 3600_000);
+  }
+}
 
 async function getSlugByMalIdCached(malId: number): Promise<string | null> {
   const now = Date.now();
@@ -520,24 +564,29 @@ async function getSlugByMalIdCached(malId: number): Promise<string | null> {
   return malSlugCache.get(malId) || null;
 }
 
+async function getSlugByAnilistIdCached(anilistId: number): Promise<string | null> {
+  const now = Date.now();
+  if (anilistSlugCache.has(anilistId)) {
+    const expiry = anilistSlugCacheExpiry.get(anilistId) || 0;
+    if (now < expiry) return anilistSlugCache.get(anilistId) || null;
+  }
+  return null;
+}
+
 // ─── Get episodes with thumbnails (fast MAL ID path) ──────
 
 export async function getReanimeEpisodesByAnilistId(anilistId: number): Promise<ReanimeEpisode[] | null> {
-  // Get MAL ID from cache
-  const { queryOne } = await import('./db');
-  const cached = await queryOne<{ mal_id: number }>(
-    'SELECT mal_id FROM anime_cache WHERE anilist_id = ? AND mal_id IS NOT NULL',
-    [anilistId]
-  );
-  if (cached?.mal_id) {
-    const slug = await getSlugByMalIdCached(cached.mal_id);
-    if (slug) return getReanimeEpisodes(slug);
+  // Check anilist slug cache first (fastest)
+  const cachedSlug = await getSlugByAnilistIdCached(anilistId);
+  if (cachedSlug) return getReanimeEpisodes(cachedSlug);
+
+  // Try to get slug from reanime detail (this populates slug cache too)
+  const detail = await getReanimeByAnilistId(anilistId);
+  if (detail?.anime_id) {
+    cacheSlugMapping(anilistId, detail.mal_id, detail.anime_id);
+    return getReanimeEpisodes(detail.anime_id);
   }
 
-  // Try full mapping
-  const mapping = await buildSlugMapping();
-  const entry = mapping.get(anilistId);
-  if (entry?.slug) return getReanimeEpisodes(entry.slug);
   return null;
 }
 

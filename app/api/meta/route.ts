@@ -1,7 +1,7 @@
 // NexAnime — Unified metadata API (reanime.to / hianime / AniList)
 import { NextRequest, NextResponse } from 'next/server';
-import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, buildSlugMapping } from '@/lib/reanime';
-import { searchMedia } from '@/lib/data-api';
+import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, getReanimeSchedule, buildSlugMapping } from '@/lib/reanime';
+import { searchMedia, getAiringSchedule } from '@/lib/data-api';
 import {
   getTrending,
   getPopular,
@@ -30,6 +30,9 @@ function mapMedia(m: any) {
     averageScore: m.averageScore,
     synopsis: m.description,
     genres: m.genres || [],
+    rating: m.rating ?? null,
+    subbed: m.subbed ?? null,
+    dubbed: m.dubbed ?? null,
   };
 }
 
@@ -55,6 +58,9 @@ function mapReanimeMedia(r: any) {
     averageScore: r.average_score || null,
     synopsis: r.description,
     genres: r.genres || [],
+    rating: r.rating ?? null,
+    subbed: typeof r.subbed === 'number' ? r.subbed : null,
+    dubbed: typeof r.dubbed === 'number' ? r.dubbed : null,
   };
 }
 
@@ -238,6 +244,23 @@ export async function GET(request: NextRequest) {
           } catch {}
         }
         return NextResponse.json({ episodes: [] });
+      }
+
+      case 'schedule': {
+        const schedule = await getAiringSchedule();
+        return NextResponse.json({ schedule: schedule.map(s => ({
+          id: s.id,
+          airingAt: s.airingAt,
+          episode: s.episode,
+          mediaId: s.mediaId,
+          media: {
+            id: s.media?.id,
+            title: s.media?.title,
+            coverImage: s.media?.coverImage,
+            format: s.media?.format,
+            status: s.media?.status,
+          },
+        }))});
       }
 
       case 'info': {

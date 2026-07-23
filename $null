@@ -1,0 +1,16 @@
+
+> nexanime@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.51:3000
+✓ Ready in 8.5s
+○ Compiling middleware ...
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+○ Compiling /api/meta ...
+○ Compiling /_not-found/page ...
+ GET /api/meta?action=info&id=21459 404 in 109s (proxy.ts: 527ms)
+ GET /api/meta?action=info&id=21459 404 in 1143ms (next.js: 87ms, proxy.ts: 37ms, application-code: 1019ms)
+ GET /api/home 404 in 725ms (next.js: 216ms, proxy.ts: 28ms, application-code: 481ms)
