@@ -266,6 +266,9 @@ export interface AniListAiringSchedule {
   episode: number;
   mediaId: number;
   media: AniListMedia;
+  airingStatus?: string;
+  delayedFrom?: number | null;
+  delayedUntil?: number | null;
 }
 
 export interface BrowseFilters {

@@ -413,6 +413,31 @@ export async function getHianimeEpisodes(
   return { total: data.total, episodes: data.episodes };
 }
 
+export async function getHianimeEpisodesByTitle(
+  title: string
+): Promise<{ total: number; episodes: Array<{ episode_number: number; title: string | null; thumbnail: string | null }> } | null> {
+  const data = await apiFetch<HianimeAnime[]>('/search', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  });
+  if (!data || !Array.isArray(data) || data.length === 0) return null;
+
+  const first = data[0];
+  if (!first?._id) return null;
+
+  const result = await apiFetch<HianimeEpisodeListResponse>(`/episodes/${first._id}`);
+  if (!result?.episodes?.length) return null;
+
+  return {
+    total: result.total,
+    episodes: result.episodes.map(ep => ({
+      episode_number: ep.episodeNumber,
+      title: ep.title || null,
+      thumbnail: null,
+    })),
+  };
+}
+
 function hashStringToNumber(s: string): number {
   let hash = 0;
   for (let i = 0; i < s.length; i++) {

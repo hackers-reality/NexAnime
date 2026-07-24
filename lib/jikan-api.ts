@@ -6,7 +6,7 @@ const BASE = 'https://api.jikan.moe/v4';
 
 let lastRequestTime = 0;
 
-async function jikanFetch<T>(path: string): Promise<T | null> {
+async function jikanFetch<T>(path: string, retries = 1): Promise<T | null> {
   const now = Date.now();
   const waitTime = Math.max(0, 1100 - (now - lastRequestTime));
   if (waitTime > 0) {
@@ -19,9 +19,50 @@ async function jikanFetch<T>(path: string): Promise<T | null> {
       headers: { 'User-Agent': 'NexAnime/1.0' },
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Retry once on 429 (rate limit) or 504 (upstream MAL timeout) after a longer pause
+      if (retries > 0 && (res.status === 429 || res.status === 504 || res.status === 500)) {
+        await new Promise(r => setTimeout(r, 2000));
+        // Reset lastRequestTime so the next attempt also waits a bit
+        lastRequestTime = Date.now();
+        return jikanFetch<T>(path, retries - 1);
+      }
+      return null;
+    }
     const json = await res.json();
     return json.data as T;
+  } catch {
+    return null;
+  }
+}
+
+// Variant that ALSO returns pagination metadata — needed for episode list pagination
+async function jikanFetchWithPagination<T>(path: string, retries = 1): Promise<{ data: T; hasNext: boolean } | null> {
+  const now = Date.now();
+  const waitTime = Math.max(0, 1100 - (now - lastRequestTime));
+  if (waitTime > 0) {
+    await new Promise(r => setTimeout(r, waitTime));
+  }
+  lastRequestTime = Date.now();
+
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      headers: { 'User-Agent': 'NexAnime/1.0' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) {
+      if (retries > 0 && (res.status === 429 || res.status === 504 || res.status === 500)) {
+        await new Promise(r => setTimeout(r, 2000));
+        lastRequestTime = Date.now();
+        return jikanFetchWithPagination<T>(path, retries - 1);
+      }
+      return null;
+    }
+    const json = await res.json();
+    return {
+      data: json.data as T,
+      hasNext: Boolean(json.pagination?.has_next_page),
+    };
   } catch {
     return null;
   }
@@ -68,13 +109,14 @@ export async function getJikanEpisodes(malId: number): Promise<JikanEpisode[]> {
   const allEpisodes: JikanEpisode[] = [];
   let page = 1;
   let hasMore = true;
+  // Cap at 12 pages (1200 episodes) to avoid unbounded pagination on long-running shows
+  const MAX_PAGES = 12;
 
-  while (hasMore && page <= 3) {
-    const data = await jikanFetch<any>(`/anime/${malId}/episodes?page=${page}`);
-    if (!data) break;
-    const episodes = Array.isArray(data) ? data : data;
-    allEpisodes.push(...episodes);
-    hasMore = episodes.length === 100;
+  while (hasMore && page <= MAX_PAGES) {
+    const res = await jikanFetchWithPagination<JikanEpisode[]>(`/anime/${malId}/episodes?page=${page}`);
+    if (!res) break;
+    allEpisodes.push(...res.data);
+    hasMore = res.hasNext;
     page++;
   }
 

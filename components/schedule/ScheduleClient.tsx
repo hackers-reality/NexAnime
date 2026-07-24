@@ -16,16 +16,52 @@ function formatTime(unix: number): string {
   });
 }
 
-function formatRelativeTime(unix: number): string {
-  const now = Date.now();
-  const diff = unix * 1000 - now;
+function formatRelativeTime(entry: AniListAiringSchedule): string {
+  const { airingStatus, delayedUntil, delayedFrom } = entry;
+  const status = (airingStatus || '').toLowerCase();
 
+  if (status.includes('aired') || status.includes('finished')) return 'Aired';
+  if (status.includes('delayed')) {
+    if (delayedUntil && delayedUntil * 1000 > Date.now()) {
+      const diff = delayedUntil * 1000 - Date.now();
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor(diff / (1000 * 60));
+      if (hours > 24) return `Delayed → ${Math.floor(hours / 24)}d`;
+      if (hours > 0) return `Delayed → ${hours}h ${minutes % 60}m`;
+      return `Delayed → ${minutes}m`;
+    }
+    return 'Delayed';
+  }
+  if (status.includes('upcoming') || status.includes('not yet') || status.includes('not aired')) {
+    const diff = entry.airingAt * 1000 - Date.now();
+    if (diff <= 0) return 'Airing soon';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor(diff / (1000 * 60));
+    if (hours > 24) return `in ${Math.floor(hours / 24)}d`;
+    if (hours > 0) return `in ${hours}h ${minutes % 60}m`;
+    return `in ${minutes}m`;
+  }
+  if (status.includes('airing') || status.includes('releas')) {
+    return 'Airing';
+  }
+
+  // Fallback: timestamp-based
+  const now = Date.now();
+  const diff = entry.airingAt * 1000 - now;
   if (diff <= 0) return 'Aired';
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor(diff / (1000 * 60));
   if (hours > 24) return `in ${Math.floor(hours / 24)}d`;
   if (hours > 0) return `in ${hours}h ${minutes % 60}m`;
   return `in ${minutes}m`;
+}
+
+function statusClass(entry: AniListAiringSchedule): string {
+  const status = (entry.airingStatus || '').toLowerCase();
+  if (status.includes('aired') || status.includes('finished')) return 'aired';
+  if (status.includes('delayed')) return 'delayed';
+  if (status.includes('airing') || status.includes('releas')) return 'airing';
+  return '';
 }
 
 export default function ScheduleClient({ initialSchedule }: { initialSchedule: AniListAiringSchedule[] }) {
@@ -91,6 +127,7 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
               key={entry.id}
               href={`/anime/${entry.media.id}`}
               className={styles.episodeCard}
+              data-status={statusClass(entry)}
             >
               <div className={styles.episodeImage}>
                 <img
@@ -106,7 +143,7 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
                 <div className={styles.episodeMeta}>
                   <span className={styles.episodeNumber}>EP {entry.episode}</span>
                   <span className={styles.episodeTime}>{formatTime(entry.airingAt)}</span>
-                  <span className={styles.episodeRelative}>{formatRelativeTime(entry.airingAt)}</span>
+                  <span className={styles.episodeRelative}>{formatRelativeTime(entry)}</span>
                 </div>
                 {entry.media.genres && entry.media.genres.length > 0 && (
                   <div className={styles.episodeGenres}>

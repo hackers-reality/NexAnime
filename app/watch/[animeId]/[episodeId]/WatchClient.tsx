@@ -33,9 +33,21 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], reanimeEps: Array<{ episode_number: number; title: string | null }> = []): string {
+  const isGeneric = (t: string | null | undefined) => !t || /^episode\s*\d+$/i.test(t.trim());
   const reanimeEp = reanimeEps.find(e => e.episode_number === epNum);
-  if (reanimeEp?.title) return reanimeEp.title;
+  // Prefer non-generic reanime title
+  if (!isGeneric(reanimeEp?.title)) return reanimeEp!.title!;
 
+  // Jikan — has real localized episode titles for most anime
+  if (jikanEpisodes?.length) {
+    const jEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+    if (jEp?.title) {
+      const t = jEp.title_english || jEp.title || '';
+      if (t.trim()) return t;
+    }
+  }
+
+  // AniList streamingEpisodes (only available if AniList merge fired)
   if (media.streamingEpisodes?.length) {
     const ep = media.streamingEpisodes.find((e: any) => {
       const t = e.title || '';
@@ -48,13 +60,8 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], r
     }
   }
 
-  if (jikanEpisodes?.length) {
-    const jEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
-    if (jEp?.title) {
-      return jEp.title_english || jEp.title || `Episode ${epNum}`;
-    }
-  }
-
+  // Fall back to reanime generic "Episode N" if we have at least that
+  if (!isGeneric(reanimeEp?.title)) return reanimeEp!.title!;
   return `Episode ${epNum}`;
 }
 

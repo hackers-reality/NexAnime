@@ -172,6 +172,19 @@
   font-size: var(--text-xs);
 }
 
+/* Status-specific relative text colors */
+.episodeCard[data-status="aired"] .episodeRelative {
+  color: var(--text-muted);
+}
+
+.episodeCard[data-status="delayed"] .episodeRelative {
+  color: var(--accent-hiatus, #eab308);
+}
+
+.episodeCard[data-status="airing"] .episodeRelative {
+  color: var(--accent-airing);
+}
+
 .episodeGenres {
   display: flex;
   gap: var(--space-1);

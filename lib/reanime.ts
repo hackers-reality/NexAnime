@@ -842,6 +842,9 @@ export function mapScheduleItem(item: ReanimeScheduleItem): {
   media: AniListMedia;
   airingAt: number;
   episode: number;
+  airingStatus: string;
+  delayedFrom: number | null;
+  delayedUntil: number | null;
 } | null {
   if (!item.anime) return null;
   const media = mapHomeItem(item.anime);
@@ -850,6 +853,9 @@ export function mapScheduleItem(item: ReanimeScheduleItem): {
     media,
     airingAt: item.airing_at,
     episode: item.episode,
+    airingStatus: item.airing_status,
+    delayedFrom: item.delayed_from ?? null,
+    delayedUntil: item.delayed_until ?? null,
   };
 }
 
@@ -868,8 +874,9 @@ function extractAnilistId(item: { anilist_id?: number | string | null; cover_ima
 function mapStatus(s: string | null | undefined): string {
   if (!s) return 'FINISHED';
   const lower = s.toLowerCase();
-  if (lower.includes('releas') || lower.includes('airing')) return 'RELEASING';
+  // Check 'not yet' / 'upcoming' BEFORE 'releas' — otherwise 'not yet released' matches 'releas'
   if (lower.includes('not yet') || lower.includes('upcoming')) return 'NOT_YET_RELEASED';
+  if (lower.includes('releas') || lower.includes('airing') || lower.includes('currently')) return 'RELEASING';
   if (lower.includes('hiatus')) return 'HIATUS';
   if (lower.includes('cancel')) return 'CANCELLED';
   return 'FINISHED';

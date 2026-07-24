@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, getReanimeSchedule, buildSlugMapping } from '@/lib/reanime';
 import { searchMedia, getAiringSchedule } from '@/lib/data-api';
 import { getJikanEpisodes } from '@/lib/jikan-api';
+import { getHianimeEpisodesByTitle } from '@/lib/hianime-api';
 import {
   getTrending,
   getPopular,
@@ -292,6 +293,22 @@ export async function GET(request: NextRequest) {
           } catch {}
         }
 
+        // Hianime fallback: if reanime returned no episodes, try hianime search by title
+        if (episodes.length === 0) {
+          try {
+            const { queryOne } = await import('@/lib/db');
+            const cached = await queryOne<{ title_romaji: string; title_english: string }>(
+              'SELECT title_romaji, title_english FROM anime_cache WHERE anilist_id = ?',
+              [anilistId]
+            );
+            const title = cached?.title_english || cached?.title_romaji;
+            if (title) {
+              const hiEps = await withTimeout(getHianimeEpisodesByTitle(title), 8000);
+              if (hiEps?.episodes?.length) episodes = hiEps.episodes;
+            }
+          } catch {}
+        }
+
         return NextResponse.json({ episodes, jikanEpisodes });
       }
 
@@ -302,6 +319,9 @@ export async function GET(request: NextRequest) {
           airingAt: s.airingAt,
           episode: s.episode,
           mediaId: s.mediaId,
+          airingStatus: s.airingStatus,
+          delayedFrom: s.delayedFrom,
+          delayedUntil: s.delayedUntil,
           media: {
             id: s.media?.id,
             title: s.media?.title,

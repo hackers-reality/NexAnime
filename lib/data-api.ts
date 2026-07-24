@@ -127,6 +127,9 @@ export async function getHomeData(): Promise<HomePayload> {
           episode: mapped.episode,
           mediaId: mapped.media.id,
           media: mapped.media,
+          airingStatus: mapped.airingStatus,
+          delayedFrom: mapped.delayedFrom,
+          delayedUntil: mapped.delayedUntil,
         } as AniListAiringSchedule;
       })
       .filter((e): e is AniListAiringSchedule => {
@@ -153,7 +156,8 @@ export async function getHomeData(): Promise<HomePayload> {
     if (seasonSettled.status === 'fulfilled' && seasonSettled.value?.results?.length) {
       thisSeason = seasonSettled.value.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
       const existingIds = new Set(trending.map(m => m.id));
-      thisSeason = thisSeason.filter(m => !existingIds.has(m.id)).slice(0, 12);
+      // Exclude not-yet-released anime from "this season" — they belong in "upcoming" only.
+      thisSeason = thisSeason.filter(m => !existingIds.has(m.id) && m.status !== 'NOT_YET_RELEASED').slice(0, 12);
     }
 
     if (upcomingSettled.status === 'fulfilled' && upcomingSettled.value?.results?.length) {
@@ -458,6 +462,9 @@ export async function getAiringSchedule(): Promise<AniListAiringSchedule[]> {
           episode: mapped.episode,
           mediaId: mapped.media.id,
           media: mapped.media,
+          airingStatus: mapped.airingStatus,
+          delayedFrom: mapped.delayedFrom,
+          delayedUntil: mapped.delayedUntil,
         } as AniListAiringSchedule;
       })
       .filter(Boolean) as AniListAiringSchedule[];

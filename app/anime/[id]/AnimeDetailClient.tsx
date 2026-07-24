@@ -404,16 +404,25 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                       return match && parseInt(match[1]) === epNum;
                     });
                     const reanimeEp = reanimeEpisodes.find((e: any) => e.episode_number === epNum);
-                    const epTitle = reanimeEp?.title
-                      ? reanimeEp.title
-                      : (streamingEp?.title
-                          ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
-                          : (jikanEpisodes.length
-                              ? (jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title_english || jikanEpisodes.find((e: any) => e.mal_id === epNum)?.title || `Episode ${epNum}`)
-                              : `Episode ${epNum}`));
-                    const epThumb = reanimeEp?.thumbnail || streamingEp?.thumbnail || media.bannerImage || media.coverImage?.large || '';
-
                     const jikanEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+                    // Helper: ignore reanime "Episode N" generic titles — they're not real titles
+                    const isGenericTitle = (t: string | null | undefined) =>
+                      !t || /^episode\s*\d+$/i.test(t.trim());
+                    const epTitle =
+                      (!isGenericTitle(reanimeEp?.title) ? reanimeEp?.title : null) ||
+                      (jikanEp?.title_english && jikanEp.title_english.trim()) ||
+                      (jikanEp?.title && jikanEp.title.trim()) ||
+                      (streamingEp?.title
+                        ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
+                        : null) ||
+                      `Episode ${epNum}`;
+                    const epThumb =
+                      reanimeEp?.thumbnail ||
+                      jikanEp?.images?.jpg?.large_image_url ||
+                      streamingEp?.thumbnail ||
+                      media.bannerImage ||
+                      media.coverImage?.large ||
+                      '';
                     const progress = watchProgress[epNum];
                     const hasProgress = progress && progress.durationSeconds > 0;
                     const pct = hasProgress ? Math.min(progress.secondsWatched / progress.durationSeconds, 1) : 0;
