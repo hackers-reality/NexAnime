@@ -150,6 +150,13 @@ export default function StatusDropdownButton({
             <span>Completed</span>
           </button>
           <button
+            className={`${styles.item} ${status === 'rewatching' ? styles.itemActive : ''}`}
+            onClick={() => handleStatusSelect('rewatching')}
+          >
+            <span className={styles.itemIcon}>🔄</span>
+            <span>Rewatching</span>
+          </button>
+          <button
             className={`${styles.item} ${status === 'on_hold' ? styles.itemActive : ''}`}
             onClick={() => handleStatusSelect('on_hold')}
           >

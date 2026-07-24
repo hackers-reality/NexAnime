@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'gogocdn.net', pathname: '/**' },
       { protocol: 'https', hostname: 'anilist.co', pathname: '/**' },
       { protocol: 'https', hostname: 'artworks.thetvdb.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'img.anili.st', pathname: '/**' },
+      { protocol: 'https', hostname: 's4.anili.st', pathname: '/**' },
     ],
   },
   allowedDevOrigins: ['localhost', '127.0.0.1', ...getNetworkDevOrigins()],
@@ -43,6 +45,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
         ],
       },
     ];

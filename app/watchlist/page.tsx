@@ -38,7 +38,8 @@ const CATEGORIES: { status: ListStatus | 'all'; label: string; icon: string }[] 
   { status: 'rewatching', label: 'Rewatching', icon: '🔄' },
 ];
 
-const FORMAT_OPTIONS = ['TV Show', 'MOVIE', 'ONA', 'SPECIAL'];
+const FORMAT_OPTIONS = ['TV', 'TV_SHORT', 'MOVIE', 'ONA', 'SPECIAL', 'OVA'];
+const FORMAT_LABELS: Record<string, string> = { TV: 'TV', TV_SHORT: 'TV Short', MOVIE: 'Movie', ONA: 'ONA', SPECIAL: 'Special', OVA: 'OVA' };
 const STATUS_OPTIONS = ['RELEASING', 'FINISHED', 'NOT_YET_RELEASED'];
 
 export default function WatchlistPage() {
@@ -68,7 +69,7 @@ export default function WatchlistPage() {
   };
 
   const getFormatCount = (format: string) => {
-    return entries.filter((e) => e.anime?.format?.replace('_', ' ') === format).length;
+    return entries.filter((e) => e.anime?.format === format).length;
   };
 
   const getStatusCount = (animeStatus: string) => {
@@ -79,7 +80,7 @@ export default function WatchlistPage() {
     const statusMatch = activeTab === 'all' || entry.listStatus === activeTab;
     const title = (entry.anime?.title?.english || entry.anime?.title?.romaji || '').toLowerCase();
     const queryMatch = !searchQuery || title.includes(searchQuery.toLowerCase());
-    const formatMatch = !formatFilter || entry.anime?.format?.replace('_', ' ') === formatFilter;
+    const formatMatch = !formatFilter || entry.anime?.format === formatFilter;
     const animeStatusMatch = !statusFilter || entry.anime?.status === statusFilter;
     return statusMatch && queryMatch && formatMatch && animeStatusMatch;
   });
@@ -162,7 +163,7 @@ export default function WatchlistPage() {
                 className={`${styles.filterItem} ${formatFilter === f ? styles.activeFilter : ''}`}
                 onClick={() => setFormatFilter(formatFilter === f ? null : f)}
               >
-                <span>{f}</span>
+                <span>{FORMAT_LABELS[f] || f}</span>
                 <span className={styles.filterCount}>{getFormatCount(f)}</span>
               </button>
             ))}

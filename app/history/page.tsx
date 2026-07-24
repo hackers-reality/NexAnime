@@ -44,17 +44,23 @@ export default function WatchHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/watchlist?continue=true')
-      .then((r) => r.json())
+    // Try history endpoint first, fallback to continue-watching
+    fetch('/api/progress/history')
+      .then((r) => r.ok ? r.json() : Promise.reject())
       .then((data) => {
-        // Continue watching endpoint returns partial progress; let's fetch full history
-        return fetch('/api/progress/history').then((r) => r.ok ? r.json() : data);
-      })
-      .then((data) => {
-        setHistory(data.progress || data.entries || []);
+        setHistory(data.progress || []);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        // Fallback to continue-watching endpoint
+        fetch('/api/watchlist?continue=true')
+          .then((r) => r.json())
+          .then((data) => {
+            setHistory(data.entries || []);
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
+      });
   }, []);
 
   return (

@@ -123,7 +123,7 @@ export default function WatchlistEditorModal({
   };
 
   return (
-    <div className={styles.backdrop} onClick={onClose}>
+    <div className={styles.backdrop} onClick={onClose} onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} role="dialog" aria-modal="true" aria-label="Edit watchlist entry">
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* Left Side Poster */}
         <div className={styles.posterSide}>
