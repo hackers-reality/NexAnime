@@ -45,6 +45,7 @@ function BrowseContent() {
   const [pageInfo, setPageInfo] = useState<AniListPageInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'dense'>('grid');
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -87,11 +88,13 @@ function BrowseContent() {
     let active = true;
     setLoading(true);
     setResults([]);
+    setError(null);
     setCurrentPage(1);
 
     const fetchResults = async () => {
       try {
         const res = await fetch(buildBrowseUrl(filters, 1));
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (active) {
           setResults(data.media ?? []);
@@ -100,6 +103,7 @@ function BrowseContent() {
         }
       } catch (err) {
         console.error('Failed to search anime:', err);
+        if (active) setError('Failed to load results. Please try again.');
       } finally {
         if (active) setLoading(false);
       }
@@ -115,12 +119,14 @@ function BrowseContent() {
     try {
       const nextPage = currentPage + 1;
       const res = await fetch(buildBrowseUrl(filters, nextPage));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResults((prev) => [...prev, ...(data.media ?? [])]);
       setPageInfo(data.pageInfo ?? null);
       setCurrentPage(nextPage);
     } catch (err) {
       console.error('Failed to load more:', err);
+      setError('Failed to load more results.');
     } finally {
       setLoadingMore(false);
     }
@@ -202,6 +208,19 @@ function BrowseContent() {
 
         {loading ? (
           <SkeletonGrid count={12} horizontal={false} />
+        ) : error ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>⚠️</span>
+            <h3 className={styles.emptyTitle}>Something went wrong</h3>
+            <p className={styles.emptySub}>{error}</p>
+            <button
+              className={styles.retryBtn}
+              onClick={() => { setError(null); setFilters({ ...filters }); }}
+              style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}
+            >
+              Try Again
+            </button>
+          </div>
         ) : results.length === 0 ? (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>🔍</span>

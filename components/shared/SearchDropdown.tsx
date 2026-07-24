@@ -28,7 +28,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
   const [selectedIndex, setSelectedIndex] = useState(-1);
 
   useEffect(() => {
-    if (!query.trim()) {
+    if (!query.trim() || query.trim().length < 2) {
       setResults([]);
       return;
     }
@@ -38,11 +38,15 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
       setLoading(true);
       setSelectedIndex(-1);
       try {
-        const res = await fetch(`/api/meta?action=search&q=${encodeURIComponent(query)}&limit=8`);
+        const res = await fetch(`/api/meta?action=search&q=${encodeURIComponent(query)}&limit=8`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('Search failed');
         const data = await res.json();
         setResults(data.media ?? []);
-      } catch {
-        // Aborted or error — ignore
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setResults([]);
       } finally {
         setLoading(false);
       }
