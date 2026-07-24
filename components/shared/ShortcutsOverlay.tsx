@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './ShortcutsOverlay.module.css';
 
 const SHORTCUTS = [
@@ -28,22 +28,32 @@ const SHORTCUTS = [
     { keys: [','], desc: 'Playback speed down' },
     { keys: ['.'], desc: 'Playback speed up' },
   ]},
+  { category: 'Watch Page', items: [
+    { keys: ['Shift', '←'], desc: 'Previous episode' },
+    { keys: ['Shift', '→'], desc: 'Next episode' },
+  ]},
 ];
 
 export default function ShortcutsOverlay() {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLElement | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
-      // Don't trigger when typing in inputs
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen((prev) => {
+          if (!prev) triggerRef.current = e.target as HTMLElement;
+          return !prev;
+        });
       }
       if (e.key === 'Escape' && open) {
+        e.preventDefault();
+        e.stopPropagation();
         setOpen(false);
       }
     }
@@ -52,14 +62,23 @@ export default function ShortcutsOverlay() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      modalRef.current?.focus();
+    } else if (triggerRef.current) {
+      triggerRef.current.focus();
+      triggerRef.current = null;
+    }
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div className={styles.overlay} onClick={() => setOpen(false)}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay} onClick={() => setOpen(false)} role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+      <div className={styles.modal} ref={modalRef} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2 className={styles.title}>Keyboard Shortcuts</h2>
-          <button className={styles.closeBtn} onClick={() => setOpen(false)}>
+          <button className={styles.closeBtn} onClick={() => setOpen(false)} aria-label="Close shortcuts overlay">
             ✕
           </button>
         </div>

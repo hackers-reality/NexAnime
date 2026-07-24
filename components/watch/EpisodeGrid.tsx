@@ -18,17 +18,19 @@ export default function EpisodeGrid({ animeId, totalEpisodes, currentEpisode }: 
       <h3 className={styles.title}>
         Episodes <span className={styles.count}>({maxEp})</span>
       </h3>
-      <div className={styles.grid}>
+      <nav className={styles.grid} aria-label="Episode navigation">
         {episodes.map((ep) => (
           <Link
             key={ep}
             href={`/watch/${animeId}/${ep}`}
             className={`${styles.episode} ${ep === currentEpisode ? styles.current : ''} ${ep < currentEpisode ? styles.watched : ''}`}
+            aria-current={ep === currentEpisode ? 'page' : undefined}
+            aria-label={`Episode ${ep}${ep === currentEpisode ? ' (currently playing)' : ''}${ep < currentEpisode ? ' (watched)' : ''}`}
           >
             {ep}
           </Link>
         ))}
-      </div>
+      </nav>
     </div>
   );
 }

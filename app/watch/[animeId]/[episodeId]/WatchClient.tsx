@@ -348,8 +348,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           durationSeconds: 99999,
         }),
       }).catch(() => {});
-      // Auto-advance to next episode
-      if (hasNextEp) {
+      // Auto-advance to next episode only if auto-play is enabled
+      if (hasNextEp && clientAutoPlay) {
         setShowAutoAdvance(true);
         autoAdvanceTimer.current = setTimeout(() => {
           window.location.href = `/watch/${media.id}/${episodeNumber + 1}`;
@@ -478,7 +478,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                 totalEpisodes={totalEpisodes}
               />
               {showAutoAdvance && hasNextEp && (
-                <div className={styles.autoAdvanceBanner}>
+                <div className={styles.autoAdvanceBanner} role="status" aria-live="polite">
                   <div className={styles.autoAdvanceInfo}>
                     <span className={styles.autoAdvanceIcon}>▶</span>
                     <div>
@@ -542,7 +542,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
               <span>Episode {episodeNumber} of {totalEpisodes}</span>
               <span>{Math.round((episodeNumber / totalEpisodes) * 100)}%</span>
             </div>
-            <div className={styles.seriesProgressBar}>
+            <div className={styles.seriesProgressBar} role="progressbar" aria-valuenow={episodeNumber} aria-valuemin={1} aria-valuemax={totalEpisodes} aria-label={`Series progress: episode ${episodeNumber} of ${totalEpisodes}`}>
               <div
                 className={styles.seriesProgressFill}
                 style={{ width: `${(episodeNumber / totalEpisodes) * 100}%` }}

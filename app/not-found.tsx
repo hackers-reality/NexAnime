@@ -2,31 +2,36 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div style={styles.container}>
+    <main id="main-content" style={styles.container}>
       <div style={styles.content}>
-        <h1 style={styles.code}>404</h1>
-        <h2 style={styles.title}>Page Not Found</h2>
+        <p style={styles.code} aria-hidden="true">404</p>
+        <h1 style={styles.title}>Page Not Found</h1>
         <p style={styles.description}>
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <Link href="/" style={styles.button}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ marginRight: 6 }}
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back to Home
-        </Link>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href="/" style={styles.button}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ marginRight: 6 }}
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            Back to Home
+          </Link>
+          <Link href="/browse" style={{ ...styles.button, backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.2)' }}>
+            Browse Anime
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
 
