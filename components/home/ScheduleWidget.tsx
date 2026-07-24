@@ -123,7 +123,7 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
                 {entry.coverImage && (
                   <img
                     src={entry.coverImage}
-                    alt=""
+                    alt={entry.title || 'Anime'}
                     className={styles.itemCover}
                     loading="lazy"
                   />

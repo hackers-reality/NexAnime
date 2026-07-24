@@ -734,7 +734,6 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                       .filter((n) => n.mediaRecommendation !== null)
                       .map((n, index) => {
                         const rec = n.mediaRecommendation!;
-                        const hasValidId = rec.id > 0;
                         const card = (
                           <AnimeCard
                             id={rec.id}
@@ -748,7 +747,6 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                             genres={rec.genres || []}
                           />
                         );
-                        if (!hasValidId) return <div key={`${rec.id}-${index}`}>{card}</div>;
                         return <div key={`${rec.id}-${index}`}>{card}</div>;
                       })}
                   </div>

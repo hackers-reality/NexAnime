@@ -110,7 +110,7 @@ export default function AnimeCardHoverPreview({
         setCurrentStatus(newStatus);
         setShowDropdown(false);
       })
-      .catch(console.error);
+      .catch(() => {});
   };
 
   const heartIcon = currentStatus ? (STATUS_HEART[currentStatus] || '♥') : '♡';
