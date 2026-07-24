@@ -19,6 +19,9 @@
   --accent-hiatus: #eab308;
   --accent-finished: #a78bfa;
   --accent-cancelled: #ef4444;
+  --accent-on-hold: #f97316;
+  --accent-dropped: #ef4444;
+  --accent-score: #fbbf24;
 
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1aa;

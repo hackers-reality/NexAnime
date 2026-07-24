@@ -835,10 +835,13 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                           suppressHydrationWarning
                           onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }}
                         />
-                        <span className={styles.relTypeBadge} style={{
-                          backgroundColor: relType === 'PREQUEL' ? 'rgba(99,102,241,0.2)' : relType === 'SEQUEL' ? 'rgba(16,185,129,0.2)' : relType === 'SIDE STORY' ? 'rgba(245,158,11,0.2)' : relType === 'ALTERNATIVE' ? 'rgba(236,72,153,0.2)' : relType === 'SPIN OFF' ? 'rgba(139,92,246,0.2)' : 'rgba(107,114,128,0.2)',
-                          color: relType === 'PREQUEL' ? '#818cf8' : relType === 'SEQUEL' ? '#34d399' : relType === 'SIDE STORY' ? '#fbbf24' : relType === 'ALTERNATIVE' ? '#f472b6' : relType === 'SPIN OFF' ? '#a78bfa' : '#9ca3af',
-                        }}>{relType}</span>
+                        <span className={`${styles.relTypeBadge} ${
+                          relType === 'PREQUEL' ? styles['relTypeBadge--prequel'] :
+                          relType === 'SEQUEL' ? styles['relTypeBadge--sequel'] :
+                          relType === 'SIDE STORY' ? styles['relTypeBadge--sideStory'] :
+                          relType === 'ALTERNATIVE' ? styles['relTypeBadge--alternative'] :
+                          relType === 'SPIN OFF' ? styles['relTypeBadge--spinOff'] : ''
+                        }`}>{relType}</span>
                       </div>
                     )}
                     <div className={styles.relInfo}>

@@ -49,13 +49,13 @@
 .current {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--primary-contrast, #fff);
   font-weight: var(--font-weight-semibold);
 }
 
 .current:hover {
   background: var(--primary-hover);
-  color: #fff;
+  color: var(--primary-contrast, #fff);
 }
 
 .watched {

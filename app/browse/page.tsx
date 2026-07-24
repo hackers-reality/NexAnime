@@ -6,7 +6,7 @@ import Header from '@/components/shared/Header';
 import FilterBar from '@/components/browse/FilterBar';
 import AnimeCard from '@/components/cards/AnimeCard';
 import SkeletonGrid from '@/components/shared/SkeletonGrid';
-import type { BrowseFilters, AniListMedia, AniListPageInfo } from '@/types';
+import type { BrowseFilters, AniListMedia, AniListPageInfo, AnimeFormat, AnimeSeason, AnimeStatus } from '@/types';
 import styles from './page.module.css';
 
 function BrowseContent() {
@@ -16,10 +16,10 @@ function BrowseContent() {
   const getFiltersFromParams = (): BrowseFilters => {
     const search = searchParams?.get('search') ?? undefined;
     const genres = searchParams?.get('genres')?.split(',') ?? undefined;
-    const format = (searchParams?.get('format') as any) ?? undefined;
+    const format = (searchParams?.get('format') as AnimeFormat | undefined) ?? undefined;
     const seasonYear = searchParams?.get('year') ? parseInt(searchParams.get('year')!) : undefined;
-    const season = (searchParams?.get('season') as any) ?? undefined;
-    const status = (searchParams?.get('status') as any) ?? undefined;
+    const season = (searchParams?.get('season') as AnimeSeason | undefined) ?? undefined;
+    const status = (searchParams?.get('status') as AnimeStatus | undefined) ?? undefined;
     const tags = searchParams?.get('tags')?.split(',') ?? undefined;
     const country = searchParams?.get('country') ?? undefined;
     const source = searchParams?.get('source') ?? undefined;

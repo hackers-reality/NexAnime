@@ -8,7 +8,7 @@ import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
 import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
 import Lightbox from '@/components/ui/Lightbox';
 import { anilistMediaToAnime, getMediaCharacters, getMediaStaff } from '@/lib/data-api';
-import type { AniListMedia, CharacterWithVA, StaffEntry } from '@/types';
+import type { AniListMedia, CharacterWithVA, StaffEntry, JikanEpisode } from '@/types';
 import styles from './page.module.css';
 
 interface AnimeDetailClientProps {
@@ -29,7 +29,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
   const [watchlistVersion, setWatchlistVersion] = useState(0);
-  const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [jikanEpisodes, setJikanEpisodes] = useState<JikanEpisode[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [jikanCharacters, setJikanCharacters] = useState<CharacterWithVA[]>([]);
   const [jikanStaff, setJikanStaff] = useState<StaffEntry[]>([]);
@@ -390,7 +390,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     {!episodesLoading && (() => {
                       const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
                       const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
-                      const ec = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
+                      const ec = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || media.lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
                       return ec > 0 ? (
                         <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--text-muted)', marginLeft: '8px' }}>
                           ({ec})
@@ -417,18 +417,18 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                   {(() => {
                     const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
                     const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
-                    const epCount = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
+                    const epCount = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || media.lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
                     if (epCount === 0 && !media.streamingEpisodes?.length) {
                       return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>{isNotYetReleased ? 'This anime has not been released yet. No episodes available.' : 'No episode data available yet.'}</p>;
                     }
                     return Array.from({ length: epCount || media.streamingEpisodes?.length || 0 }, (_, i) => {
                     const epNum = i + 1;
-                    const streamingEp = media.streamingEpisodes?.find((ep: any) => {
+                    const streamingEp = media.streamingEpisodes?.find((ep) => {
                       const match = ep.title?.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
                       return match && parseInt(match[1]) === epNum;
                     });
-                    const reanimeEp = reanimeEpisodes.find((e: any) => e.episode_number === epNum);
-                    const jikanEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+                    const reanimeEp = reanimeEpisodes.find((e) => e.episode_number === epNum);
+                    const jikanEp = jikanEpisodes.find((e) => e.mal_id === epNum);
                     // Helper: ignore reanime "Episode N" generic titles — they're not real titles
                     const isGenericTitle = (t: string | null | undefined) =>
                       !t || /^episode\s*\d+$/i.test(t.trim());
@@ -484,8 +484,8 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           {epSynopsis && (
                             <div className={styles.epSynopsis}>{epSynopsis}</div>
                           )}
-                          {formatAirDate(jikanEp?.aired) && (
-                            <div className={styles.epAirDate}>Aired: {formatAirDate(jikanEp.aired)}</div>
+                          {formatAirDate(jikanEp?.aired ?? null) && (
+                            <div className={styles.epAirDate}>Aired: {formatAirDate(jikanEp?.aired ?? null)}</div>
                           )}
                           {hasProgress && (
                             <>

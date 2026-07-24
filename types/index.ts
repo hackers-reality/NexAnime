@@ -339,6 +339,9 @@ export interface JikanEpisode {
   recap: boolean;
   forum_url: string | null;
   synopsis: string | null;
+  images?: {
+    jpg?: { image_url?: string; small_image_url?: string; large_image_url?: string };
+  };
 }
 
 export interface CharacterWithVA {

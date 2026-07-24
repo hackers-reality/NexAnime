@@ -10,6 +10,7 @@ import SkeletonCarousel from '@/components/home/SkeletonCarousel';
 import ScheduleWidget from '@/components/home/ScheduleWidget';
 import SkeletonGrid from '@/components/shared/SkeletonGrid';
 import Image from 'next/image';
+import type { AnimeFormat, AnimeStatus as AnimeStatusType } from '@/types';
 import styles from './page.module.css';
 
 async function fetchJSON(url: string): Promise<any> {
@@ -54,6 +55,36 @@ interface MediaItem {
   episodes: number | null;
 }
 
+interface RecentlyUpdatedItem {
+  id: number;
+  airingAt: number;
+  episode: number;
+  mediaId: number;
+  media: {
+    id: number;
+    title: { romaji?: string; english?: string };
+    coverImage: { extraLarge?: string; large?: string; medium?: string };
+    format: string | null;
+    seasonYear: number | null;
+    status: string | null;
+    averageScore: number | null;
+    description: string | null;
+    genres: string[];
+    rating?: string | null;
+    subbed?: number | null;
+    dubbed?: number | null;
+  };
+}
+
+interface ScheduleEntry {
+  id: number;
+  airingAt: number;
+  episode: number;
+  mediaId: number;
+  title: string;
+  coverImage: string | null;
+}
+
 interface HomeCardItem {
   anilistId: number;
   titleRomaji: string;
@@ -83,8 +114,8 @@ export default function HomePage() {
     return ['WINTER', 'WINTER', 'SPRING', 'SPRING', 'SPRING', 'SUMMER', 'SUMMER', 'SUMMER', 'FALL', 'FALL', 'FALL', 'WINTER'][m];
   })();
   const [upcomingCards, setUpcomingCards] = useState<HomeCardItem[]>([]);
-  const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<any[]>([]);
-  const [formattedSchedules, setFormattedSchedules] = useState<any[]>([]);
+  const [recentlyUpdatedCards, setRecentlyUpdatedCards] = useState<RecentlyUpdatedItem[]>([]);
+  const [formattedSchedules, setFormattedSchedules] = useState<ScheduleEntry[]>([]);
   const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'popular' | 'topRated'>('trending');
   const [tabAnime, setTabAnime] = useState<HomeCardItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,9 +333,9 @@ export default function HomePage() {
                       id={anime.anilistId}
                       poster={anime.coverImage}
                       title={anime.titleRomaji}
-                      format={anime.format as any}
+                      format={anime.format as AnimeFormat | null}
                       year={anime.seasonYear}
-                      status={anime.status as any}
+                      status={anime.status as AnimeStatusType | null}
                       score={anime.averageScore}
                       synopsis={anime.synopsis}
                       genres={anime.genres}
@@ -333,9 +364,9 @@ export default function HomePage() {
                         id={anime.anilistId}
                         poster={anime.coverImage}
                         title={anime.titleRomaji}
-                        format={anime.format as any}
+                        format={anime.format as AnimeFormat | null}
                         year={anime.seasonYear}
-                        status={anime.status as any}
+                        status={anime.status as AnimeStatusType | null}
                         score={anime.averageScore}
                         synopsis={anime.synopsis}
                         genres={anime.genres}
@@ -376,12 +407,12 @@ export default function HomePage() {
                   <div className={styles.homeCardGridLimited}>
                     {(() => {
                       const seen = new Set<number>();
-                      return recentlyUpdatedCards.slice(0, 12).filter((item: any) => {
+                      return recentlyUpdatedCards.slice(0, 12).filter((item) => {
                         const anime = item.media;
                         if (!anime?.id || seen.has(anime.id)) return false;
                         seen.add(anime.id);
                         return true;
-                      }).map((item: any) => {
+                      }).map((item) => {
                         const anime = item.media;
                         return (
                           <div key={`recent-${anime.id}`} className={styles.cardWrapper}>
@@ -389,15 +420,15 @@ export default function HomePage() {
                               id={anime.id}
                               poster={anime.coverImage?.extraLarge || anime.coverImage?.large || null}
                               title={anime.title?.english || anime.title?.romaji || 'Unknown'}
-                              format={anime.format}
+                              format={anime.format as AnimeFormat | null}
                               year={anime.seasonYear}
-                              status={anime.status}
+                              status={anime.status as AnimeStatusType | null}
                               score={anime.averageScore}
                               synopsis={anime.description}
                               genres={anime.genres || []}
-                              rating={(anime as any).rating}
-                              subbed={(anime as any).subbed}
-                              dubbed={(anime as any).dubbed}
+                              rating={anime.rating ?? null}
+                              subbed={anime.subbed ?? null}
+                              dubbed={anime.dubbed ?? null}
                             />
                           </div>
                         );
@@ -429,9 +460,9 @@ export default function HomePage() {
                       id={anime.anilistId}
                       poster={anime.coverImage}
                       title={anime.titleRomaji}
-                      format={anime.format as any}
+                      format={anime.format as AnimeFormat | null}
                       year={anime.seasonYear}
-                      status={anime.status as any}
+                      status={anime.status as AnimeStatusType | null}
                       score={anime.averageScore}
                       synopsis={anime.synopsis}
                       genres={anime.genres}

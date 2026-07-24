@@ -7,7 +7,7 @@ import AnimeCard from '@/components/cards/AnimeCard';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
-import type { ListStatus } from '@/types';
+import type { ListStatus, AnimeFormat, AnimeStatus as AnimeStatusType } from '@/types';
 
 interface WatchlistEntry {
   id: number;
@@ -208,10 +208,10 @@ export default function WatchlistPage() {
                             id={entry.anilistId}
                             poster={entry.anime?.coverImage?.extraLarge || null}
                             title={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
-                            format={entry.anime?.format as any}
+                            format={entry.anime?.format as AnimeFormat | null}
                             year={entry.anime?.seasonYear || null}
                             score={entry.score ?? entry.anime?.averageScore}
-                            status={entry.anime?.status as any}
+                            status={entry.anime?.status as AnimeStatusType | null}
                             synopsis={entry.anime?.synopsis}
                             genres={entry.anime?.genres || []}
                           />

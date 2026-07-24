@@ -282,12 +282,12 @@
 
 .statusPill.on_hold {
   background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
+  color: var(--accent-on-hold);
 }
 
 .statusPill.dropped {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--accent-dropped);
 }
 
 .synopsis {
@@ -370,7 +370,7 @@
 
 .animeScore {
   font-size: 14px;
-  color: #fbbf24;
+  color: var(--accent-score);
   font-weight: 600;
 }
 
@@ -740,7 +740,7 @@
 
 .navControlBtn:hover:not(.disabledBtn) {
   background-color: var(--primary);
-  color: #000;
+  color: var(--primary-contrast, #fff);
   border-color: var(--primary);
 }
 
@@ -873,6 +873,11 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+.relTypeBadge--prequel { background: rgba(99,102,241,0.2); color: #818cf8; }
+.relTypeBadge--sequel { background: rgba(16,185,129,0.2); color: #34d399; }
+.relTypeBadge--sideStory { background: rgba(245,158,11,0.2); color: var(--accent-score); }
+.relTypeBadge--alternative { background: rgba(236,72,153,0.2); color: #f472b6; }
+.relTypeBadge--spinOff { background: rgba(139,92,246,0.2); color: #a78bfa; }
 
 .relInfo {
   display: flex;
