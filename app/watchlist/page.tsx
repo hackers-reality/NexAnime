@@ -210,7 +210,7 @@ export default function WatchlistPage() {
                             title={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
                             format={entry.anime?.format as any}
                             year={entry.anime?.seasonYear || null}
-                            score={entry.score || entry.anime?.averageScore}
+                            score={entry.score ?? entry.anime?.averageScore}
                             status={entry.anime?.status as any}
                             synopsis={entry.anime?.synopsis}
                             genres={entry.anime?.genres || []}
@@ -286,7 +286,7 @@ export default function WatchlistPage() {
                         title={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
                         format={entry.anime?.format as any}
                         year={entry.anime?.seasonYear || null}
-                        score={entry.score || entry.anime?.averageScore}
+                        score={entry.score ?? entry.anime?.averageScore}
                         status={entry.anime?.status as any}
                         synopsis={entry.anime?.synopsis}
                         genres={entry.anime?.genres || []}

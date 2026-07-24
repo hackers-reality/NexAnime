@@ -211,7 +211,10 @@ export default function WatchlistEditorModal({
                     max={totalEpisodes || undefined}
                     placeholder="0"
                     value={episodeWatched}
-                    onChange={(e) => setEpisodeWatched(Math.max(0, parseInt(e.target.value) || 0))}
+                    onChange={(e) => {
+                      const val = Math.max(0, parseInt(e.target.value) || 0);
+                      setEpisodeWatched(totalEpisodes ? Math.min(val, totalEpisodes) : val);
+                    }}
                   />
                   {totalEpisodes ? <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>/ {totalEpisodes}</span> : null}
                 </div>

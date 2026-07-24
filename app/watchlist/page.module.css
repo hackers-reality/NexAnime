@@ -190,6 +190,14 @@
   display: flex;
   gap: 8px;
   margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+
+.sortRow::-webkit-scrollbar {
+  display: none;
 }
 
 .sortBtn {
@@ -200,6 +208,8 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s;
 }
 

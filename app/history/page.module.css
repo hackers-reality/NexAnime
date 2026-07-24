@@ -127,6 +127,8 @@
   font-size: var(--text-xs);
   color: var(--text-muted);
   align-items: center;
+  flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .format {
