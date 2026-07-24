@@ -182,9 +182,9 @@ return (
            <div className={styles.titleRow}>
              <h1 className={styles.pageTitle}>Browse Anime</h1>
              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-               <span className={styles.countLabel}>
-                 Showing {results.length} of {pageInfo.total.toLocaleString()} results
-               </span>
+<span className={styles.countLabel}>
+                  Showing {results.length} of {pageInfo ? pageInfo.total.toLocaleString() : '0'} results
+                </span>
                <div className="viewToggle">
                  <button
                    className={`viewToggleBtn ${viewMode === 'grid' ? 'active' : ''}`}
