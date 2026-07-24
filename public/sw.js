@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexanime-v1';
+const CACHE_NAME = 'nexanime-v2';
 const STATIC_ASSETS = [
   '/',
   '/favicon.svg',
@@ -38,7 +38,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => {
+          if (cached) return cached;
+          // Offline fallback for navigation requests
+          if (request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
+        });
 
       return cached || fetched;
     })

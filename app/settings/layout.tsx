@@ -78,7 +78,7 @@ export default function SettingsLayout({
             </button>
           </nav>
         </aside>
-        <main className={styles.mainContent}>{children}</main>
+        <main id="main-content" className={styles.mainContent}>{children}</main>
       </div>
     </div>
   );

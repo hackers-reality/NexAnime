@@ -34,6 +34,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [jikanCharacters, setJikanCharacters] = useState<CharacterWithVA[]>([]);
   const [jikanStaff, setJikanStaff] = useState<StaffEntry[]>([]);
   const [charsLoading, setCharsLoading] = useState(false);
+  const [episodesLoading, setEpisodesLoading] = useState(true);
   const [watchProgress, setWatchProgress] = useState<Record<number, { secondsWatched: number; durationSeconds: number }>>({});
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -41,6 +42,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
     if (!media.idMal && !media.id) return;
 
     setCharsLoading(true);
+    setEpisodesLoading(true);
 
     // Fetch episodes (reanime.to + Jikan synopses) and characters/staff in parallel
     Promise.allSettled([
@@ -55,7 +57,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
       media.idMal ? getMediaCharacters(media.idMal).then(setJikanCharacters) : Promise.resolve(),
       // Staff
       media.idMal ? getMediaStaff(media.idMal).then(setJikanStaff) : Promise.resolve(),
-    ]).finally(() => setCharsLoading(false));
+    ]).finally(() => { setCharsLoading(false); setEpisodesLoading(false); });
   }, [media.idMal, media.id]);
 
   useEffect(() => {
@@ -385,12 +387,34 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                 <div className={styles.episodesHeader}>
                   <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
                     Episodes
+                    {!episodesLoading && (() => {
+                      const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
+                      const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
+                      const ec = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
+                      return ec > 0 ? (
+                        <span style={{ fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--text-muted)', marginLeft: '8px' }}>
+                          ({ec})
+                        </span>
+                      ) : null;
+                    })()}
                   </h3>
                 </div>
                 
+                {episodesLoading ? (
+                  <div className={styles.episodesGrid}>
+                    {Array.from({ length: 6 }, (_, i) => (
+                      <div key={i} className={styles.episodeCard} style={{ opacity: 0.5 }}>
+                        <div className={styles.epThumbWrap} style={{ background: 'var(--bg-surface)' }} />
+                        <div className={styles.epInfo}>
+                          <div className={styles.epTitle} style={{ background: 'var(--bg-surface)', borderRadius: 4, height: 14, width: '70%' }} />
+                          <div className={styles.epSynopsis} style={{ background: 'var(--bg-surface)', borderRadius: 4, height: 12, width: '90%' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                 <div className={styles.episodesGrid}>
                   {(() => {
-                    // Use actual fetched episode data first. Don't trust planned episode counts for unreleased anime.
                     const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
                     const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
                     const epCount = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || (media as any).lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
@@ -427,6 +451,10 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     const hasProgress = progress && progress.durationSeconds > 0;
                     const pct = hasProgress ? Math.min(progress.secondsWatched / progress.durationSeconds, 1) : 0;
                     const isWatched = pct >= 0.9;
+                    // Strip HTML from synopsis
+                    const epSynopsis = jikanEp?.synopsis
+                      ? jikanEp.synopsis.replace(/<[^>]*>/g, '').trim()
+                      : null;
 
                     return (
                       <Link
@@ -453,8 +481,8 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                         </div>
                         <div className={styles.epInfo}>
                           <div className={styles.epTitle}>{epTitle}</div>
-                          {jikanEp?.synopsis && (
-                            <div className={styles.epSynopsis}>{jikanEp.synopsis}</div>
+                          {epSynopsis && (
+                            <div className={styles.epSynopsis}>{epSynopsis}</div>
                           )}
                           {formatAirDate(jikanEp?.aired) && (
                             <div className={styles.epAirDate}>Aired: {formatAirDate(jikanEp.aired)}</div>
@@ -475,6 +503,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                   });
                   })()}
                 </div>
+                )}
               </div>
             )}
 

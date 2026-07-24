@@ -183,7 +183,7 @@ export default function WatchlistPage() {
           </div>
         </aside>
 
-        <main className={styles.mainContent}>
+        <main id="main-content" className={styles.mainContent}>
           {loading ? (
             <SkeletonGrid count={8} />
           ) : filteredEntries.length === 0 ? (

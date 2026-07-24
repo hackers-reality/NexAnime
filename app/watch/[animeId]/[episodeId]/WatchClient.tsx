@@ -405,13 +405,16 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
         }
       }
-      if (e.key === '?' && !e.shiftKey && e.keyCode === 191) {
+      if (e.key === '?' && e.shiftKey) {
         setShowShortcuts(p => !p);
       }
-      if (e.key === 'ArrowLeft' && episodeNumber > 1) {
+      // Shift+Arrow for episode navigation (plain arrows are used by VideoPlayer for seeking)
+      if (e.key === 'ArrowLeft' && e.shiftKey && episodeNumber > 1) {
+        e.preventDefault();
         window.location.href = `/watch/${media.id}/${episodeNumber - 1}`;
       }
-      if (e.key === 'ArrowRight' && hasNextEp) {
+      if (e.key === 'ArrowRight' && e.shiftKey && hasNextEp) {
+        e.preventDefault();
         window.location.href = `/watch/${media.id}/${episodeNumber + 1}`;
       }
     };
@@ -445,7 +448,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const hasRelations = prequels.length > 0 || sequels.length > 0 || sideStories.length > 0 || alternatives.length > 0 || spinOffs.length > 0 || summaries.length > 0;
 
   return (
-    <main className={styles.container}>
+    <main id="main-content" className={styles.container}>
       <div className={styles.leftCol}>
         <div className={styles.breadcrumb}>
           <Link href="/">Home</Link>

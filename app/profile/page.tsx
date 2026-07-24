@@ -84,7 +84,7 @@ export default async function ProfilePage() {
   return (
     <div className={styles.container}>
       <Header />
-      <main className={styles.wrapper}>
+      <main id="main-content" className={styles.wrapper}>
         {/* Profile Card */}
         <section className={styles.profileCard}>
           <div className={styles.avatarWrapper}>

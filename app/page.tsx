@@ -171,7 +171,7 @@ export default function HomePage() {
       {loading ? (
         <>
           <SkeletonCarousel />
-          <main className={styles.main}>
+          <main id="main-content" className={styles.main}>
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Trending Now</h2>
             <SkeletonGrid count={8} horizontal />
@@ -186,7 +186,7 @@ export default function HomePage() {
         <>
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}
 
-          <main className={styles.main}>
+          <main id="main-content" className={styles.main}>
             {continueWatching.length > 0 ? (
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Dive Back In</h2>

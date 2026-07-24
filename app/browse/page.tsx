@@ -170,7 +170,7 @@ function BrowseContent() {
   return (
     <div className={styles.page}>
       <Header />
-      <main className={styles.main}>
+      <main id="main-content" className={styles.main}>
         <div className={styles.titleRow}>
           <h1 className={styles.pageTitle}>Browse Anime</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
