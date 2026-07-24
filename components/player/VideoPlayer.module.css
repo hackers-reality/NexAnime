@@ -444,3 +444,40 @@
   50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
   100% { opacity: 0; transform: translateY(-50%) scale(1.2); }
 }
+
+/* ── Mobile ─────────────────────────────── */
+@media (max-width: 600px) {
+  .miniPlayer {
+    width: calc(100vw - 32px);
+    max-width: 340px;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    bottom: calc(16px + var(--safe-area-bottom, 0px));
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+
+  .closeMiniBtn {
+    width: 32px;
+    height: 32px;
+    top: -8px;
+    right: -8px;
+    font-size: 14px;
+  }
+
+  .ctrlBtn {
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .volumeSlider {
+    width: 60px;
+  }
+
+  .timeLabel {
+    min-width: 60px;
+    font-size: 11px;
+  }
+}

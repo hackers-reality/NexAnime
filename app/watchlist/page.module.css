@@ -142,6 +142,8 @@
   gap: 16px;
   overflow-x: auto;
   padding-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .cardContainer {

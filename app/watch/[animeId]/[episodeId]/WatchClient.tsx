@@ -450,17 +450,17 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   return (
     <main id="main-content" className={styles.container}>
       <div className={styles.leftCol}>
-        <div className={styles.breadcrumb}>
+        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
           <Link href="/">Home</Link>
-          <span className={styles.separator}>›</span>
+          <span className={styles.separator} aria-hidden="true">›</span>
           <Link href={`/anime/${media.id}`}>{media.title.romaji || media.title.english}</Link>
-          <span className={styles.separator}>›</span>
-          <span className={styles.currentCrumb}>{getEpisodeTitle(media, episodeNumber, jikanEpisodes, reanimeEpisodes)}</span>
-        </div>
+          <span className={styles.separator} aria-hidden="true">›</span>
+          <span className={styles.currentCrumb} aria-current="page">{getEpisodeTitle(media, episodeNumber, jikanEpisodes, reanimeEpisodes)}</span>
+        </nav>
 
         <div className={styles.playerSection}>
           {loading ? (
-            <div className={styles.loadingPlayer}>
+            <div className={styles.loadingPlayer} role="status" aria-label="Loading video">
               <div className={styles.spinner} />
               <p>Resolving streams...</p>
             </div>
@@ -577,7 +577,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
               </svg>
               <span>If the current server doesn't work, feel free to try the other available servers</span>
             </div>
-            <button className={styles.dismissBtn} onClick={() => setShowWarning(false)}>×</button>
+            <button className={styles.dismissBtn} onClick={() => setShowWarning(false)} aria-label="Dismiss warning">×</button>
           </div>
         )}
 
@@ -591,6 +591,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             <button
               className={`${styles.dubSubBtn} ${isDub ? styles.dubActive : ''}`}
               onClick={() => setIsDub(!isDub)}
+              aria-pressed={isDub}
+              aria-label={isDub ? 'Switch to sub' : 'Switch to dub'}
             >
               🌐 {isDub ? 'DUB' : 'SUB'}
             </button>
@@ -705,7 +707,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       </button>
 
       {showEpisodeList && <div className={styles.railOverlay} onClick={() => setShowEpisodeList(false)} />}
-      <aside className={`${styles.rightRail} ${showEpisodeList ? styles.rightRailOpen : ''}`}>
+      <aside className={`${styles.rightRail} ${showEpisodeList ? styles.rightRailOpen : ''}`} aria-label="Episode list">
         <div className={styles.upNextHeader}>
           <div>
             <h2>Up Next - {getEpisodeTitle(media, totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes ? episodeNumber + 1 : episodeNumber, jikanEpisodes, reanimeEpisodes)}</h2>
@@ -715,14 +717,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             <button
               className={`${styles.iconBtn} ${isGridView ? styles.iconBtnActive : ''}`}
               onClick={() => setIsGridView(!isGridView)}
-              title={isGridView ? "List View" : "Grid View"}
+              aria-pressed={isGridView}
+              aria-label={isGridView ? "Switch to list view" : "Switch to grid view"}
             >
               {isGridView ? '☰' : '⊞'}
             </button>
             <button
               className={styles.iconBtn}
               onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-              title={sortOrder === 'asc' ? "Sort Descending" : "Sort Ascending"}
+              aria-label={sortOrder === 'asc' ? "Sort descending" : "Sort ascending"}
             >
               {sortOrder === 'asc' ? '↓' : '↑'}
             </button>
@@ -891,15 +894,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       )}
 
       {showShortcuts && (
-        <div className={styles.shortcutsOverlay} onClick={() => setShowShortcuts(false)}>
+        <div className={styles.shortcutsOverlay} onClick={() => setShowShortcuts(false)} role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
           <div className={styles.shortcutsModal} onClick={e => e.stopPropagation()}>
             <div className={styles.shortcutsHeader}>
               <h2>Keyboard Shortcuts</h2>
-              <button onClick={() => setShowShortcuts(false)}>✕</button>
+              <button onClick={() => setShowShortcuts(false)} aria-label="Close shortcuts overlay">✕</button>
             </div>
             <div className={styles.shortcutsList}>
-              <div className={styles.shortcutRow}><kbd>←</kbd><span>Previous episode</span></div>
-              <div className={styles.shortcutRow}><kbd>→</kbd><span>Next episode</span></div>
+              <div className={styles.shortcutRow}><kbd>Shift+←</kbd><span>Previous episode</span></div>
+              <div className={styles.shortcutRow}><kbd>Shift+→</kbd><span>Next episode</span></div>
               <div className={styles.shortcutRow}><kbd>Esc</kbd><span>Close modals / overlays</span></div>
               <div className={styles.shortcutRow}><kbd>?</kbd><span>Toggle this shortcuts overlay</span></div>
             </div>
