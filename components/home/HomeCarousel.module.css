@@ -188,11 +188,14 @@
   border: none;
   border-radius: 2px;
   cursor: pointer;
+  padding: 10px 4px;
+  background-clip: content-box;
   transition: background-color 0.2s;
 }
 
 .activeDot {
   background-color: var(--primary);
+  background-clip: content-box;
 }
 
 /* ─── Slide container (each carousel item) ──────────────────── */

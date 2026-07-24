@@ -72,6 +72,17 @@
   min-width: 0;
 }
 
+@media (max-width: 600px) {
+  .wrapper {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .mainContent {
+    padding: 16px;
+  }
+}
+
 .navBtn {
   background: none;
   border: none;

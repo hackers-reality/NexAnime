@@ -16,10 +16,26 @@
   padding: 12px;
   gap: 8px;
   scrollbar-width: none;
+  position: relative;
+  scroll-snap-type: x proximity;
 }
 
 .tabs::-webkit-scrollbar {
   display: none;
+}
+
+@media (max-width: 600px) {
+  .tabs::after {
+    content: '';
+    position: sticky;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 32px;
+    background: linear-gradient(to right, transparent, var(--bg-surface));
+    pointer-events: none;
+    flex-shrink: 0;
+  }
 }
 
 .tab {
