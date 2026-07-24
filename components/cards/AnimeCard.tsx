@@ -3,17 +3,9 @@
 import { useState, useRef } from 'react';
 import Link from 'next/link';
 import type { AnimeCardProps, AnimeStatus } from '@/types';
+import { STATUS_CONFIG } from './status-config';
 import AnimeCardHoverPreview from './AnimeCardHoverPreview';
 import styles from './AnimeCard.module.css';
-
-// Status display config — fully self-contained, no external deps
-const STATUS_CONFIG: Record<string, { dot: string; label: string }> = {
-  RELEASING: { dot: 'var(--accent-airing)', label: 'Airing' },
-  FINISHED: { dot: 'var(--accent-finished)', label: 'Finished' },
-  NOT_YET_RELEASED: { dot: 'var(--primary)', label: 'Upcoming' },
-  CANCELLED: { dot: 'var(--accent-cancelled)', label: 'Cancelled' },
-  HIATUS: { dot: 'var(--accent-hiatus)', label: 'Hiatus' },
-};
 
 // Props for the hover preview (optional — passed through when available)
 export interface AnimeCardWithPreviewProps extends AnimeCardProps {
