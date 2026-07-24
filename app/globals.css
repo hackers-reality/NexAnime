@@ -3,9 +3,6 @@
    Dark theme, blue-dominant accent, vanilla CSS
    ═══════════════════════════════════════════════════════════ */
 
-/* ─── Google Fonts ────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
 /* ─── CSS Custom Properties (Design Tokens) ──────────── */
 :root {
   /* Palette — Section 7 of spec */
@@ -454,6 +451,10 @@ input::placeholder, textarea::placeholder {
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .skeleton {
