@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { query, queryOne, execute, getDb } from '@/lib/db';
 import { getAiringSchedule } from '@/lib/anilist';
+import type { AniListAiringSchedule } from '@/types';
 
 export async function POST() {
   try {
@@ -79,7 +80,7 @@ export async function POST() {
   }
 }
 
-async function getCachedSchedule() {
+async function getCachedSchedule(): Promise<AniListAiringSchedule[] | null> {
   try {
     const cached = await queryOne<{ data: string; cached_at: string }>(
       `SELECT data, cached_at FROM home_cache WHERE key = 'airing_schedule'`
@@ -95,7 +96,7 @@ async function getCachedSchedule() {
   }
 }
 
-async function cacheSchedule(schedule: any[]) {
+async function cacheSchedule(schedule: AniListAiringSchedule[]) {
   try {
     await execute(
       `INSERT INTO home_cache (key, data, cached_at) VALUES ('airing_schedule', ?, datetime('now'))

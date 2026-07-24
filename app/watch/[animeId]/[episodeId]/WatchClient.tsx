@@ -9,6 +9,7 @@ import WatchlistEditorModal from '@/components/detail/WatchlistEditorModal';
 import StackedAnimeCard from '@/components/cards/StackedAnimeCard';
 import EpisodeGrid from '@/components/watch/EpisodeGrid';
 import { useToast } from '@/components/ui/Toast';
+import type { AniListMedia, JikanEpisode } from '@/types';
 import styles from './WatchClient.module.css';
 
 interface ServerSource {
@@ -19,7 +20,7 @@ interface ServerSource {
 }
 
 interface WatchClientProps {
-  media: any;
+  media: AniListMedia;
   episodeNumber: number;
 }
 
@@ -32,7 +33,7 @@ const STATUS_LABELS: Record<string, string> = {
   rewatching: 'Rewatching',
 };
 
-function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], reanimeEps: Array<{ episode_number: number; title: string | null }> = []): string {
+function getEpisodeTitle(media: AniListMedia, epNum: number, jikanEpisodes: JikanEpisode[] = [], reanimeEps: Array<{ episode_number: number; title: string | null }> = []): string {
   const isGeneric = (t: string | null | undefined) => !t || /^episode\s*\d+$/i.test(t.trim());
   const reanimeEp = reanimeEps.find(e => e.episode_number === epNum);
   // Prefer non-generic reanime title
@@ -40,7 +41,7 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], r
 
   // Jikan — has real localized episode titles for most anime
   if (jikanEpisodes?.length) {
-    const jEp = jikanEpisodes.find((e: any) => e.mal_id === epNum);
+    const jEp = jikanEpisodes.find((e) => e.mal_id === epNum);
     if (jEp?.title) {
       const t = jEp.title_english || jEp.title || '';
       if (t.trim()) return t;
@@ -49,7 +50,7 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], r
 
   // AniList streamingEpisodes (only available if AniList merge fired)
   if (media.streamingEpisodes?.length) {
-    const ep = media.streamingEpisodes.find((e: any) => {
+    const ep = media.streamingEpisodes.find((e) => {
       const t = e.title || '';
       const match = t.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
       return match && parseInt(match[1]) === epNum;
@@ -65,11 +66,11 @@ function getEpisodeTitle(media: any, epNum: number, jikanEpisodes: any[] = [], r
   return `Episode ${epNum}`;
 }
 
-function getEpisodeThumb(media: any, epNum: number, reanimeEps: Array<{ episode_number: number; thumbnail: string | null }> = []): string | null {
+function getEpisodeThumb(media: AniListMedia, epNum: number, reanimeEps: Array<{ episode_number: number; thumbnail: string | null }> = []): string | null {
   const reanimeEp = reanimeEps.find(e => e.episode_number === epNum);
   if (reanimeEp?.thumbnail) return reanimeEp.thumbnail;
   if (media.streamingEpisodes?.length) {
-    const ep = media.streamingEpisodes.find((e: any) => {
+    const ep = media.streamingEpisodes.find((e) => {
       const t = e.title || '';
       const match = t.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
       return match && parseInt(match[1]) === epNum;
@@ -79,11 +80,11 @@ function getEpisodeThumb(media: any, epNum: number, reanimeEps: Array<{ episode_
   return media.coverImage?.medium || media.coverImage?.extraLarge || null;
 }
 
-function getRelationByType(media: any, type: string): any[] {
+function getRelationByType(media: AniListMedia, type: string): AniListMedia[] {
   if (!media.relations?.edges) return [];
   return media.relations.edges
-    .filter((r: any) => r.relationType === type)
-    .map((r: any) => r.node)
+    .filter((r) => r.relationType === type)
+    .map((r) => r.node)
     .filter(Boolean);
 }
 
@@ -127,7 +128,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [clientAutoPlay, setClientAutoPlay] = useState(true);
   const [clientAutoSkip, setClientAutoSkip] = useState(false);
   const [videoQuality, setVideoQuality] = useState('auto');
-  const [jikanEpisodes, setJikanEpisodes] = useState<any[]>([]);
+  const [jikanEpisodes, setJikanEpisodes] = useState<JikanEpisode[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -166,7 +167,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.history) {
-          setWatchedEpisodes(new Set(data.history.map((h: any) => h.episode_number)));
+          setWatchedEpisodes(new Set(data.history.map((h: { episode_number: number }) => h.episode_number)));
         }
       })
       .catch(() => {});
@@ -600,7 +601,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <div className={styles.actionsGroup}>
             <StatusDropdownButton
               animeId={media.id}
-              animeTitle={media.title.english || media.title.romaji}
+              animeTitle={media.title.english || media.title.romaji || 'Untitled'}
               onOpenEditor={() => setShowEditor(true)}
               onStatusUpdated={fetchWatchlistStatus}
               isAiring={media.status === 'RELEASING'}
@@ -858,7 +859,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <div className={styles.recommendationsSection}>
             <h3 className={styles.recsHeader}>More Like This</h3>
             <div className={styles.stackedRecList}>
-              {media.recommendations.nodes.slice(0, 10).map((rec: any) => {
+              {media.recommendations.nodes.slice(0, 10).map((rec) => {
                 const recMedia = rec.mediaRecommendation;
                 if (!recMedia) return null;
                 return (
@@ -886,7 +887,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           isOpen={showEditor}
           onClose={() => setShowEditor(false)}
           animeId={media.id}
-          animeTitle={media.title.english || media.title.romaji}
+          animeTitle={media.title.english || media.title.romaji || 'Untitled'}
           posterUrl={media.coverImage?.extraLarge || null}
           totalEpisodes={media.episodes}
           onSaveSuccess={fetchWatchlistStatus}

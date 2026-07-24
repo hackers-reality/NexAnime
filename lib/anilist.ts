@@ -433,8 +433,28 @@ function queueDetailCache(media: AniListMedia): void {
   }, 100);
 }
 
-function dbRowToMedia(id: number, row: any): AniListMedia {
-  let streamingEps: any[] = [];
+interface AnimeCacheRow {
+  title_romaji: string | null;
+  title_english: string | null;
+  title_native: string | null;
+  synopsis: string | null;
+  format: string | null;
+  status: string | null;
+  season: string | null;
+  season_year: number | null;
+  average_score: number | null;
+  mean_score: number | null;
+  genres: string | null;
+  cover_image: string | null;
+  banner_image: string | null;
+  episode_count: number | null;
+  next_airing_at: string | null;
+  streaming_episodes: string | null;
+  mal_id: number | null;
+}
+
+function dbRowToMedia(id: number, row: AnimeCacheRow): AniListMedia {
+  let streamingEps: Array<{ title: string; thumbnail?: string; url?: string; site?: string }> = [];
   try {
     if (row.streaming_episodes) streamingEps = JSON.parse(row.streaming_episodes);
   } catch {}

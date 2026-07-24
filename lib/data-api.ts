@@ -208,16 +208,29 @@ export async function getHomeData(): Promise<HomePayload> {
     if (hianimeHome.ok) {
       const data = await hianimeHome.json();
       // hianime returns latestEpisodes as an array of {episodes: [...]} groups; flatten and extract
-      const groups: any[] = Array.isArray(data?.latestEpisodes) ? data.latestEpisodes : [];
-      const flat: any[] = [];
+      interface HianimeEpisodeGroup { episodes?: HianimeEpisodeItem[] }
+      interface HianimeEpisodeItem {
+        episodeNumber?: number;
+        createdAt?: string;
+        anime_info?: {
+          mal_id?: number;
+          title?: string;
+          English?: string;
+          Japanese?: string;
+          image?: string;
+          Status?: string;
+        };
+      }
+      const groups = (Array.isArray(data?.latestEpisodes) ? data.latestEpisodes : []) as (HianimeEpisodeGroup | HianimeEpisodeItem[])[];
+      const flat: HianimeEpisodeItem[] = [];
       for (const g of groups) {
-        const arr = Array.isArray(g?.episodes) ? g.episodes : (Array.isArray(g) ? g : []);
+        const arr = Array.isArray(g) ? g : (Array.isArray((g as HianimeEpisodeGroup).episodes) ? (g as HianimeEpisodeGroup).episodes! : []);
         flat.push(...arr);
       }
       const nowSec = Math.floor(Date.now() / 1000);
       const seenMal = new Set<number>();
       recentlyUpdated = flat
-        .filter((ep: any) => {
+        .filter((ep) => {
           const info = ep?.anime_info;
           if (!info) return false;
           const malId = info.mal_id;
@@ -229,9 +242,9 @@ export async function getHomeData(): Promise<HomePayload> {
           return true;
         })
         .slice(0, 10)
-        .map((ep: any) => {
-          const info = ep.anime_info;
-          const malId = info.mal_id;
+        .map((ep) => {
+          const info = ep.anime_info!;
+          const malId = info.mal_id!;
           // hianime doesn't return AniList ID; the cover-image URL parsing is unreliable
           // so we use malId as both mediaId and (temporarily) the AniList id. The home page
           // will look up the proper mapping via the AnimeCard's link click.

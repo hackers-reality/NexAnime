@@ -27,8 +27,8 @@ function setCache<T>(key: string, data: T): void {
 
 // ─── Raw API types (matching actual API response) ─────────
 
-function parseGenres(g: any): string[] {
-  if (Array.isArray(g)) return g;
+function parseGenres(g: unknown): string[] {
+  if (Array.isArray(g)) return g.filter((x): x is string => typeof x === 'string');
   if (typeof g === 'string') return g.split(/\s+/).filter(Boolean);
   return [];
 }
@@ -40,7 +40,7 @@ interface HianimeAnime {
   image: string;
   landScapeImage: string;
   synopsis: string;
-  genres: any;
+  genres: string[] | string | null;
   English: string;
   Japanese: string;
   Type: string;

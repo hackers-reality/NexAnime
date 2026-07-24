@@ -1,6 +1,20 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 
+interface HistoryRow {
+  anilist_id: number;
+  episode_number: number;
+  seconds_watched: number;
+  duration_seconds: number;
+  last_watched_at: string;
+  source_type: string;
+  title_romaji: string | null;
+  title_english: string | null;
+  cover_image: string | null;
+  format: string | null;
+  ep_thumbnail: string | null;
+}
+
 export async function GET() {
   try {
     const db = getDb();
@@ -29,9 +43,9 @@ export async function GET() {
     `);
 
     // Merge and deduplicate by anilist_id (prefer progress over watchlist)
-    const allRows = [...progressResult.rows, ...watchlistResult.rows];
+    const allRows = [...progressResult.rows, ...watchlistResult.rows] as unknown as HistoryRow[];
     const seen = new Set<string>();
-    const merged: any[] = [];
+    const merged: HistoryRow[] = [];
     for (const row of allRows) {
       const key = `${row.anilist_id}-${row.episode_number}`;
       if (!seen.has(key)) {
@@ -41,7 +55,7 @@ export async function GET() {
     }
 
     // Sort by last_watched_at desc and limit
-    merged.sort((a: any, b: any) => {
+    merged.sort((a, b) => {
       const ta = a.last_watched_at ? new Date(a.last_watched_at).getTime() : 0;
       const tb = b.last_watched_at ? new Date(b.last_watched_at).getTime() : 0;
       return tb - ta;

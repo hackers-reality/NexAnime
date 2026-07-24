@@ -1,6 +1,7 @@
 // NexAnime — Unified metadata API (reanime.to / hianime / AniList)
 import { NextRequest, NextResponse } from 'next/server';
 import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, getReanimeSchedule, buildSlugMapping } from '@/lib/reanime';
+import type { ReanimeAnimeItem } from '@/lib/reanime';
 import { searchMedia, getAiringSchedule } from '@/lib/data-api';
 import { getJikanEpisodes } from '@/lib/jikan-api';
 import { getHianimeEpisodesByTitle } from '@/lib/hianime-api';
@@ -11,6 +12,7 @@ import {
   getUpcoming,
   searchAnime,
 } from '@/lib/anilist';
+import type { AniListMedia, BrowseFilters, AnimeStatus, AnimeSeason, AnimeFormat } from '@/types';
 
 // ─── Timeout wrapper — kills slow API calls after ms ─────
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -20,7 +22,23 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   ]);
 }
 
-function mapMedia(m: any) {
+interface MappedMedia {
+  anilistId: number;
+  titleRomaji: string;
+  titleEnglish: string | null;
+  coverImage: string | null;
+  format: string | null;
+  seasonYear: number | null;
+  status: string | null;
+  averageScore: number | null;
+  synopsis: string | null;
+  genres: string[];
+  rating: string | null;
+  subbed: number | null;
+  dubbed: number | null;
+}
+
+function mapMedia(m: AniListMedia): MappedMedia {
   return {
     anilistId: m.id,
     titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
@@ -38,7 +56,7 @@ function mapMedia(m: any) {
   };
 }
 
-function extractAnilistId(r: any): number | null {
+function extractAnilistId(r: ReanimeAnimeItem): number | null {
   if (r.anilist_id && Number(r.anilist_id) > 0) return Number(r.anilist_id);
   const url = r.cover_image?.extra_large || r.cover_image?.large || '';
   const match = url.match(/[\\/]bx(\d+)-/);
@@ -46,23 +64,23 @@ function extractAnilistId(r: any): number | null {
   return null;
 }
 
-function mapReanimeMedia(r: any) {
+function mapReanimeMedia(r: ReanimeAnimeItem): MappedMedia | null {
   const id = extractAnilistId(r);
   if (!id) return null;
   return {
     anilistId: id,
     titleRomaji: r.title?.romaji || r.title?.english || 'Unknown',
-    titleEnglish: r.title?.english,
-    coverImage: r.cover_image?.extra_large || r.cover_image?.large,
-    format: r.format,
+    titleEnglish: r.title?.english || null,
+    coverImage: r.cover_image?.extra_large || r.cover_image?.large || null,
+    format: r.format || null,
     seasonYear: r.season_year || null,
-    status: r.status,
+    status: r.status || null,
     averageScore: r.average_score || null,
-    synopsis: r.description,
+    synopsis: r.description || null,
     genres: r.genres || [],
     rating: r.rating ?? null,
-    subbed: typeof r.subbed === 'number' ? r.subbed : null,
-    dubbed: typeof r.dubbed === 'number' ? r.dubbed : null,
+    subbed: null,
+    dubbed: null,
   };
 }
 
@@ -126,7 +144,7 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -137,13 +155,13 @@ export async function GET(request: NextRequest) {
 
         // AniList fallback (10s timeout)
         const alSort = sort ? (AL_SORT_MAP[sort] || ['POPULARITY_DESC']) : ['POPULARITY_DESC'];
-        const alFilters: any = { page, perPage: limit, sort: alSort };
+        const alFilters: BrowseFilters = { page, perPage: limit, sort: alSort };
         if (query) alFilters.search = query;
-        if (status) alFilters.status = status;
+        if (status) alFilters.status = status as AnimeStatus;
         if (genres) alFilters.genres = genres.split(',');
-        if (season) alFilters.season = season;
+        if (season) alFilters.season = season as AnimeSeason;
         if (year) alFilters.seasonYear = year;
-        if (format) alFilters.format = format;
+        if (format) alFilters.format = format as AnimeFormat;
         const alResult = await withTimeout(searchAnime(alFilters), 10000);
         return NextResponse.json({
           media: alResult ? alResult.media.map(mapMedia) : [],
@@ -160,7 +178,7 @@ export async function GET(request: NextRequest) {
           5000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -182,7 +200,7 @@ export async function GET(request: NextRequest) {
           5000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -204,7 +222,7 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m: any) => m?.anilistId);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
