@@ -6,6 +6,7 @@ import Header from '@/components/shared/Header';
 import FilterBar from '@/components/browse/FilterBar';
 import AnimeCard from '@/components/cards/AnimeCard';
 import SkeletonGrid from '@/components/shared/SkeletonGrid';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
 import type { BrowseFilters, AniListMedia, AniListPageInfo, AnimeFormat, AnimeSeason, AnimeStatus } from '@/types';
 import styles from './page.module.css';
 
@@ -173,105 +174,105 @@ function BrowseContent() {
 
   const allLoaded = pageInfo ? currentPage >= pageInfo.lastPage : true;
 
-  return (
-    <div className={styles.page}>
-      <Header />
-      <main id="main-content" className={styles.main}>
-        <div className={styles.titleRow}>
-          <h1 className={styles.pageTitle}>Browse Anime</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {pageInfo && (
-              <span className={styles.countLabel}>
-                Showing {results.length} of {pageInfo.total.toLocaleString()} results
-              </span>
-            )}
-            <div className="viewToggle">
-              <button
-                className={`viewToggleBtn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Standard grid"
-              >
-                ▦
-              </button>
-              <button
-                className={`viewToggleBtn ${viewMode === 'dense' ? 'active' : ''}`}
-                onClick={() => setViewMode('dense')}
-                title="Dense grid"
-              >
-                ▤
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <FilterBar initialFilters={filters} onFilterChange={handleFilterChange} />
-
-        {loading ? (
-          <SkeletonGrid count={12} horizontal={false} />
-        ) : error ? (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>⚠️</span>
-            <h3 className={styles.emptyTitle}>Something went wrong</h3>
-            <p className={styles.emptySub}>{error}</p>
-            <button
-              className={styles.retryBtn}
-              onClick={() => { setError(null); setFilters({ ...filters }); }}
-              style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}
-            >
-              Try Again
-            </button>
-          </div>
-        ) : results.length === 0 ? (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>🔍</span>
-            <h3 className={styles.emptyTitle}>No anime found</h3>
-            <p className={styles.emptySub}>
-              We couldn&apos;t find any titles matching those filters. Try clearing some selections!
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className={`anime-grid ${viewMode === 'dense' ? 'anime-grid--dense' : ''}`}>
-              {results.map((anime) => (
-                <AnimeCard
-                  key={anime.id}
-                  id={anime.id}
-                  poster={anime.coverImage?.extraLarge ?? anime.coverImage?.large}
-                  title={anime.title.english || anime.title.romaji || 'Untitled'}
-                  format={anime.format}
-                  year={anime.seasonYear}
-                  status={anime.status}
-                  score={anime.averageScore}
-                  synopsis={anime.description}
-                  genres={anime.genres}
-                  rating={anime.rating}
-                  subbed={anime.subbed}
-                  dubbed={anime.dubbed}
-                  airDate={
-                    anime.nextAiringEpisode
-                      ? `Ep ${anime.nextAiringEpisode.episode} airing soon`
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-
-            <div ref={sentinelRef} />
-
-            {loadingMore && (
-              <div className={styles.loadingMore}>
-                <div className={styles.spinner} />
-              </div>
-            )}
-
-            {allLoaded && results.length > 0 && (
-              <div className={styles.allLoaded}>All results loaded</div>
-            )}
-          </>
-        )}
-      </main>
-    </div>
-  );
+return (
+     <ErrorBoundary>
+       <div className={styles.page}>
+         <Header />
+         <main id="main-content" className={styles.main}>
+           <div className={styles.titleRow}>
+             <h1 className={styles.pageTitle}>Browse Anime</h1>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+               <span className={styles.countLabel}>
+                 Showing {results.length} of {pageInfo.total.toLocaleString()} results
+               </span>
+               <div className="viewToggle">
+                 <button
+                   className={`viewToggleBtn ${viewMode === 'grid' ? 'active' : ''}`}
+                   onClick={() => setViewMode('grid')}
+                   title="Standard grid"
+                 >
+                   ▦
+                 </button>
+                 <button
+                   className={`viewToggleBtn ${viewMode === 'dense' ? 'active' : ''}`}
+                   onClick={() => setViewMode('dense')}
+                   title="Dense grid"
+                 >
+                   ▤
+                 </button>
+               </div>
+             </div>
+           </div>
+ 
+           <FilterBar initialFilters={filters} onFilterChange={handleFilterChange} />
+ 
+           {loading ? (
+             <SkeletonGrid count={12} horizontal={false} />
+           ) : error ? (
+             <div className={styles.emptyState}>
+               <span className={styles.emptyIcon}>⚠️</span>
+               <h3 className={styles.emptyTitle}>Something went wrong</h3>
+               <p className={styles.emptySub}>{error}</p>
+               <button
+                 className={styles.retryBtn}
+                 onClick={() => { setError(null); setFilters({ ...filters }); }}
+                 style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, background: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14 }}
+               >
+                 Try Again
+               </button>
+             </div>
+           ) : results.length === 0 ? (
+             <div className={styles.emptyState}>
+               <span className={styles.emptyIcon}>🔍</span>
+               <h3 className={styles.emptyTitle}>No anime found</h3>
+               <p className={styles.emptySub}>
+                 We couldn&apos;t find any titles matching those filters. Try clearing some selections!
+               </p>
+             </div>
+           ) : (
+             <>
+               <div className={`anime-grid ${viewMode === 'dense' ? 'anime-grid--dense' : ''}`}>
+                 {results.map((anime) => (
+                   <AnimeCard
+                     key={anime.id}
+                     id={anime.id}
+                     poster={anime.coverImage?.extraLarge ?? anime.coverImage?.large}
+                     title={anime.title.english || anime.title.romaji || 'Untitled'}
+                     format={anime.format}
+                     year={anime.seasonYear}
+                     status={anime.status}
+                     score={anime.averageScore}
+                     synopsis={anime.description}
+                     genres={anime.genres}
+                     rating={anime.rating}
+                     subbed={anime.subbed}
+                     dubbed={anime.dubbed}
+                     airDate={
+                       anime.nextAiringEpisode
+                         ? `Ep ${anime.nextAiringEpisode.episode} airing soon`
+                         : undefined
+                     }
+                   />
+                 ))}
+               </div>
+ 
+               <div ref={sentinelRef} />
+ 
+               {loadingMore && (
+                 <div className={styles.loadingMore}>
+                   <div className={styles.spinner} />
+                 </div>
+               )}
+ 
+               {allLoaded && results.length > 0 && (
+                 <div className={styles.allLoaded}>All results loaded</div>
+               )}
+             </>
+           )}
+         </main>
+       </div>
+     </ErrorBoundary>
+   );
 }
 
 export default function BrowsePage() {

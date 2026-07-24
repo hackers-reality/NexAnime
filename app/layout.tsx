@@ -10,9 +10,37 @@ import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration
 import { ToastProvider } from '@/components/ui/Toast';
 
 export const metadata: Metadata = {
-  title: 'NexAnime — Your Anime, Your Way',
-  description:
-    'Self-hosted anime streaming and tracking app. Browse, watch, track progress, maintain a watchlist, and get notified about new episodes.',
+  title: {
+    template: '%s | NexAnime',
+    default: 'NexAnime — Your Anime, Your Way',
+  },
+  description: 'Self-hosted anime streaming and tracking app. Browse, watch, track progress, maintain a watchlist, and get notified about new episodes.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://anime.hackers-reality.com/',
+    siteName: 'NexAnime',
+    images: [
+      {
+        url: 'https://anime.hackers-reality.com/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'NexAnime - Anime Tracking and Streaming Platform',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@hackersreality',
+    title: 'NexAnime — Your Anime, Your Way',
+    description: 'Self-hosted anime streaming and tracking app.',
+    images: ['https://anime.hackers-reality.com/og-image.png'],
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 // Initialize the database on server startup

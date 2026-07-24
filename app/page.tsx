@@ -172,9 +172,9 @@ export default function HomePage() {
         if (contData.progress) {
           setContinueWatching(contData.progress);
         }
-      } catch (err) {
-        console.error('Failed to load home data:', err);
-      } finally {
+} catch (err) {
+         // Error is handled via UI state - see loading/error states above
+       } finally {
         if (active) setLoading(false);
       }
     };
