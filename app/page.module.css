@@ -215,6 +215,13 @@
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.trendTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .trendTab {
@@ -226,6 +233,8 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s;
   white-space: nowrap;
 }

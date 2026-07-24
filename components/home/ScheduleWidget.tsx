@@ -95,7 +95,7 @@ export default function ScheduleWidget({ schedules }: { schedules: ScheduleEntry
           return (
             <button
               key={key}
-              className={`${styles.tab} ${activeDay === key ? styles.activeTab : ''}`}
+              className={`${styles.tab} ${activeDay === key ? styles.activeTab : ''} ${key === dayKeys[0] ? styles.todayTab : ''}`}
               onClick={() => setActiveDay(key)}
             >
               <span className={styles.tabDayName}>{item.dayName}</span>

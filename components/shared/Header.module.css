@@ -347,7 +347,6 @@
   color: var(--text-primary);
   min-width: 44px;
   min-height: 44px;
-  display: flex;
   align-items: center;
   justify-content: center;
 }
@@ -378,8 +377,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
   }
 
   .mobileOverlay {
