@@ -112,6 +112,12 @@
   color: var(--accent-airing);
 }
 
+.badgeRating {
+  background-color: rgba(251, 191, 36, 0.12);
+  color: rgba(251, 191, 36, 0.8);
+  font-weight: 600;
+}
+
 /* ─── Score / meta row ────────────────────────── */
 .scoreRow {
   display: flex;

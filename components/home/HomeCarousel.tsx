@@ -207,6 +207,7 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
 
       {/* Slide Indicators */}
       <div className={styles.indicators}>
+        <span className={styles.slideCounter}>{activeIndex + 1} / {items.length}</span>
         {items.map((_, idx) => (
           <button
             key={idx}

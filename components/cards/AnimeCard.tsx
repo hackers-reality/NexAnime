@@ -125,7 +125,6 @@ export default function AnimeCard({
             {format && <span className={styles.format}>{format.replace('_', ' ')}</span>}
             {format && year && <span className={styles.dot} />}
             {year && <span>{year}</span>}
-            {rating && <><span className={styles.dot} /><span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{rating}</span></>}
           </div>
           {(subbed || dubbed) && (
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -138,19 +137,20 @@ export default function AnimeCard({
       </Link>
 
       {/* Hover Preview */}
-      {showPreview && synopsis && (
+      {showPreview && (
         <AnimeCardHoverPreview
           id={id}
           title={title}
           poster={poster}
           banner={banner}
-          synopsis={synopsis}
+          synopsis={synopsis ?? null}
           runtime={runtime ?? null}
           airDate={airDate ?? null}
           genres={genres ?? []}
           format={format}
           status={status}
           score={score}
+          rating={rating}
           side={previewSide}
         />
       )}

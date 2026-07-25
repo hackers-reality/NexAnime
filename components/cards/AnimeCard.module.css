@@ -50,11 +50,7 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.starIcon {
-  color: var(--accent-score);
-  font-size: 10px;
+  z-index: 2;
 }
 
 /* ─── Status dot overlay (top-left) ───────────── */
@@ -105,6 +101,19 @@
 .format {
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+.ratingTag {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background-color: rgba(251, 191, 36, 0.12);
+  color: rgba(251, 191, 36, 0.8);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.4;
 }
 
 .dot {

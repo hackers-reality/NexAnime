@@ -178,7 +178,18 @@
   right: 24px;
   z-index: 10;
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.slideCounter {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  margin-right: 4px;
+  letter-spacing: 0.5px;
+  user-select: none;
 }
 
 .dot {

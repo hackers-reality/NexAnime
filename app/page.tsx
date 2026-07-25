@@ -103,6 +103,15 @@ interface HomeCardItem {
   dubbed: number | null;
 }
 
+function dedup(items: HomeCardItem[]): HomeCardItem[] {
+  const seen = new Set<number>();
+  return items.filter((m) => {
+    if (!m.anilistId || seen.has(m.anilistId)) return false;
+    seen.add(m.anilistId);
+    return true;
+  });
+}
+
 export default function HomePage() {
   const router = useRouter();
   const [carouselMedia, setCarouselMedia] = useState<CarouselItem[]>([]);
@@ -152,8 +161,8 @@ export default function HomePage() {
           })));
           setTrendingCards(allTrending.slice(5));
           setTabAnime(allTrending.slice(5));
-          setThisSeasonCards(homeData.thisSeason || []);
-          setUpcomingCards(homeData.upcoming || []);
+          setThisSeasonCards(dedup(homeData.thisSeason || []));
+          setUpcomingCards(dedup(homeData.upcoming || []));
           setRecentlyUpdatedCards(Array.isArray(homeData.recentlyUpdated) ? homeData.recentlyUpdated : []);
           setFormattedSchedules(homeData.schedule || []);
 

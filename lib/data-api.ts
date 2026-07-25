@@ -167,6 +167,34 @@ export async function getHomeData(): Promise<HomePayload> {
     }
   } catch {}
 
+  // Batch-fetch descriptions for items missing synopsis (reanime search doesn't always include descriptions)
+  const itemsNeedingDesc = [...thisSeason, ...upcoming].filter(m => !m.description);
+  if (itemsNeedingDesc.length > 0) {
+    try {
+      const ids = itemsNeedingDesc.map(m => m.id);
+      const res = await fetch('https://graphql.anilist.co', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `query ($ids: [Int]) { Page(page: 1, perPage: 50) { media(id_in: $ids, type: ANIME) { id description } } }`,
+          variables: { ids },
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const descMap = new Map<number, string>();
+        for (const m of json?.data?.Page?.media || []) {
+          if (m.id && m.description) descMap.set(m.id, m.description.replace(/<[^>]+>/g, ''));
+        }
+        for (const m of itemsNeedingDesc) {
+          const desc = descMap.get(m.id);
+          if (desc) m.description = desc;
+        }
+      }
+    } catch {}
+  }
+
   if (needsAniListFallback) {
     // Fire AniList queries in parallel — the in-process rate limiter handles throttling
     const [trendingSettled, seasonSettled, upcomingSettled] = await Promise.allSettled([
@@ -264,6 +292,12 @@ export async function getHomeData(): Promise<HomePayload> {
         });
     }
   } catch {}
+
+  // Step 3b: Fallback — use AniList recently aired schedule if hianime failed
+  if (recentlyUpdated.length === 0 && schedule.length > 0) {
+    // Use the schedule items we already fetched as recentlyUpdated
+    recentlyUpdated = schedule.slice(0, 12);
+  }
 
   // Step 4: Fill schedule from AniList only if reanime.to failed
   if (schedule.length === 0) {

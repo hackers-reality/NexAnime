@@ -35,6 +35,7 @@ export interface AnimeCardHoverPreviewProps {
   format: AnimeFormat | null;
   status: AnimeStatus | null;
   score: number | null;
+  rating?: string | null;
   side: 'left' | 'right';
 }
 
@@ -50,6 +51,7 @@ export default function AnimeCardHoverPreview({
   format,
   status,
   score,
+  rating,
   side,
 }: AnimeCardHoverPreviewProps) {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
@@ -133,6 +135,9 @@ export default function AnimeCardHoverPreview({
         <div className={styles.title}>{title}</div>
 
         <div className={styles.badges}>
+          {rating && (
+            <span className={`${styles.badge} ${styles.badgeRating}`}>{rating}</span>
+          )}
           {format && (
             <span className={styles.badge}>
               {format.replace('_', ' ')}
