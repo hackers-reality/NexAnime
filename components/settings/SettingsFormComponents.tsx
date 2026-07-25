@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import styles from './SettingsFormComponents.module.css';
 
 interface ToggleRowProps {
@@ -10,14 +11,16 @@ interface ToggleRowProps {
 }
 
 export function SettingsToggleRow({ label, description, checked, onChange }: ToggleRowProps) {
+  const id = useId();
   return (
     <div className={styles.row}>
       <div className={styles.info}>
-        <div className={styles.label}>{label}</div>
+        <label htmlFor={id} className={styles.label}>{label}</label>
         <div className={styles.description}>{description}</div>
       </div>
-      <label className={styles.switch}>
+      <label className={styles.switch} htmlFor={id}>
         <input 
+          id={id}
           type="checkbox" 
           checked={checked} 
           onChange={(e) => onChange(e.target.checked)} 
@@ -37,13 +40,15 @@ interface SelectRowProps {
 }
 
 export function SettingsSelectRow({ label, description, value, options, onChange }: SelectRowProps) {
+  const id = useId();
   return (
     <div className={styles.row}>
       <div className={styles.info}>
-        <div className={styles.label}>{label}</div>
+        <label htmlFor={id} className={styles.label}>{label}</label>
         <div className={styles.description}>{description}</div>
       </div>
       <select 
+        id={id}
         className={styles.select} 
         value={value} 
         onChange={(e) => onChange(e.target.value)}
