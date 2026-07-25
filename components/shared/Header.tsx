@@ -138,6 +138,12 @@ export default function Header() {
           Schedule
         </Link>
         <Link
+          href="/stats"
+          className={`${styles.navLink} ${isActive('/stats') ? styles.navLinkActive : ''}`}
+        >
+          Stats
+        </Link>
+        <Link
           href="/history"
           className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`}
         >
@@ -344,6 +350,9 @@ export default function Header() {
             </Link>
             <Link href="/schedule" className={`${styles.navLink} ${isActive('/schedule') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
               📅 Schedule
+            </Link>
+            <Link href="/stats" className={`${styles.navLink} ${isActive('/stats') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+              📊 Stats
             </Link>
             <Link href="/history" className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
               🕐 History
