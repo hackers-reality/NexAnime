@@ -91,12 +91,12 @@ export default function StackedAnimeCard({
         </div>
       </Link>
 
-      {showPreview && synopsis && (
+      {showPreview && (
         <AnimeCardHoverPreview
           id={id}
           title={title}
           poster={poster}
-          synopsis={synopsis}
+          synopsis={synopsis ?? null}
           runtime={null}
           airDate={null}
           genres={genres ?? []}
