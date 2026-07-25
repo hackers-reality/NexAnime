@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://anime.hackers-reality.com/',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://anime.hackers-reality.com/',
     siteName: 'NexAnime',
     images: [
       {
-        url: 'https://anime.hackers-reality.com/og-image.png',
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://anime.hackers-reality.com'}/og-image.png`,
         width: 1200,
         height: 630,
         alt: 'NexAnime - Anime Tracking and Streaming Platform',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     site: '@hackersreality',
     title: 'NexAnime — Your Anime, Your Way',
     description: 'Self-hosted anime streaming and tracking app.',
-    images: ['https://anime.hackers-reality.com/og-image.png'],
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://anime.hackers-reality.com'}/og-image.png`],
   },
   icons: {
     icon: '/favicon.ico',

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import type { ListStatus } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 import styles from './WatchlistEditorModal.module.css';
@@ -24,6 +24,7 @@ export default function WatchlistEditorModal({
   totalEpisodes,
   onSaveSuccess,
 }: WatchlistEditorModalProps) {
+  const formId = useId();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -128,7 +129,7 @@ export default function WatchlistEditorModal({
         {/* Left Side Poster */}
         <div className={styles.posterSide}>
           {posterUrl ? (
-            <img src={posterUrl} alt="" className={styles.posterImage} />
+            <img src={posterUrl} alt={`${animeTitle} poster`} className={styles.posterImage} />
           ) : (
             <div className={styles.posterPlaceholder} />
           )}
@@ -153,8 +154,9 @@ export default function WatchlistEditorModal({
               <div className={styles.grid}>
                 {/* Row 1: Status, Start date, End date */}
                 <div className={styles.field}>
-                  <label className={styles.label}>Status</label>
+                  <label className={styles.label} htmlFor={`${formId}-status`}>Status</label>
                   <select
+                    id={`${formId}-status`}
                     className={styles.select}
                     value={status}
                     onChange={(e) => setStatus(e.target.value as ListStatus)}
@@ -169,8 +171,9 @@ export default function WatchlistEditorModal({
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>Start date</label>
+                  <label className={styles.label} htmlFor={`${formId}-start`}>Start date</label>
                   <input
+                    id={`${formId}-start`}
                     type="date"
                     className={styles.input}
                     value={startDate}
@@ -179,8 +182,9 @@ export default function WatchlistEditorModal({
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>End date</label>
+                  <label className={styles.label} htmlFor={`${formId}-end`}>End date</label>
                   <input
+                    id={`${formId}-end`}
                     type="date"
                     className={styles.input}
                     value={endDate}
@@ -190,8 +194,9 @@ export default function WatchlistEditorModal({
 
                 {/* Row 2: Score, Episodes watched, Total rewatches */}
                 <div className={styles.field}>
-                  <label className={styles.label}>Score</label>
+                  <label className={styles.label} htmlFor={`${formId}-score`}>Score</label>
                   <input
+                    id={`${formId}-score`}
                     type="number"
                     className={styles.input}
                     min="0"
@@ -203,8 +208,9 @@ export default function WatchlistEditorModal({
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>Episode watched</label>
+                  <label className={styles.label} htmlFor={`${formId}-ep`}>Episode watched</label>
                   <input
+                    id={`${formId}-ep`}
                     type="number"
                     className={styles.input}
                     min="0"
@@ -220,8 +226,9 @@ export default function WatchlistEditorModal({
                 </div>
 
                 <div className={styles.field}>
-                  <label className={styles.label}>Total rewatches</label>
+                  <label className={styles.label} htmlFor={`${formId}-rewatches`}>Total rewatches</label>
                   <input
+                    id={`${formId}-rewatches`}
                     type="number"
                     className={styles.input}
                     min="0"
@@ -234,8 +241,9 @@ export default function WatchlistEditorModal({
 
               {/* Notes */}
               <div className={styles.field}>
-                <label className={styles.label}>Notes</label>
+                <label className={styles.label} htmlFor={`${formId}-notes`}>Notes</label>
                 <textarea
+                  id={`${formId}-notes`}
                   className={styles.textarea}
                   placeholder="Add a note."
                   value={notes}

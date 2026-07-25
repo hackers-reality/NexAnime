@@ -110,7 +110,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
       {/* Hero Banner Section */}
       <div className={styles.bannerWrap}>
         {media.bannerImage ? (
-          <img src={media.bannerImage} alt="" className={styles.bannerImage} suppressHydrationWarning onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          <img src={media.bannerImage} alt={`Banner for ${anime.titleEnglish || anime.titleRomaji}`} className={styles.bannerImage} suppressHydrationWarning onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
         ) : (
           <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--bg-surface)' }} />
         )}
@@ -359,7 +359,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                   <img
                     key={i}
                     src={url}
-                    alt=""
+                    alt={`Artwork ${i + 1}`}
                     style={{ height: 120, borderRadius: 8, objectFit: 'cover', scrollSnapAlign: 'start', flexShrink: 0, border: '1px solid var(--border-color)', cursor: 'pointer', transition: 'transform 0.2s' }}
                     loading="lazy"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -465,7 +465,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                         <div className={styles.epThumbWrap}>
                           <img
                             src={epThumb}
-                            alt=""
+                    alt={`Episode ${epNum}`}
                             className={styles.epThumb}
                             loading="lazy"
                             suppressHydrationWarning
@@ -521,7 +521,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           {/* Character Part */}
                           <Link href={`/character/${entry.malId}`} className={styles.charHalf}>
                             {entry.image && (
-                              <img src={entry.image} alt="" className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={entry.image} alt={entry.name} className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.charMeta}>
                               <span className={styles.charName}>{entry.name}</span>
@@ -531,7 +531,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           {/* VA Part */}
                           <div className={styles.vaHalf}>
                             {va?.image && (
-                              <img src={va.image} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={va.image} alt={va.name} className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.vaMeta}>
                               <span className={styles.vaName}>{va ? va.name : 'N/A'}</span>
@@ -551,7 +551,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                         <div key={`${character.id}-${index}`} className={styles.charCard}>
                           <div className={styles.charHalf}>
                             {character.image?.large && (
-                              <img src={character.image.large} alt="" className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={character.image.large} alt={character.name.full} className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.charMeta}>
                               <span className={styles.charName}>{character.name.full}</span>
@@ -560,7 +560,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           </div>
                           <div className={styles.vaHalf}>
                             {va?.image?.large && (
-                              <img src={va.image.large} alt="" className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={va.image.large} alt={va.name?.full} className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.vaMeta}>
                               <span className={styles.vaName}>{va ? va.name?.full : 'N/A'}</span>
@@ -588,7 +588,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                       <div key={`${entry.id}-${index}`} className={styles.charCard}>
                         <div className={styles.charHalf}>
                           {entry.image && (
-                            <img src={entry.image} alt="" className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                            <img src={entry.image} alt={entry.name} className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                           )}
                           <div className={styles.charMeta}>
                             <span className={styles.charName}>{entry.name}</span>
@@ -604,7 +604,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                       <div key={`${edge.node.id}-${index}`} className={styles.charCard}>
                         <div className={styles.charHalf}>
                           {edge.node.image?.large && (
-                            <img src={edge.node.image.large} alt="" className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                            <img src={edge.node.image.large} alt={edge.node.name.full} className={styles.charImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                           )}
                           <div className={styles.charMeta}>
                             <span className={styles.charName}>{edge.node.name.full}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useId } from 'react';
 import type { BrowseFilters, AnimeFormat, AnimeStatus, AnimeSeason } from '@/types';
 import styles from './FilterBar.module.css';
 
@@ -77,6 +77,7 @@ interface FilterBarProps {
 }
 
 export default function FilterBar({ initialFilters, onFilterChange }: FilterBarProps) {
+  const fId = useId();
   const [search, setSearch] = useState(initialFilters.search ?? '');
   const [genres, setGenres] = useState<string[]>(initialFilters.genres ?? []);
   const [format, setFormat] = useState<string>(initialFilters.format ?? '');
@@ -266,9 +267,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Format Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Format</span>
+          <label className={styles.label} htmlFor={`${fId}-format`}>Format</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-format`}
               className={styles.select}
               value={format}
               onChange={(e) => {
@@ -289,9 +291,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Year Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Year</span>
+          <label className={styles.label} htmlFor={`${fId}-year`}>Year</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-year`}
               className={styles.select}
               value={year}
               onChange={(e) => {
@@ -312,9 +315,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Season Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Season</span>
+          <label className={styles.label} htmlFor={`${fId}-season`}>Season</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-season`}
               className={styles.select}
               value={season}
               onChange={(e) => {
@@ -335,9 +339,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Airing Status Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Airing Status</span>
+          <label className={styles.label} htmlFor={`${fId}-status`}>Airing Status</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-status`}
               className={styles.select}
               value={status}
               onChange={(e) => {
@@ -358,7 +363,7 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Tags Multi-select Popover */}
         <div className={styles.filterGroup} ref={tagRef}>
-          <span className={styles.label}>Tags</span>
+          <label className={styles.label} htmlFor={`${fId}-tags`}>Tags</label>
           <div className={styles.selectWrapper}>
             <button
               className={styles.customDropdownBtn}
@@ -394,9 +399,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Country of Origin Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Country</span>
+          <label className={styles.label} htmlFor={`${fId}-country`}>Country</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-country`}
               className={styles.select}
               value={country}
               onChange={(e) => {
@@ -417,9 +423,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Source Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Source</span>
+          <label className={styles.label} htmlFor={`${fId}-source`}>Source</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-source`}
               className={styles.select}
               value={source}
               onChange={(e) => {
@@ -440,9 +447,10 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
 
         {/* Sort Select */}
         <div className={styles.filterGroup}>
-          <span className={styles.label}>Sort By</span>
+          <label className={styles.label} htmlFor={`${fId}-sort`}>Sort By</label>
           <div className={styles.selectWrapper}>
             <select
+              id={`${fId}-sort`}
               className={styles.select}
               value={sort}
               onChange={(e) => {
