@@ -293,9 +293,9 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
 
           <div className={styles.genresRow}>
             {anime.genres.map((genre) => (
-              <span key={genre} className="genre-pill">
+              <Link key={genre} href={`/browse?genres=${encodeURIComponent(genre)}`} className="genre-pill">
                 {genre}
-              </span>
+              </Link>
             ))}
           </div>
 

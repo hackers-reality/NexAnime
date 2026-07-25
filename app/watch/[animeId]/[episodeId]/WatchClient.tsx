@@ -644,7 +644,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
           <div className={styles.genreList}>
             {media.genres?.map((g: string) => (
-              <span key={g} className={styles.genrePill}>{g}</span>
+              <Link key={g} href={`/browse?genres=${encodeURIComponent(g)}`} className={styles.genrePill}>{g}</Link>
             ))}
           </div>
         </div>
