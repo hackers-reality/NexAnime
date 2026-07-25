@@ -1,6 +1,6 @@
 // NexAnime — Unified metadata API (reanime.to / hianime / AniList)
 import { NextRequest, NextResponse } from 'next/server';
-import { searchReanime, getReanimeEpisodes, getReanimeEpisodesByAnilistId, getReanimeSchedule, buildSlugMapping } from '@/lib/reanime';
+import { searchReanime, getReanimeEpisodesByAnilistId } from '@/lib/reanime';
 import type { ReanimeAnimeItem } from '@/lib/reanime';
 import { searchMedia, getAiringSchedule } from '@/lib/data-api';
 import { getJikanEpisodes } from '@/lib/jikan-api';
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
         // Try reanime.to first
         try {
           const reResult = await withTimeout(
-            searchReanime({ season: seasonParam.toLowerCase() as any, year: yearParam, sort: 'popularity', limit }),
+            searchReanime({ season: seasonParam.toLowerCase(), year: yearParam, sort: 'popularity', limit }),
             8000
           );
           if (reResult?.results?.length) {
@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
         } catch {}
         // Fallback to AniList
         const alResult = await withTimeout(
-          searchAnime({ season: seasonParam as any, seasonYear: yearParam, sort: ['POPULARITY_DESC'], page: 1, perPage: limit }),
+          searchAnime({ season: seasonParam as AnimeSeason, seasonYear: yearParam, sort: ['POPULARITY_DESC'], page: 1, perPage: limit }),
           10000
         );
         return NextResponse.json({ media: alResult ? alResult.media.map(mapMedia) : [] });

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import type { AnimeCardProps, AnimeStatus } from '@/types';
+import type { AnimeCardProps } from '@/types';
 import { STATUS_CONFIG } from './status-config';
 import AnimeCardHoverPreview from './AnimeCardHoverPreview';
 import styles from './AnimeCard.module.css';

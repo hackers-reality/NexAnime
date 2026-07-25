@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/shared/Header';
 import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
