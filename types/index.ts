@@ -167,7 +167,7 @@ export interface AniListMedia {
   meanScore: number | null;
   source: string | null;
   studios: {
-    nodes: Array<{ name: string; isAnimationStudio: boolean }>;
+    nodes: Array<{ name: string; isAnimationStudio: boolean; isMain?: boolean }>;
   };
   genres: string[];
   tags: Array<{ name: string; rank: number; isAdult: boolean }>;

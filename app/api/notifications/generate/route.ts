@@ -34,7 +34,7 @@ export async function POST() {
     }
 
     // Batch insert all new notifications in one round-trip
-    const statements: { sql: string; args: any[] }[] = [];
+    const statements: { sql: string; args: (string | number | null)[] }[] = [];
     for (const entry of schedule) {
       const mediaId = entry.mediaId;
       if (existingKeys.has(String(mediaId))) continue;

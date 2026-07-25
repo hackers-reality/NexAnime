@@ -33,7 +33,19 @@ function getPackageVersion(): string {
   return _pkgVersion!;
 }
 
-let updateCache: { data: any; expiry: number } | null = null;
+interface UpdateResult {
+  updateAvailable: boolean;
+  localSha: string;
+  remoteSha?: string;
+  remoteMessage?: string;
+  remoteDate?: string;
+  remoteAuthor?: string;
+  commitUrl?: string;
+  currentVersion?: string;
+  error?: string;
+}
+
+let updateCache: { data: UpdateResult; expiry: number } | null = null;
 
 // GET — Check for available updates
 export async function GET() {

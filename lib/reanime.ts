@@ -717,7 +717,7 @@ export function mapAnimeDetail(anime: ReanimeAnimeItem): AniListMedia {
             native: r.title?.native || null,
           },
           format: r.format || 'TV',
-          status: (r as any).status || 'FINISHED',
+          status: r.status || 'FINISHED',
           season: r.season || null,
           seasonYear: r.season_year || null,
           episodes: r.episodes_total || null,

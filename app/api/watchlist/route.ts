@@ -284,7 +284,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     let whereClause = '';
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (listStatus) {
       whereClause = 'WHERE list_status = ?';

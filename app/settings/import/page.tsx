@@ -4,6 +4,18 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
+interface WatchlistEntryExport {
+  anilistId: number;
+  anime?: { title?: { romaji?: string; english?: string } };
+  listStatus?: string;
+  score?: number;
+  episodeWatched?: number;
+  totalRewatches?: number;
+  notes?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export default function ImportSettingsPage() {
   const [username, setUsername] = useState('');
   const [importing, setImporting] = useState(false);
@@ -51,7 +63,7 @@ export default function ImportSettingsPage() {
         exportedAt: new Date().toISOString(),
         source: 'NexAnime',
         version: '0.1.0',
-        entries: (data.entries || []).map((e: any) => ({
+        entries: (data.entries || []).map((e: WatchlistEntryExport) => ({
           anilistId: e.anilistId,
           title: e.anime?.title?.romaji || e.anime?.title?.english || 'Unknown',
           status: e.listStatus,

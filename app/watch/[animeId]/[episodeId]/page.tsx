@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getAnimeRecommendations } from '@/lib/anilist';
 import { getMediaDetail } from '@/lib/data-api';
+import type { AniListMedia } from '@/types';
 import Header from '@/components/shared/Header';
 import WatchClient from './WatchClient';
 
@@ -18,7 +19,7 @@ export default async function WatchPage({ params }: PageProps) {
   }
 
   // getMediaDetail handles reanime→mapAnimeDetail→AniList fallback automatically
-  let media: any = null;
+  let media: AniListMedia | null = null;
   try {
     media = await getMediaDetail(anilistId);
   } catch {}

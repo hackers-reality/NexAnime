@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { queryOne } from '@/lib/db';
 import { getAnimeRecommendations } from '@/lib/anilist';
 import { getMediaDetail } from '@/lib/data-api';
+import type { AniListMedia } from '@/types';
 import Header from '@/components/shared/Header';
 import AnimeDetailClient from './AnimeDetailClient';
 
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     };
   }
 
-  let media: any = null;
+  let media: AniListMedia | null = null;
   try { media = await getMediaDetail(anilistId); } catch {}
   if (!media) return {};
 
@@ -58,7 +59,7 @@ export default async function AnimeDetailPage({ params }: PageProps) {
   // Fetch recommendations in parallel (5s timeout)
   try {
     const recs = await getAnimeRecommendations(anilistId);
-    if (recs) (media as any).recommendations = recs;
+    if (recs) media.recommendations = recs;
   } catch {}
 
   return (

@@ -809,7 +809,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           <div className={styles.relationsSection}>
             <h3 className={styles.relationsHeader}>Related Anime</h3>
             <div className={styles.relationsList}>
-              {[...prequels, ...sequels, ...sideStories, ...alternatives, ...spinOffs, ...summaries].map((relMedia: any) => {
+              {[...prequels, ...sequels, ...sideStories, ...alternatives, ...spinOffs, ...summaries].map((relMedia: AniListMedia) => {
                 const relTitle = relMedia.title?.english || relMedia.title?.romaji || 'Unknown';
                 let relType = 'RELATED';
                 if (prequels.includes(relMedia)) relType = 'PREQUEL';

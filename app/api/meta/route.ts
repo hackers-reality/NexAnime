@@ -1,7 +1,7 @@
 // NexAnime — Unified metadata API (reanime.to / hianime / AniList)
 import { NextRequest, NextResponse } from 'next/server';
 import { searchReanime, getReanimeEpisodesByAnilistId } from '@/lib/reanime';
-import type { ReanimeAnimeItem } from '@/lib/reanime';
+import type { ReanimeAnimeItem, ReanimeEpisode } from '@/lib/reanime';
 import { searchMedia, getAiringSchedule } from '@/lib/data-api';
 import { getJikanEpisodes } from '@/lib/jikan-api';
 import { getHianimeEpisodesByTitle } from '@/lib/hianime-api';
@@ -12,7 +12,7 @@ import {
   getUpcoming,
   searchAnime,
 } from '@/lib/anilist';
-import type { AniListMedia, BrowseFilters, AnimeStatus, AnimeSeason, AnimeFormat } from '@/types';
+import type { AniListMedia, BrowseFilters, AnimeStatus, AnimeSeason, AnimeFormat, JikanEpisode } from '@/types';
 
 // ─── Timeout wrapper — kills slow API calls after ms ─────
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
@@ -277,8 +277,8 @@ export async function GET(request: NextRequest) {
         const id = request.nextUrl.searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
         const anilistId = parseInt(id);
-        let episodes: any[] = [];
-        let jikanEpisodes: any[] = [];
+        let episodes: ReanimeEpisode[] = [];
+        let jikanEpisodes: JikanEpisode[] = [];
 
         if (!isNaN(anilistId)) {
           try {
@@ -312,6 +312,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Hianime fallback: if reanime returned no episodes, try hianime search by title
+        let hianimeEpisodes: Array<{ episode_number: number; title: string | null; thumbnail: string | null }> = [];
         if (episodes.length === 0) {
           try {
             const { queryOne } = await import('@/lib/db');
@@ -322,12 +323,12 @@ export async function GET(request: NextRequest) {
             const title = cached?.title_english || cached?.title_romaji;
             if (title) {
               const hiEps = await withTimeout(getHianimeEpisodesByTitle(title), 8000);
-              if (hiEps?.episodes?.length) episodes = hiEps.episodes;
+              if (hiEps?.episodes?.length) hianimeEpisodes = hiEps.episodes;
             }
           } catch {}
         }
 
-        return NextResponse.json({ episodes, jikanEpisodes });
+        return NextResponse.json({ episodes: hianimeEpisodes.length > 0 ? hianimeEpisodes : episodes, jikanEpisodes });
       }
 
       case 'schedule': {

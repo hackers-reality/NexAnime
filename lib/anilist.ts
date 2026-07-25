@@ -644,6 +644,12 @@ export interface AniListCharacter {
     image: { large: string | null };
     language?: string;
   }[];
+  mediaConnections?: {
+    id: number;
+    name: { full: string };
+    image: { large: string | null };
+    language?: string;
+  }[];
 }
 
 export async function searchCharacters(
@@ -719,7 +725,7 @@ export async function getCharacterById(id: number): Promise<AniListCharacter | n
     const data = await anilistFetch<{ Character: AniListCharacter }>(query, { id });
     const char = data.Character;
     // Map voiceActors from mediaConnections
-    char.voiceActors = (char as any).mediaConnections || [];
+    char.voiceActors = char.mediaConnections || [];
     return char;
   } catch (err) {
     console.warn(`[AniList] Character ID ${id} not found, using default fallback.`);
@@ -850,7 +856,7 @@ export function anilistMediaToAnime(media: AniListMedia): Anime {
     meanScore: media.meanScore,
     source: media.source,
     studios: media.studios?.nodes
-      ?.filter((s) => s.isAnimationStudio || (s as any).isMain)
+      ?.filter((s) => s.isAnimationStudio || s.isMain)
       .map((s) => s.name) ?? [],
     genres: media.genres ?? [],
     tags: media.tags?.map((t) => ({

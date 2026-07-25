@@ -188,7 +188,7 @@ export async function getHianimeLatestEpisodes(): Promise<AniListMedia[]> {
     if (!anime) continue;
     const media = await mapAnime(anime);
     if (media) {
-      (media as any).streamingEpisodes = [{
+      media.streamingEpisodes = [{
         title: ep.title,
         thumbnail: anime.image,
         site: 'hianime',
