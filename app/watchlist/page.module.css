@@ -245,7 +245,7 @@
 
 .bulkBtnDanger:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-error);
   border-color: rgba(239, 68, 68, 0.3);
 }
 
@@ -414,7 +414,7 @@
 
 .listScore {
   font-size: 13px;
-  color: #fbbf24;
+  color: var(--accent-score);
   font-weight: 600;
 }
 
@@ -444,10 +444,10 @@
 
 .listStatusBadge.on_hold {
   background: rgba(249, 115, 22, 0.15);
-  color: #f97316;
+  color: var(--color-warning);
 }
 
 .listStatusBadge.dropped {
   background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  color: var(--color-error);
 }

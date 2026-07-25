@@ -41,7 +41,7 @@
 
 .successMessage {
   background-color: rgba(53, 213, 191, 0.1);
-  color: #35d5bf;
+  color: var(--accent-teal);
   padding: 12px;
   border-radius: 6px;
   font-size: 14px;
@@ -50,7 +50,7 @@
 
 .errorMessage {
   background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-error);
   padding: 12px;
   border-radius: 6px;
   font-size: 14px;
@@ -115,7 +115,7 @@
 }
 
 .saveBtn:hover {
-  background-color: #00d2b4;
+  background-color: var(--accent-teal);
   transform: translateY(-1px);
 }
 
@@ -135,7 +135,7 @@
 .dangerTitle {
   font-size: 16px;
   font-weight: 700;
-  color: #ef4444;
+  color: var(--color-error);
   margin-bottom: 8px;
 }
 
@@ -148,8 +148,8 @@
 
 .resetBtn {
   background: none;
-  border: 1px solid #ef4444;
-  color: #ef4444;
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
   font-size: 14px;
   font-weight: 600;
   padding: 10px 20px;
@@ -159,7 +159,7 @@
 }
 
 .resetBtn:hover {
-  background-color: #ef4444;
+  background-color: var(--color-error);
   color: #fff;
 }
 

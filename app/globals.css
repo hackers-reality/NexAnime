@@ -22,6 +22,18 @@
   --accent-on-hold: #f97316;
   --accent-dropped: #ef4444;
   --accent-score: #fbbf24;
+  --accent-teal: #35d5bf;
+  --accent-success: #22c55e;
+  --accent-rose: #f43f5e;
+
+  --color-error: #ef4444;
+  --color-warning: #f97316;
+  --color-success: #35d5bf;
+
+  --badge-prequel: #818cf8;
+  --badge-sequel: #34d399;
+  --badge-alternative: #f472b6;
+  --badge-spinoff: #a78bfa;
 
   --text-primary: #f5f5f7;
   --text-secondary: #a1a1aa;

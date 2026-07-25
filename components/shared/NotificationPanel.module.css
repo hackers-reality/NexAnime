@@ -179,5 +179,5 @@
 }
 
 .deleteBtn:hover {
-  color: #ef4444;
+  color: var(--color-error);
 }

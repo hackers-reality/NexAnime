@@ -29,7 +29,7 @@
 
 .errorMessage {
   background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  color: var(--color-error);
   padding: 12px;
   border-radius: 6px;
   font-size: 14px;

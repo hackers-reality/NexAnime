@@ -53,7 +53,7 @@
 }
 
 .starIcon {
-  color: #fbbf24;
+  color: var(--accent-score);
   font-size: 10px;
 }
 

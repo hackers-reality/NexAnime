@@ -321,12 +321,12 @@
 }
 
 .signOutBtn {
-  color: #f43f5e;
+  color: var(--accent-rose);
 }
 
 .signOutBtn:hover {
   background-color: rgba(244, 63, 94, 0.08);
-  color: #f43f5e;
+  color: var(--accent-rose);
 }
 
 .versionInfo {

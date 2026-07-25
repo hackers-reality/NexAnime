@@ -81,7 +81,7 @@
 }
 
 .score {
-  color: #fbbf24;
+  color: var(--accent-score);
   font-weight: 500;
 }
 

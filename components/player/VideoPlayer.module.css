@@ -58,7 +58,7 @@
   transition: background 0.2s, transform 0.2s;
 }
 
-.closeMiniBtn:hover { background: #ef4444; transform: scale(1.1); }
+.closeMiniBtn:hover { background: var(--color-error); transform: scale(1.1); }
 
 /* ── Video Element ────────────────────── */
 .video {
@@ -91,7 +91,7 @@
   z-index: 10;
 }
 
-.errorOverlay { color: #ef4444; }
+.errorOverlay { color: var(--color-error); }
 
 .spinner {
   width: 40px;

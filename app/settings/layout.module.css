@@ -92,7 +92,7 @@
 }
 
 .signOutBtn {
-  color: #ef4444 !important;
+  color: var(--color-error) !important;
   background: none;
   border: none;
   text-align: left;
