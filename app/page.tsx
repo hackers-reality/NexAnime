@@ -128,6 +128,7 @@ export default function HomePage() {
   const [activeTrendTab, setActiveTrendTab] = useState<'trending' | 'popular' | 'topRated'>('trending');
   const [tabAnime, setTabAnime] = useState<HomeCardItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [homeError, setHomeError] = useState<string | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
 
   const loadAttempt = useRef(0);
@@ -182,7 +183,7 @@ export default function HomePage() {
           setContinueWatching(contData.progress);
         }
 } catch (err) {
-         // Error is handled via UI state - see loading/error states above
+         if (active) setHomeError('Failed to load home data. Please try again.');
        } finally {
         if (active) setLoading(false);
       }
@@ -222,6 +223,13 @@ export default function HomePage() {
           </section>
         </main>
         </>
+      ) : homeError ? (
+        <main id="main-content" className={styles.main}>
+          <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: 16 }}>{homeError}</p>
+            <button onClick={() => window.location.reload()} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>Retry</button>
+          </div>
+        </main>
       ) : (
         <>
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}

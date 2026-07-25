@@ -56,7 +56,7 @@ export default function WatchHistoryPage() {
         fetch('/api/watchlist?continue=true')
           .then((r) => r.json())
           .then((data) => {
-            setHistory(data.entries || []);
+            setHistory(data.progress || data.entries || []);
             setLoading(false);
           })
           .catch(() => setLoading(false));

@@ -22,6 +22,21 @@ export default function Header() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Global keyboard shortcut: / to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const active = document.activeElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || (active as HTMLElement).isContentEditable)) return;
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const fetchProfile = async () => {
     try {
@@ -186,9 +201,10 @@ export default function Header() {
       <div className={styles.searchWrap}>
         <span className={styles.searchIcon}>⌕</span>
         <input
+          ref={searchInputRef}
           type="text"
           className={styles.searchInput}
-          placeholder="Search anime..."
+          placeholder="Search anime... (press /)"
           aria-label="Search anime"
           value={searchQuery}
           onChange={(e) => {

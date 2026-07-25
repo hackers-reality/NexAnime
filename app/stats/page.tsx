@@ -46,7 +46,9 @@ export default function StatsPage() {
     fetch('/api/stats')
       .then((r) => r.json())
       .then((data) => {
-        setStats(data);
+        if (data && !data.error && data.overview) {
+          setStats(data);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
