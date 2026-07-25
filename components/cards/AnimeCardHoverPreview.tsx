@@ -191,6 +191,7 @@ export default function AnimeCardHoverPreview({
                 setShowDropdown(!showDropdown);
               }}
               title={currentStatus ? `Status: ${STATUS_OPTIONS.find(s => s.value === currentStatus)?.label}` : 'Add to watchlist'}
+              aria-label="Add to watchlist"
             >
               {heartIcon}
             </button>

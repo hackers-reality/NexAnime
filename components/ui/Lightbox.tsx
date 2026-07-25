@@ -37,7 +37,7 @@ export default function Lightbox({ images, initialIndex = 0, alt = '', onClose }
   }, [onClose, goPrev, goNext]);
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true" aria-label="Image preview">
       <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
 
       <div className={styles.content} onClick={(e) => e.stopPropagation()}>

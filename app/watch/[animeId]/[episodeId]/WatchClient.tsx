@@ -738,6 +738,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             type="text"
             placeholder="Search Episode"
             className={styles.searchInput}
+            aria-label="Search episodes"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

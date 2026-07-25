@@ -193,6 +193,7 @@ export default function FilterBar({ initialFilters, onFilterChange }: FilterBarP
           type="text"
           className={styles.searchInput}
           placeholder="Search for anime..."
+          aria-label="Search anime"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onFocus={() => setShowRecent(true)}

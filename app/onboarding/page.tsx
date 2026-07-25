@@ -173,6 +173,7 @@ export default function OnboardingPage() {
                 <input
                   type="text"
                   placeholder="Search characters (e.g. Luffy, Zoro)..."
+                  aria-label="Search characters"
                   value={searchQuery}
                   onChange={handleSearchChange}
                   disabled={submitting}

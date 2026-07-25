@@ -118,7 +118,7 @@ export default function Header() {
       </Link>
 
       {/* Nav links */}
-      <nav className={styles.nav}>
+      <nav className={styles.nav} aria-label="Main navigation">
         <Link
           href="/browse"
           className={`${styles.navLink} ${isActive('/browse') ? styles.navLinkActive : ''}`}
@@ -155,6 +155,7 @@ export default function Header() {
             } catch {}
           }}
           title="Random Anime"
+          aria-label="Random Anime"
         >
           🎲
         </button>
@@ -182,6 +183,7 @@ export default function Header() {
           type="text"
           className={styles.searchInput}
           placeholder="Search anime..."
+          aria-label="Search anime"
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -211,6 +213,7 @@ export default function Header() {
         <button
           className={styles.shortcutsHint}
           title="Keyboard shortcuts (press ?)"
+          aria-label="Keyboard shortcuts"
           onClick={() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }));
           }}
@@ -222,6 +225,7 @@ export default function Header() {
         <button
           className={styles.themeBtn}
           title="Toggle theme"
+          aria-label="Toggle theme"
           onClick={() => {
             const next = theme === 'dark' ? 'light' : 'dark';
             setTheme(next);
@@ -243,6 +247,7 @@ export default function Header() {
           <button 
             className={styles.bellBtn} 
             title="Notifications"
+            aria-label="Notifications"
             onClick={() => setShowNotifications(!showNotifications)}
           >
             🔔
@@ -267,6 +272,7 @@ export default function Header() {
             className={styles.avatarBtn}
             onClick={() => setShowProfileDropdown(!showProfileDropdown)}
             title="Profile & Settings"
+            aria-label="Profile menu"
           >
             {avatarUrl ? (
               <img
@@ -326,7 +332,7 @@ export default function Header() {
       {showMobileNav && (
         <>
           <div className={styles.mobileOverlay} onClick={() => setShowMobileNav(false)} />
-          <nav className={styles.mobileNav}>
+          <nav className={styles.mobileNav} aria-label="Mobile navigation">
             <Link href="/" className={styles.navLink} onClick={() => setShowMobileNav(false)}>
               🏠 Home
             </Link>

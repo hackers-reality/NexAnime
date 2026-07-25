@@ -177,6 +177,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
                     onClick={() => handleDelete(notif.id)}
                     className={styles.deleteBtn}
                     title="Dismiss"
+                    aria-label="Dismiss notification"
                   >
                     ✕
                   </button>

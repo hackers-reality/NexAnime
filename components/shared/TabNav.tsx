@@ -22,7 +22,7 @@ export default function TabNav({
   variant = 'underline',
 }: TabNavProps) {
   return (
-    <nav className={`${styles.nav} ${styles[variant]}`} role="tablist">
+    <nav className={`${styles.nav} ${styles[variant]}`} role="tablist" aria-label="Content tabs">
       {tabs.map((tab) => (
         <button
           key={tab.key}
