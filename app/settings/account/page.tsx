@@ -47,13 +47,12 @@ export default function AccountSettingsPage() {
                   setAvatarUrl(charData.character.image.large);
                 }
               })
-              .catch(err => console.error('Failed to load profile avatar preview:', err));
+              .catch(() => {});
           }
         }
         setLoading(false);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setError('Failed to load profile.');
         setLoading(false);
       });
@@ -84,7 +83,6 @@ export default function AccountSettingsPage() {
         setError(data.error || 'Failed to save changes.');
       }
     } catch (err) {
-      console.error(err);
       setError('An error occurred.');
     } finally {
       setSaving(false);
@@ -106,7 +104,6 @@ export default function AccountSettingsPage() {
         toast('Failed to reset data.', 'error');
       }
     } catch (err) {
-      console.error(err);
       toast('An error occurred.', 'error');
     }
   };

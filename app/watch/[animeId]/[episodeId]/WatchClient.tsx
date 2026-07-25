@@ -144,7 +144,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         if (d.episodes?.length) setReanimeEpisodes(d.episodes);
         if (d.jikanEpisodes?.length) setJikanEpisodes(d.jikanEpisodes);
       })
-      .catch(err => console.warn('[Meta] Episode fetch failed:', err));
+      .catch(() => {});
   }, [media.idMal, media.id]);
 
   useEffect(() => {
@@ -251,7 +251,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
         setWatchlistStatus(data.entry?.listStatus || null);
       }
     } catch (err) {
-      console.error('Failed to fetch watchlist status:', err);
+      // Non-critical
     }
   };
 

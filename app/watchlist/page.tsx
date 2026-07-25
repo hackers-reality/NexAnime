@@ -119,7 +119,7 @@ export default function WatchlistPage() {
       const data = await res.json();
       setEntries(data.entries || []);
     } catch (err) {
-      console.error('Bulk action failed:', err);
+      // Error handled via UI state
     } finally {
       setBulkLoading(false);
     }

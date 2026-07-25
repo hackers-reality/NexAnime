@@ -67,7 +67,7 @@ export default function WatchlistEditorModal({
           setNotes('');
         }
       } catch (err) {
-        console.error('Failed to fetch watchlist status:', err);
+        // Non-critical
       } finally {
         setLoading(false);
       }

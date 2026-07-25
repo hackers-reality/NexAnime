@@ -32,8 +32,7 @@ export default function PlaybackSettingsPage() {
         }
         setLoading(false);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setLoading(false);
       });
   }, []);
@@ -89,7 +88,7 @@ export default function PlaybackSettingsPage() {
         setTimeout(() => setMessage(null), 3000);
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical
     }
   };
 

@@ -47,7 +47,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
         setNotifications(data.notifications);
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
         onRefreshCount();
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical
     }
   };
 
@@ -87,7 +87,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
         onRefreshCount();
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical
     }
   };
 
@@ -101,7 +101,7 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
         onRefreshCount();
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical
     }
   };
 

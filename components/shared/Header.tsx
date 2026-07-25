@@ -49,7 +49,7 @@ export default function Header() {
         }
       }
     } catch (err) {
-      console.error('Failed to load header profile details:', err);
+      // Error handled silently - non-critical
     }
   };
 
@@ -58,11 +58,11 @@ export default function Header() {
       const res = await fetch('/api/notifications');
       const data = await res.json();
       if (data.notifications) {
-        const unread = data.notifications.filter((n: any) => !n.read).length;
+        const unread = data.notifications.filter((n: { read?: number }) => !n.read).length;
         setUnreadCount(unread);
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical - notification count defaults to 0
     }
   };
 

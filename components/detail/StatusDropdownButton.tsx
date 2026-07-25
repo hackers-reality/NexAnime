@@ -43,7 +43,7 @@ export default function StatusDropdownButton({
         setStatus(null);
       }
     } catch (err) {
-      console.error('Failed to fetch watchlist status:', err);
+      // Non-critical
     } finally {
       setLoading(false);
     }
@@ -83,7 +83,7 @@ export default function StatusDropdownButton({
         onStatusUpdated?.();
       }
     } catch (err) {
-      console.error('Failed to update status:', err);
+      // Non-critical
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function StatusDropdownButton({
         onStatusUpdated?.();
       }
     } catch (err) {
-      console.error('Failed to remove from watchlist:', err);
+      // Non-critical
     } finally {
       setLoading(false);
     }

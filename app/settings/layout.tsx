@@ -26,7 +26,6 @@ export default function SettingsLayout({
         alert('Failed to sign out / reset.');
       }
     } catch (err) {
-      console.error('Sign Out failed:', err);
       alert('An error occurred during sign out.');
     }
   };

@@ -37,7 +37,6 @@ export default function ImportSettingsPage() {
         setError(data.error || 'Failed to import user list.');
       }
     } catch (err) {
-      console.error(err);
       setError('An error occurred during import.');
     } finally {
       setImporting(false);

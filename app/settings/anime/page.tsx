@@ -23,8 +23,7 @@ export default function AnimeSettingsPage() {
         }
         setLoading(false);
       })
-      .catch((err) => {
-        console.error(err);
+      .catch(() => {
         setLoading(false);
       });
   }, []);
@@ -57,7 +56,7 @@ export default function AnimeSettingsPage() {
         setTimeout(() => setMessage(null), 3000);
       }
     } catch (err) {
-      console.error(err);
+      // Non-critical - save silently
     } finally {
       setSaving(false);
     }

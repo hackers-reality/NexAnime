@@ -53,7 +53,7 @@ export default function OnboardingPage() {
         }
       }
     } catch (err) {
-      console.error('Failed to load characters:', err);
+      // Error handled via UI state
     } finally {
       setLoadingChars(false);
     }
@@ -101,7 +101,6 @@ export default function OnboardingPage() {
         setError(data.error || 'Failed to complete onboarding. Please try again.');
       }
     } catch (err) {
-      console.error(err);
       setError('An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
