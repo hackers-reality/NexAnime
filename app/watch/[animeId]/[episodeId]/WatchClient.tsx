@@ -391,7 +391,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       window.removeEventListener('message', handleMessage);
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     };
-  }, [media.id, episodeNumber, hasNextEp]);
+  }, [media.id, episodeNumber, hasNextEp, clientAutoPlay]);
 
   // ── Keyboard shortcuts ──
   useEffect(() => {

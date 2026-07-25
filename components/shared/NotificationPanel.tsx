@@ -23,6 +23,7 @@ function timeAgo(dateStr: string): string {
   const then = new Date(dateStr).getTime();
   const seconds = Math.floor((now - then) / 1000);
 
+  if (seconds < 0) return 'Just now';
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
@@ -30,14 +31,15 @@ function timeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }
 
 export default function NotificationPanel({ onClose, onRefreshCount }: NotificationPanelProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'new_episode' | 'airing_soon'>('all');
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchNotifications = async () => {
     try {
@@ -45,9 +47,11 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
       const data = await res.json();
       if (data.notifications) {
         setNotifications(data.notifications);
+      } else {
+        setFetchError(true);
       }
     } catch (err) {
-      // Non-critical
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -146,7 +150,9 @@ export default function NotificationPanel({ onClose, onRefreshCount }: Notificat
         {loading ? (
           <div className={styles.loading}>Loading...</div>
         ) : filteredNotifs.length === 0 ? (
-          <div className={styles.empty}>No notifications found</div>
+          <div className={styles.empty}>
+            {fetchError ? 'Failed to load notifications' : 'No notifications yet'}
+          </div>
         ) : (
           filteredNotifs.map((notif) => (
             <div
