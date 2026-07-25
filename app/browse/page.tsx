@@ -102,10 +102,10 @@ function BrowseContent() {
           setPageInfo(data.pageInfo ?? null);
           setCurrentPage(1);
         }
-      } catch (err) {
-        console.error('Failed to search anime:', err);
-        if (active) setError('Failed to load results. Please try again.');
-      } finally {
+} catch (err) {
+         // Error is handled via UI state - see setError below
+         if (active) setError('Failed to load results. Please try again.');
+       } finally {
         if (active) setLoading(false);
       }
     };
@@ -125,10 +125,10 @@ function BrowseContent() {
       setResults((prev) => [...prev, ...(data.media ?? [])]);
       setPageInfo(data.pageInfo ?? null);
       setCurrentPage(nextPage);
-    } catch (err) {
-      console.error('Failed to load more:', err);
-      setError('Failed to load more results.');
-    } finally {
+} catch (err) {
+         // Error is handled via UI state - see setError below
+         setError('Failed to load more results.');
+       } finally {
       setLoadingMore(false);
     }
   }, [loadingMore, pageInfo, currentPage, filters]);
