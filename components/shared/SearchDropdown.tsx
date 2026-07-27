@@ -93,13 +93,19 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
 
   if (!query.trim()) return null;
 
+  const trimmedQuery = query.trim();
+
   return (
     <div className={styles.dropdown} role="listbox" onKeyDown={handleKeyDown}>
       {loading && results.length === 0 && (
         <div className={styles.loading}>Searching...</div>
       )}
 
-      {!loading && results.length === 0 && query.length > 1 && (
+      {!loading && results.length === 0 && trimmedQuery.length === 1 && (
+        <div className={styles.empty} style={{ opacity: 0.6 }}>Type at least 2 characters to search</div>
+      )}
+
+      {!loading && results.length === 0 && trimmedQuery.length > 1 && (
         <div className={styles.empty}>No results for &ldquo;{query}&rdquo;</div>
       )}
 
@@ -115,7 +121,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
         >
           <div className={styles.thumb}>
             {result.coverImage?.large ? (
-              <img src={result.coverImage.large} alt={result.title?.english || result.title?.romaji || 'Anime'} className={styles.thumbImage} loading="lazy" />
+              <img src={result.coverImage?.large || ''} alt={result.title?.english || result.title?.romaji || 'Anime'} className={styles.thumbImage} loading="lazy" />
             ) : (
               <div className={styles.thumbPlaceholder} />
             )}
@@ -123,7 +129,7 @@ export default function SearchDropdown({ query, onSelect }: SearchDropdownProps)
 
           <div className={styles.info}>
             <div className={styles.title}>
-              {result.title.english || result.title.romaji || 'Untitled'}
+              {result.title?.english || result.title?.romaji || 'Untitled'}
             </div>
             <div className={styles.meta}>
               {result.format && (

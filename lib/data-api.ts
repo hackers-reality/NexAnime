@@ -442,15 +442,30 @@ function mergeAnilistFields(target: AniListMedia, source: AniListMedia): void {
 // ─── Search ────────────────────────────────────────────────
 
 export async function searchMedia(query: string): Promise<AniListMedia[]> {
-  // Try reanime.to search first
-  const reanimeResults = await searchReanime({ q: query, limit: 20 });
-  if (reanimeResults?.results && reanimeResults.results.length > 0) {
-    const mapped = reanimeResults.results.map(mapHomeItem).filter(Boolean) as AniListMedia[];
-    if (mapped.length > 0) return mapped;
+  const [reanimeRes, anilistRes] = await Promise.allSettled([
+    searchReanime({ q: query, limit: 20 }),
+    searchAnime({ search: query, page: 1, perPage: 20 }),
+  ]);
+
+  const reanimeMapped = reanimeRes.status === 'fulfilled' && reanimeRes.value?.results
+    ? reanimeRes.value.results.map(mapHomeItem).filter(Boolean) as AniListMedia[]
+    : [];
+
+  const anilistMapped = anilistRes.status === 'fulfilled'
+    ? anilistRes.value.media
+    : [];
+
+  // Merge: reanime first, then AniList items not already present
+  const seen = new Set(reanimeMapped.map(m => m.id));
+  const merged = [...reanimeMapped];
+  for (const item of anilistMapped) {
+    if (!seen.has(item.id)) {
+      merged.push(item);
+      seen.add(item.id);
+    }
   }
-  // Fallback to AniList
-  const result = await searchAnime({ search: query, page: 1, perPage: 20 });
-  return result.media;
+
+  return merged;
 }
 
 // ─── Browse with filters ──────────────────────────────────

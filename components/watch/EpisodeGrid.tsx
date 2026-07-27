@@ -10,13 +10,31 @@ interface EpisodeGridProps {
 }
 
 export default function EpisodeGrid({ animeId, totalEpisodes, currentEpisode }: EpisodeGridProps) {
-  const maxEp = totalEpisodes || 25;
-  const episodes = Array.from({ length: maxEp }, (_, i) => i + 1);
+  if (!totalEpisodes || totalEpisodes <= 0) {
+    return (
+      <div className={styles.container}>
+        <h3 className={styles.title}>Episodes</h3>
+        <p className={styles.count} style={{ opacity: 0.5 }}>Episode count not yet available</p>
+        <div className={styles.grid} aria-label="Episode navigation">
+          <Link
+            href={`/watch/${animeId}/${currentEpisode}`}
+            className={`${styles.episode} ${styles.current}`}
+            aria-current="page"
+            aria-label={`Episode ${currentEpisode} (currently playing)`}
+          >
+            {currentEpisode}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const episodes = Array.from({ length: totalEpisodes }, (_, i) => i + 1);
 
   return (
     <div className={styles.container}>
       <h3 className={styles.title}>
-        Episodes <span className={styles.count}>({maxEp})</span>
+        Episodes <span className={styles.count}>({totalEpisodes})</span>
       </h3>
       <nav className={styles.grid} aria-label="Episode navigation">
         {episodes.map((ep) => (

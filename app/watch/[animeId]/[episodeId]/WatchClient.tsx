@@ -61,8 +61,6 @@ function getEpisodeTitle(media: AniListMedia, epNum: number, jikanEpisodes: Jika
     }
   }
 
-  // Fall back to reanime generic "Episode N" if we have at least that
-  if (!isGeneric(reanimeEp?.title)) return reanimeEp!.title!;
   return `Episode ${epNum}`;
 }
 

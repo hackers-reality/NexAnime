@@ -51,7 +51,7 @@ export default function UpdateBanner() {
       const res = await fetch('/api/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dryRun: false }),
+        body: JSON.stringify({ dryRun: false, confirm: 'UPDATE_CONFIRMED' }),
       });
       const data = await res.json();
 

@@ -105,7 +105,15 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { dryRun } = body as { dryRun?: boolean };
+    const { dryRun, confirm } = body as { dryRun?: boolean; confirm?: string };
+
+    // Require explicit confirmation to prevent accidental/malicious updates
+    if (confirm !== 'UPDATE_CONFIRMED') {
+      return NextResponse.json(
+        { success: false, error: 'Update not confirmed. Send confirm: "UPDATE_CONFIRMED" to proceed.' },
+        { status: 403 }
+      );
+    }
 
     const cwd = path.resolve(process.cwd());
 
