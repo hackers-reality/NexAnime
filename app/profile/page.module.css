@@ -96,6 +96,16 @@
   gap: 16px;
 }
 
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .statCard {
+    padding: 12px;
+  }
+}
+
 .statCard {
   background-color: var(--bg-surface);
   border: 1px solid var(--border);
