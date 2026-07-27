@@ -163,8 +163,20 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+  .page {
+    padding: var(--space-4) var(--space-3);
+  }
+
   .cardImage {
     width: 90px;
     height: 60px;
+  }
+
+  .epBadge {
+    font-size: 11px;
+  }
+
+  .progressLabel {
+    font-size: 11px;
   }
 }

@@ -96,9 +96,18 @@
   gap: 16px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+  .wrapper {
+    padding: var(--space-4) var(--space-3);
+  }
+
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
     gap: 8px;
   }
   .statCard {
