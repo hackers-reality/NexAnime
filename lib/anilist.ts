@@ -81,7 +81,6 @@ async function anilistFetch<T>(
       if (response.status === 429) {
         const retryAfter = Math.min(parseInt(response.headers.get('Retry-After') || '10'), 15);
         const waitMs = retryAfter * 1000;
-        console.log(`[AniList] Rate limited, waiting ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
         await new Promise((resolve) => setTimeout(resolve, waitMs));
         continue;
       }

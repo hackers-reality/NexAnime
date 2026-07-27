@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   const quality = request.nextUrl.searchParams.get('quality');
 
   if (quality) {
-    console.log(`[Stream] Quality preference "${quality}" requested for anime ${anilistId} ep ${episodeNumber} — adapters do not support quality selection yet`);
+    // Quality preference noted — adapters do not support quality selection yet
   }
 
   // Look up episode metadata for cache enrichment
