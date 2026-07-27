@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
@@ -133,6 +133,21 @@ export default function HomePage() {
   const [randomLoading, setRandomLoading] = useState(false);
 
   const loadAttempt = useRef(0);
+
+  const dedupedRecentlyUpdated = useMemo(() => {
+    const seen = new Set<string>();
+    return recentlyUpdatedCards.slice(0, 12).filter((item) => {
+      const anime = item.media;
+      if (!anime?.id || seen.has(String(anime.id))) return false;
+      seen.add(String(anime.id));
+      return true;
+    });
+  }, [recentlyUpdatedCards]);
+
+  const filteredTabAnime = useMemo(
+    () => tabAnime.filter((a: HomeCardItem) => a.anilistId && a.anilistId > 0),
+    [tabAnime]
+  );
 
   useEffect(() => {
     let active = true;
@@ -345,7 +360,7 @@ export default function HomePage() {
                 </button>
               </div>
               <div className={styles.horizontalScroll}>
-                {tabAnime.filter((a: HomeCardItem) => a.anilistId && a.anilistId > 0).map((anime: HomeCardItem) => (
+                {filteredTabAnime.map((anime: HomeCardItem) => (
                   <div key={`trend-${anime.anilistId}-${activeTrendTab}`} className={styles.cardWrapper}>
                     <AnimeCard
                       id={anime.anilistId}
@@ -423,16 +438,9 @@ export default function HomePage() {
                     </Link>
                   </div>
                   <div className={styles.homeCardGridLimited}>
-                    {(() => {
-                      const seen = new Set<string>();
-                      return recentlyUpdatedCards.slice(0, 12).filter((item) => {
-                        const anime = item.media;
-                        if (!anime?.id || seen.has(String(anime.id))) return false;
-                        seen.add(String(anime.id));
-                        return true;
-                      }).map((item) => {
-                        const anime = item.media;
-                        return (
+                    {dedupedRecentlyUpdated.map((item) => {
+                      const anime = item.media;
+                      return (
                           <div key={`recent-${anime.id}`} className={styles.cardWrapper}>
                             <AnimeCard
                               id={anime.id}
@@ -450,8 +458,7 @@ export default function HomePage() {
                             />
                           </div>
                         );
-                      });
-                    })()}
+                    })}
                   </div>
                 </section>
               </div>
