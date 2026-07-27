@@ -30,6 +30,8 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTouch = useRef(false);
+  const touchStartX = useRef(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     isTouch.current = isTouchDevice();
@@ -110,8 +112,45 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
     setTrailerFade(false);
   };
 
+  const goNext = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % items.length);
+    setTouchPlayed(null);
+    setTrailerFade(false);
+  }, [items.length]);
+
+  const goPrev = useCallback(() => {
+    setActiveIndex((prev) => (prev - 1 + items.length) % items.length);
+    setTouchPlayed(null);
+    setTrailerFade(false);
+  }, [items.length]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    stopTimer();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    const threshold = 50;
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) goNext();
+      else goPrev();
+    } else {
+      if (hoveredSlide === null) startTimer();
+    }
+  };
+
   return (
-    <div className={styles.carousel} suppressHydrationWarning={true}>
+    <div
+      ref={carouselRef}
+      className={styles.carousel}
+      suppressHydrationWarning={true}
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Anime spotlight carousel"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {items.map((item, idx) => {
         const isActive = idx === activeIndex;
         const isHovered = hoveredSlide === idx;
@@ -129,7 +168,9 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
             onMouseLeave={handleMouseLeave}
             onClick={() => isTouch.current && handleTouchToggle(idx)}
             role="group"
-            aria-label={`Slide ${idx + 1}: ${slideTitle}`}
+            aria-roledescription="slide"
+            aria-label={`Slide ${idx + 1} of ${items.length}: ${slideTitle}`}
+            aria-hidden={!isActive}
           >
             {/* Background Image */}
             <div className={`${styles.imageContainer} ${fading ? styles.imageFaded : ''}`} suppressHydrationWarning={true}>
@@ -206,14 +247,16 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
       })}
 
       {/* Slide Indicators */}
-      <div className={styles.indicators}>
+      <div className={styles.indicators} role="tablist" aria-label="Carousel navigation">
         <span className={styles.slideCounter}>{activeIndex + 1} / {items.length}</span>
         {items.map((_, idx) => (
           <button
             key={idx}
             className={`${styles.dot} ${idx === activeIndex ? styles.activeDot : ''}`}
             onClick={() => handleDotClick(idx)}
-            title={`Slide ${idx + 1}`}
+            role="tab"
+            aria-selected={idx === activeIndex}
+            aria-label={`Go to slide ${idx + 1}`}
           />
         ))}
       </div>

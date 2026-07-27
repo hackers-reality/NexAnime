@@ -931,6 +931,10 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
             <div className={styles.shortcutsList}>
               <div className={styles.shortcutRow}><kbd>Shift+←</kbd><span>Previous episode</span></div>
               <div className={styles.shortcutRow}><kbd>Shift+→</kbd><span>Next episode</span></div>
+              <div className={styles.shortcutRow}><kbd>T</kbd><span>Toggle theatre mode</span></div>
+              <div className={styles.shortcutRow}><kbd>E</kbd><span>Toggle episode list</span></div>
+              <div className={styles.shortcutRow}><kbd>,</kbd><span>Decrease playback speed</span></div>
+              <div className={styles.shortcutRow}><kbd>.</kbd><span>Increase playback speed</span></div>
               <div className={styles.shortcutRow}><kbd>Esc</kbd><span>Close modals / overlays</span></div>
               <div className={styles.shortcutRow}><kbd>?</kbd><span>Toggle this shortcuts overlay</span></div>
             </div>

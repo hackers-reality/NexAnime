@@ -317,12 +317,28 @@ export default function VideoPlayer({
           e.preventDefault();
           takeScreenshot();
           break;
+        case ',':
+          e.preventDefault();
+          {
+            const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            const idx = speeds.indexOf(playbackRate);
+            if (idx > 0) setSpeed(speeds[idx - 1]);
+          }
+          break;
+        case '.':
+          e.preventDefault();
+          {
+            const speeds = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+            const idx = speeds.indexOf(playbackRate);
+            if (idx < speeds.length - 1) setSpeed(speeds[idx + 1]);
+          }
+          break;
       }
     };
 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [isFullscreen]);
+  }, [isFullscreen, playbackRate]);
 
   // ── Controls auto-hide ─────────────────────────────
   const showControlsTemporarily = useCallback(() => {

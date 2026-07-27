@@ -8,15 +8,15 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div style={styles.container}>
-      <div style={styles.content}>
-        <div style={styles.icon}>
+    <main id="main-content" className="error-page">
+      <div className="error-content">
+        <div className="error-icon">
           <svg
             width="48"
             height="48"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#ef4444"
+            stroke="var(--accent-error, #ef4444)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -26,14 +26,14 @@ export default function Error({
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         </div>
-        <h2 style={styles.title}>Something went wrong</h2>
-        <p style={styles.message}>
+        <h2 className="error-title">Something went wrong</h2>
+        <p className="error-message">
           {error.message || 'An unexpected error occurred.'}
         </p>
         {error.digest && (
-          <p style={styles.digest}>Error ID: {error.digest}</p>
+          <p className="error-digest">Error ID: {error.digest}</p>
         )}
-        <button onClick={reset} style={styles.button}>
+        <button onClick={reset} className="error-button">
           <svg
             width="16"
             height="16"
@@ -51,58 +51,61 @@ export default function Error({
           Try Again
         </button>
       </div>
-    </div>
+
+      <style jsx>{`
+        .error-page {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          background-color: var(--bg-base, #0a0a0f);
+          font-family: 'Inter', 'Space Grotesk', system-ui, sans-serif;
+        }
+        .error-content {
+          text-align: center;
+          padding: 0 24px;
+          max-width: 480px;
+        }
+        .error-icon {
+          margin-bottom: 24px;
+        }
+        .error-title {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--text-primary, #f5f5f7);
+          margin: 0 0 8px;
+          font-family: 'Space Grotesk', system-ui, sans-serif;
+        }
+        .error-message {
+          font-size: 1rem;
+          color: var(--text-secondary, #a1a1aa);
+          line-height: 1.6;
+          margin-bottom: 8px;
+        }
+        .error-digest {
+          font-size: 0.75rem;
+          color: var(--text-muted, #71717a);
+          margin-bottom: 24px;
+          font-family: monospace;
+        }
+        .error-button {
+          display: inline-flex;
+          align-items: center;
+          padding: 12px 28px;
+          background-color: var(--primary, #3b82f6);
+          color: var(--text-primary, #ffffff);
+          border-radius: 10px;
+          font-size: 0.95rem;
+          font-weight: 500;
+          font-family: 'Inter', system-ui, sans-serif;
+          border: none;
+          cursor: pointer;
+          transition: background-color 150ms ease, box-shadow 150ms ease;
+        }
+        .error-button:hover {
+          background-color: var(--primary-hover, #2563eb);
+        }
+      `}</style>
+    </main>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#0a0a0f',
-    fontFamily: "'Inter', 'Space Grotesk', system-ui, sans-serif",
-  },
-  content: {
-    textAlign: 'center',
-    padding: '0 24px',
-    maxWidth: 480,
-  },
-  icon: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: '1.5rem',
-    fontWeight: 600,
-    color: '#f5f5f7',
-    margin: '0 0 8px',
-    fontFamily: "'Space Grotesk', system-ui, sans-serif",
-  },
-  message: {
-    fontSize: '1rem',
-    color: '#a1a1aa',
-    lineHeight: 1.6,
-    marginBottom: 8,
-  },
-  digest: {
-    fontSize: '0.75rem',
-    color: '#71717a',
-    marginBottom: 24,
-    fontFamily: 'monospace',
-  },
-  button: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '12px 28px',
-    backgroundColor: '#3b82f6',
-    color: '#ffffff',
-    borderRadius: 10,
-    fontSize: '0.95rem',
-    fontWeight: 500,
-    fontFamily: "'Inter', system-ui, sans-serif",
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'background-color 150ms ease, box-shadow 150ms ease',
-  },
-};
