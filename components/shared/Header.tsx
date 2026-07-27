@@ -1,30 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import SearchDropdown from './SearchDropdown';
 import NotificationPanel from './NotificationPanel';
 import styles from './Header.module.css';
 
-export default function Header() {
-  const pathname = usePathname();
+const SearchSection = memo(function SearchSection() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [showMobileNav, setShowMobileNav] = useState(false);
-  
-  // Dynamic header state
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Global keyboard shortcut: / to focus search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -37,6 +24,57 @@ export default function Header() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  const handleSelect = useCallback(() => {
+    setSearchQuery('');
+    setShowSearch(false);
+  }, []);
+
+  return (
+    <div className={styles.searchWrap}>
+      <span className={styles.searchIcon}>⌕</span>
+      <input
+        ref={searchInputRef}
+        type="text"
+        className={styles.searchInput}
+        placeholder="Search anime... (press /)"
+        aria-label="Search anime"
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+          setShowSearch(e.target.value.length > 0);
+        }}
+        onFocus={() => {
+          if (searchQuery.length > 0) setShowSearch(true);
+        }}
+        onBlur={() => {
+          setTimeout(() => setShowSearch(false), 200);
+        }}
+      />
+      {showSearch && (
+        <SearchDropdown
+          query={searchQuery}
+          onSelect={handleSelect}
+        />
+      )}
+    </div>
+  );
+});
+
+export default function Header() {
+  const pathname = usePathname();
+  
+  // Dynamic header state
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showMobileNav, setShowMobileNav] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchProfile = async () => {
     try {
@@ -68,7 +106,7 @@ export default function Header() {
     }
   };
 
-  const fetchNotificationCount = async () => {
+  const fetchNotificationCount = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications');
       const data = await res.json();
@@ -79,7 +117,7 @@ export default function Header() {
     } catch (err) {
       // Non-critical - notification count defaults to 0
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Load theme from settings API, fallback to localStorage, fallback to dark
@@ -198,36 +236,7 @@ export default function Header() {
       </button>
 
       {/* Search */}
-      <div className={styles.searchWrap}>
-        <span className={styles.searchIcon}>⌕</span>
-        <input
-          ref={searchInputRef}
-          type="text"
-          className={styles.searchInput}
-          placeholder="Search anime... (press /)"
-          aria-label="Search anime"
-          value={searchQuery}
-          onChange={(e) => {
-            setSearchQuery(e.target.value);
-            setShowSearch(e.target.value.length > 0);
-          }}
-          onFocus={() => {
-            if (searchQuery.length > 0) setShowSearch(true);
-          }}
-          onBlur={() => {
-            setTimeout(() => setShowSearch(false), 200);
-          }}
-        />
-        {showSearch && (
-          <SearchDropdown
-            query={searchQuery}
-            onSelect={() => {
-              setSearchQuery('');
-              setShowSearch(false);
-            }}
-          />
-        )}
-      </div>
+      <SearchSection />
 
       {/* Right actions */}
       <div className={styles.actions}>

@@ -129,7 +129,7 @@ export default function WatchlistEditorModal({
         {/* Left Side Poster */}
         <div className={styles.posterSide}>
           {posterUrl ? (
-            <img src={posterUrl} alt={`${animeTitle} poster`} className={styles.posterImage} />
+            <img src={posterUrl} alt={`${animeTitle} poster`} className={styles.posterImage} loading="lazy" />
           ) : (
             <div className={styles.posterPlaceholder} />
           )}

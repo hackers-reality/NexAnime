@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import Link from 'next/link';
 import type { AnimeCardProps } from '@/types';
 import { STATUS_CONFIG } from './status-config';
@@ -21,7 +21,7 @@ export interface AnimeCardWithPreviewProps extends AnimeCardProps {
   dubbed?: number | null;
 }
 
-export default function AnimeCard({
+function AnimeCardInner({
   id,
   poster,
   title,
@@ -157,3 +157,5 @@ export default function AnimeCard({
     </div>
   );
 }
+
+export default memo(AnimeCardInner);

@@ -531,7 +531,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           {/* VA Part */}
                           <div className={styles.vaHalf}>
                             {va?.image && (
-                              <img src={va.image} alt={va.name} className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={va.image} alt={va.name} className={styles.vaImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.vaMeta}>
                               <span className={styles.vaName}>{va ? va.name : 'N/A'}</span>
@@ -560,7 +560,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           </div>
                           <div className={styles.vaHalf}>
                             {va?.image?.large && (
-                              <img src={va.image.large} alt={va.name?.full} className={styles.vaImage} onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
+                              <img src={va.image.large} alt={va.name?.full} className={styles.vaImage} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/avatars/default.svg'; }} />
                             )}
                             <div className={styles.vaMeta}>
                               <span className={styles.vaName}>{va ? va.name?.full : 'N/A'}</span>
