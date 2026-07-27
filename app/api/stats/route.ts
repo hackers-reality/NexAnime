@@ -95,7 +95,7 @@ export async function GET() {
         for (const g of genres) {
           genreMap[g] = (genreMap[g] || 0) + Number(row.count);
         }
-      } catch {}
+      } catch { /* malformed genres JSON — skip row */ }
     }
     const topGenres = Object.entries(genreMap)
       .sort(([, a], [, b]) => b - a)
@@ -125,6 +125,7 @@ export async function GET() {
       recentActivity: activity,
     });
   } catch (err) {
+    console.error('[Stats] Failed to fetch stats:', err);
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
 }
