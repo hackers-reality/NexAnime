@@ -104,10 +104,11 @@ interface HomeCardItem {
 }
 
 function dedup(items: HomeCardItem[]): HomeCardItem[] {
-  const seen = new Set<number>();
+  const seen = new Set<string>();
   return items.filter((m) => {
-    if (!m.anilistId || seen.has(m.anilistId)) return false;
-    seen.add(m.anilistId);
+    const id = String(m.anilistId);
+    if (!m.anilistId || seen.has(id)) return false;
+    seen.add(id);
     return true;
   });
 }
@@ -423,11 +424,11 @@ export default function HomePage() {
                   </div>
                   <div className={styles.homeCardGridLimited}>
                     {(() => {
-                      const seen = new Set<number>();
+                      const seen = new Set<string>();
                       return recentlyUpdatedCards.slice(0, 12).filter((item) => {
                         const anime = item.media;
-                        if (!anime?.id || seen.has(anime.id)) return false;
-                        seen.add(anime.id);
+                        if (!anime?.id || seen.has(String(anime.id))) return false;
+                        seen.add(String(anime.id));
                         return true;
                       }).map((item) => {
                         const anime = item.media;
