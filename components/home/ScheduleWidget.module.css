@@ -187,3 +187,9 @@
   color: var(--accent-airing);
   background-color: rgba(34, 197, 94, 0.1);
 }
+
+@media (max-width: 768px) {
+  .list {
+    max-height: 320px;
+  }
+}

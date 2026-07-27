@@ -193,7 +193,7 @@
 }
 
 .genreTag {
-  font-size: 10px;
+  font-size: 11px;
   padding: 2px 8px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
@@ -205,4 +205,47 @@
 :global([data-theme="light"]) .genreTag {
   background: rgba(0, 0, 0, 0.03);
   border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .page {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .title {
+    font-size: var(--text-2xl);
+  }
+
+  .dayTabs {
+    scrollbar-width: none;
+    margin-bottom: var(--space-4);
+  }
+  .dayTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dayTab {
+    min-width: 48px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .episodeCard {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .episodeImage {
+    width: 60px;
+    height: 82px;
+  }
+
+  .episodeTitle {
+    font-size: var(--text-sm);
+  }
+
+  .episodeMeta {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
 }
