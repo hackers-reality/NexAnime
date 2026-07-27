@@ -54,9 +54,13 @@ export default function AnimeSettingsPage() {
       if (res.ok) {
         setMessage('Settings saved.');
         setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage('Failed to save settings.');
+        setTimeout(() => setMessage(null), 3000);
       }
     } catch (err) {
-      // Non-critical - save silently
+      setMessage('Failed to save settings.');
+      setTimeout(() => setMessage(null), 3000);
     } finally {
       setSaving(false);
     }

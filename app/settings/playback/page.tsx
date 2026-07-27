@@ -86,9 +86,13 @@ export default function PlaybackSettingsPage() {
       if (res.ok) {
         setMessage('Playback settings saved.');
         setTimeout(() => setMessage(null), 3000);
+      } else {
+        setMessage('Failed to save settings.');
+        setTimeout(() => setMessage(null), 3000);
       }
     } catch (err) {
-      // Non-critical
+      setMessage('Failed to save settings.');
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
