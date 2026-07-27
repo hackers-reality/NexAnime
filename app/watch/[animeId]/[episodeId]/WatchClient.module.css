@@ -9,6 +9,31 @@
   gap: 32px;
 }
 
+/* ── Theatre Mode ── */
+.theatreMode {
+  max-width: 100%;
+  padding: 0;
+  gap: 0;
+}
+.theatreMode .leftCol {
+  width: 100%;
+}
+.theatreMode .rightRail {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .theatreMode .leftCol {
+    width: 100%;
+  }
+  .theatreMode .rightRail {
+    display: none;
+  }
+}
+.theatreActive {
+  color: var(--primary) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+
 @media (min-width: 1024px) {
   .container {
     flex-direction: row;

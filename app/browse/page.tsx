@@ -237,7 +237,7 @@ return (
                      key={anime.id}
                      id={anime.id}
                      poster={anime.coverImage?.extraLarge ?? anime.coverImage?.large}
-                     title={anime.title.english || anime.title.romaji || 'Untitled'}
+                      title={anime.title?.english || anime.title?.romaji || 'Untitled'}
                      format={anime.format}
                      year={anime.seasonYear}
                      status={anime.status}

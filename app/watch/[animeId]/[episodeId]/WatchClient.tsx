@@ -130,6 +130,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [theatreMode, setTheatreMode] = useState(false);
   const [watchedEpisodes, setWatchedEpisodes] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -312,7 +313,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
   const nextEpisode = media.nextAiringEpisode?.episode;
   const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
-  const totalEpisodes = isNotYetReleased ? 0 : (media.episodes || (nextEpisode ? nextEpisode - 1 : 0) || media.streamingEpisodes?.length || 0);
+  const isReleasing = media.status === 'RELEASING' || !!nextEpisode;
+
+  // Priority: lastEpisode (reanime, actual aired) > nextEpisode-1 (airing) > media.episodes (finished) > 0
+  const totalEpisodes = isNotYetReleased
+    ? 0
+    : (media.lastEpisode
+        || (isReleasing && nextEpisode ? nextEpisode - 1 : null)
+        || media.episodes
+        || 0);
   const hasNextEp = totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes;
 
   const [showAutoAdvance, setShowAutoAdvance] = useState(false);
@@ -447,7 +456,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const hasRelations = prequels.length > 0 || sequels.length > 0 || sideStories.length > 0 || alternatives.length > 0 || spinOffs.length > 0 || summaries.length > 0;
 
   return (
-    <main id="main-content" className={styles.container}>
+    <main id="main-content" className={`${styles.container} ${theatreMode ? styles.theatreMode : ''}`}>
       <div className={styles.leftCol}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
           <Link href="/">Home</Link>
@@ -560,6 +569,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                     />
                     <span>Auto Skip</span>
                   </label>
+                  <button
+                    className={`${styles.settingToggle} ${theatreMode ? styles.theatreActive : ''}`}
+                    onClick={() => setTheatreMode(p => !p)}
+                    aria-label={theatreMode ? 'Exit theatre mode' : 'Enter theatre mode'}
+                    title={theatreMode ? 'Exit theatre mode' : 'Theatre mode'}
+                  >
+                    <span>{theatreMode ? '◧' : '⛶'} Theatre</span>
+                  </button>
                 </div>
               </div>
             </>
@@ -891,7 +908,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
           animeId={media.id}
           animeTitle={media.title.english || media.title.romaji || 'Untitled'}
           posterUrl={media.coverImage?.extraLarge || null}
-          totalEpisodes={media.episodes}
+          totalEpisodes={totalEpisodes || media.episodes}
           onSaveSuccess={fetchWatchlistStatus}
         />
       )}
