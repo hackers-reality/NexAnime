@@ -31,6 +31,8 @@ const SHORTCUTS = [
   { category: 'Watch Page', items: [
     { keys: ['Shift', '←'], desc: 'Previous episode' },
     { keys: ['Shift', '→'], desc: 'Next episode' },
+    { keys: ['T'], desc: 'Toggle theatre mode' },
+    { keys: ['E'], desc: 'Toggle episode list' },
   ]},
 ];
 

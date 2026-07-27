@@ -416,6 +416,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       if (e.key === '?' && e.shiftKey) {
         setShowShortcuts(p => !p);
       }
+      // T = toggle theatre mode
+      if (e.key === 't' || e.key === 'T') {
+        setTheatreMode(p => !p);
+      }
+      // E = toggle episode list
+      if (e.key === 'e' || e.key === 'E') {
+        setShowEpisodeList(p => !p);
+      }
       // Shift+Arrow for episode navigation (plain arrows are used by VideoPlayer for seeking)
       if (e.key === 'ArrowLeft' && e.shiftKey && episodeNumber > 1) {
         e.preventDefault();

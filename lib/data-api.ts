@@ -539,14 +539,47 @@ export async function getAiringSchedule(): Promise<AniListAiringSchedule[]> {
 
 // ─── Characters with voice actors (via Jikan) ─────────────
 
-export async function getMediaCharacters(malId: number): Promise<CharacterWithVA[]> {
-  return getJikanCharacters(malId);
+export async function getMediaCharacters(malId: number, anilistMedia?: AniListMedia): Promise<CharacterWithVA[]> {
+  // Try Jikan first
+  const jikanChars = await getJikanCharacters(malId);
+  if (jikanChars.length > 0) return jikanChars;
+
+  // Fallback: use AniList characters from the media detail
+  if (anilistMedia?.characters?.edges) {
+    return anilistMedia.characters.edges.map((edge, i) => ({
+      id: edge.node.id,
+      malId: 0,
+      name: edge.node.name?.full || 'Unknown',
+      image: edge.node.image?.large || null,
+      role: edge.role || 'SUPPORTING',
+      voiceActors: (edge as any).voiceActors?.map((va: any) => ({
+        id: va.id || 0,
+        name: va.name?.full || 'Unknown',
+        image: va.image?.large || null,
+        language: va.languageV2 || va.language || 'Japanese',
+      })) || [],
+    }));
+  }
+
+  return [];
 }
 
 // ─── Staff (via Jikan) ─────────────────────────────────────
 
-export async function getMediaStaff(malId: number): Promise<StaffEntry[]> {
-  return getJikanStaff(malId);
+export async function getMediaStaff(malId: number, anilistMedia?: AniListMedia): Promise<StaffEntry[]> {
+  const jikanStaff = await getJikanStaff(malId);
+  if (jikanStaff.length > 0) return jikanStaff;
+
+  if (anilistMedia?.staff?.edges) {
+    return anilistMedia.staff.edges.map((edge) => ({
+      id: edge.node.id,
+      name: edge.node.name?.full || 'Unknown',
+      image: edge.node.image?.large || null,
+      roles: [edge.role || 'Unknown'],
+    }));
+  }
+
+  return [];
 }
 
 // ─── Episodes metadata (via Jikan) ─────────────────────────

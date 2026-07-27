@@ -54,9 +54,9 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
           if (d.jikanEpisodes?.length) setJikanEpisodes(d.jikanEpisodes);
         }),
       // Characters with voice actors
-      media.idMal ? getMediaCharacters(media.idMal).then(setJikanCharacters) : Promise.resolve(),
+      media.idMal ? getMediaCharacters(media.idMal, media).then(setJikanCharacters) : Promise.resolve(),
       // Staff
-      media.idMal ? getMediaStaff(media.idMal).then(setJikanStaff) : Promise.resolve(),
+      media.idMal ? getMediaStaff(media.idMal, media).then(setJikanStaff) : Promise.resolve(),
     ]).finally(() => { setCharsLoading(false); setEpisodesLoading(false); });
   }, [media.idMal, media.id]);
 

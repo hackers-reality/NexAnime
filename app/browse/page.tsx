@@ -232,28 +232,32 @@ return (
            ) : (
              <>
                <div className={`anime-grid ${viewMode === 'dense' ? 'anime-grid--dense' : ''}`}>
-                 {results.map((anime) => (
-                   <AnimeCard
-                     key={anime.id}
-                     id={anime.id}
-                     poster={anime.coverImage?.extraLarge ?? anime.coverImage?.large}
-                      title={anime.title?.english || anime.title?.romaji || 'Untitled'}
-                     format={anime.format}
-                     year={anime.seasonYear}
-                     status={anime.status}
-                     score={anime.averageScore}
-                     synopsis={anime.description}
-                     genres={anime.genres}
-                     rating={anime.rating}
-                     subbed={anime.subbed}
-                     dubbed={anime.dubbed}
-                     airDate={
-                       anime.nextAiringEpisode
-                         ? `Ep ${anime.nextAiringEpisode.episode} airing soon`
-                         : undefined
-                     }
-                   />
-                 ))}
+                  {results.map((anime) => {
+                    const id = (anime as any).anilistId || anime.id;
+                    if (!id) return null;
+                    return (
+                    <AnimeCard
+                      key={id}
+                      id={id}
+                      poster={anime.coverImage?.extraLarge ?? anime.coverImage?.large}
+                       title={anime.title?.english || anime.title?.romaji || 'Untitled'}
+                      format={anime.format}
+                      year={anime.seasonYear}
+                      status={anime.status}
+                      score={anime.averageScore}
+                      synopsis={anime.description}
+                      genres={anime.genres}
+                      rating={anime.rating}
+                      subbed={anime.subbed}
+                      dubbed={anime.dubbed}
+                      airDate={
+                        anime.nextAiringEpisode
+                          ? `Ep ${anime.nextAiringEpisode.episode} airing soon`
+                          : undefined
+                      }
+                    />
+                    );
+                  })}
                </div>
  
                <div ref={sentinelRef} />
