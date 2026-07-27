@@ -233,7 +233,7 @@ return (
              <>
                <div className={`anime-grid ${viewMode === 'dense' ? 'anime-grid--dense' : ''}`}>
                   {results.map((anime) => {
-                    const id = (anime as any).anilistId || anime.id;
+                    const id = anime.id;
                     if (!id) return null;
                     return (
                     <AnimeCard

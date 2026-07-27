@@ -23,36 +23,72 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
 }
 
 interface MappedMedia {
-  anilistId: number;
-  titleRomaji: string;
-  titleEnglish: string | null;
-  coverImage: string | null;
+  id: number;
+  title: { romaji: string | null; english: string | null; native: string | null };
+  coverImage: { extraLarge: string | null; large: string | null; medium: string | null };
   format: string | null;
   seasonYear: number | null;
   status: string | null;
   averageScore: number | null;
-  synopsis: string | null;
+  description: string | null;
   genres: string[];
   rating: string | null;
   subbed: number | null;
   dubbed: number | null;
+  synonyms: string[];
+  season: string | null;
+  episodes: null;
+  lastEpisode: null;
+  nextAiringEpisode: null;
+  trailer: null;
+  bannerImage: null;
+  popularity: null;
+  favourites: null;
+  stats: null;
+  relations: { edges: [] };
+  recommendations: { nodes: [] };
+  characters: { edges: [] };
+  idMal: null;
+  meanScore: null;
+  source: null;
+  studios: { nodes: [] };
+  tags: [];
+  streamingEpisodes: null;
 }
 
 function mapMedia(m: AniListMedia): MappedMedia {
   return {
-    anilistId: m.id,
-    titleRomaji: m.title?.romaji || m.title?.english || 'Unknown',
-    titleEnglish: m.title?.english,
-    coverImage: m.coverImage?.extraLarge || m.coverImage?.large,
+    id: m.id,
+    title: m.title || { romaji: null, english: null, native: null },
+    coverImage: m.coverImage || { extraLarge: null, large: null, medium: null },
     format: m.format,
     seasonYear: m.seasonYear,
     status: m.status,
     averageScore: m.averageScore,
-    synopsis: m.description,
+    description: m.description,
     genres: m.genres || [],
     rating: m.rating ?? null,
     subbed: m.subbed ?? null,
     dubbed: m.dubbed ?? null,
+    synonyms: m.synonyms || [],
+    season: m.season || null,
+    episodes: null,
+    lastEpisode: null,
+    nextAiringEpisode: null,
+    trailer: null,
+    bannerImage: null,
+    popularity: null,
+    favourites: null,
+    stats: null,
+    relations: { edges: [] },
+    recommendations: { nodes: [] },
+    characters: { edges: [] },
+    idMal: null,
+    meanScore: null,
+    source: null,
+    studios: { nodes: [] },
+    tags: [],
+    streamingEpisodes: null,
   };
 }
 
@@ -68,19 +104,37 @@ function mapReanimeMedia(r: ReanimeAnimeItem): MappedMedia | null {
   const id = extractAnilistId(r);
   if (!id) return null;
   return {
-    anilistId: id,
-    titleRomaji: r.title?.romaji || r.title?.english || 'Unknown',
-    titleEnglish: r.title?.english || null,
-    coverImage: r.cover_image?.extra_large || r.cover_image?.large || null,
+    id,
+    title: { romaji: r.title?.romaji || null, english: r.title?.english || null, native: null },
+    coverImage: { extraLarge: r.cover_image?.extra_large || null, large: r.cover_image?.large || null, medium: null },
     format: r.format || null,
     seasonYear: r.season_year || null,
     status: r.status || null,
     averageScore: r.average_score || null,
-    synopsis: r.description || null,
+    description: r.description || null,
     genres: r.genres || [],
     rating: r.rating ?? null,
     subbed: null,
     dubbed: null,
+    synonyms: [],
+    season: null,
+    episodes: null,
+    lastEpisode: null,
+    nextAiringEpisode: null,
+    trailer: null,
+    bannerImage: null,
+    popularity: null,
+    favourites: null,
+    stats: null,
+    relations: { edges: [] },
+    recommendations: { nodes: [] },
+    characters: { edges: [] },
+    idMal: null,
+    meanScore: null,
+    source: null,
+    studios: { nodes: [] },
+    tags: [],
+    streamingEpisodes: null,
   };
 }
 
@@ -144,7 +198,7 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.id > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -178,7 +232,7 @@ export async function GET(request: NextRequest) {
           5000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.id > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -200,7 +254,7 @@ export async function GET(request: NextRequest) {
           5000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.id > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
@@ -222,7 +276,7 @@ export async function GET(request: NextRequest) {
           8000
         );
         if (reanimeResult?.results?.length) {
-          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.anilistId > 0);
+          const mapped = reanimeResult.results.map(mapReanimeMedia).filter((m): m is MappedMedia => m !== null && m?.id > 0);
           if (mapped.length > 0) {
             return NextResponse.json({
               media: mapped,
