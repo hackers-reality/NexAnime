@@ -14,6 +14,7 @@ export default function PlaybackSettingsPage() {
   const [pauseHistory, setPauseHistory] = useState(false);
   const [notificationSound, setNotificationSound] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function PlaybackSettingsPage() {
 
   const handleUpdateSetting = async (key: string, value: any) => {
     setMessage(null);
+    setSaving(true);
     try {
       const body: Record<string, any> = {};
       
@@ -93,6 +95,8 @@ export default function PlaybackSettingsPage() {
     } catch (err) {
       setMessage('Failed to save settings.');
       setTimeout(() => setMessage(null), 3000);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -118,6 +122,7 @@ export default function PlaybackSettingsPage() {
             { label: '480p', value: '480p' },
           ]}
           onChange={(val) => handleUpdateSetting('videoQuality', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -125,6 +130,7 @@ export default function PlaybackSettingsPage() {
           description="Automatically play the video when the watch page is loaded."
           checked={autoPlay}
           onChange={(val) => handleUpdateSetting('autoPlay', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -132,6 +138,7 @@ export default function PlaybackSettingsPage() {
           description="Automatically play the next episode when the current one ends."
           checked={autoNext}
           onChange={(val) => handleUpdateSetting('autoNext', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -139,6 +146,7 @@ export default function PlaybackSettingsPage() {
           description="Skip OP and ED segments automatically using metadata indexes when available."
           checked={autoSkip}
           onChange={(val) => handleUpdateSetting('autoSkip', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -146,6 +154,7 @@ export default function PlaybackSettingsPage() {
           description="Keep video playing in a picture-in-picture widget when scrolling details."
           checked={miniPlayer}
           onChange={(val) => handleUpdateSetting('miniPlayer', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -153,6 +162,7 @@ export default function PlaybackSettingsPage() {
           description="Cast a glow effect matched to the video colors onto the player background."
           checked={ambientMode}
           onChange={(val) => handleUpdateSetting('ambientMode', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -160,6 +170,7 @@ export default function PlaybackSettingsPage() {
           description="Temporarily stop saving your progress and status changes to your profile history."
           checked={pauseHistory}
           onChange={(val) => handleUpdateSetting('pauseHistory', val)}
+          disabled={saving}
         />
 
         <SettingsToggleRow
@@ -167,6 +178,7 @@ export default function PlaybackSettingsPage() {
           description="Play a sound when new episodes are available for anime in your watchlist."
           checked={notificationSound}
           onChange={(val) => handleUpdateSetting('notificationSound', val)}
+          disabled={saving}
         />
       </div>
     </div>

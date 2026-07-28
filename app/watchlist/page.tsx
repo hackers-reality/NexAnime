@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Header from '@/components/shared/Header';
 import AnimeCard from '@/components/cards/AnimeCard';
+import WatchlistStatusBadge from '@/components/watchlist/WatchlistStatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
@@ -53,7 +54,7 @@ export default function WatchlistPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [bulkLoading, setBulkLoading] = useState(false);
 
-  useEffect(() => {
+  const loadWatchlist = () => {
     fetch('/api/watchlist')
       .then((res) => res.json())
       .then((data) => {
@@ -61,6 +62,10 @@ export default function WatchlistPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadWatchlist();
   }, []);
 
   const getCategoryCount = (status: string) => {
@@ -290,6 +295,13 @@ export default function WatchlistPage() {
                         status={entry.anime?.status as AnimeStatusType | null}
                         synopsis={entry.anime?.synopsis}
                         genres={entry.anime?.genres || []}
+                      />
+                      <WatchlistStatusBadge
+                        entryId={entry.id}
+                        anilistId={entry.anilistId}
+                        animeTitle={entry.anime?.title?.romaji || entry.anime?.title?.english || 'Unknown'}
+                        currentStatus={entry.listStatus}
+                        onStatusUpdated={loadWatchlist}
                       />
                     </div>
                   ))}
