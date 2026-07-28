@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { getSettings } from '@/lib/settings-cache';
 import Hls from 'hls.js';
 import styles from './VideoPlayer.module.css';
 
@@ -83,18 +84,13 @@ export default function VideoPlayer({
 
   // ── Load settings from DB ──────────────────────────
   useEffect(() => {
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.settings) {
-          setAutoPlayNext(!!data.settings.auto_next);
-          setAutoSkip(!!data.settings.auto_skip_intro_outro);
-          setShowAmbient(!!data.settings.ambient_mode);
-          setMiniPlayerEnabled(data.settings.mini_player !== false);
-          autoPlayRef.current = !!data.settings.auto_play;
-        }
-      })
-      .catch(() => {});
+    getSettings().then((settings) => {
+      setAutoPlayNext(!!settings.auto_next);
+      setAutoSkip(!!settings.auto_skip_intro_outro);
+      setShowAmbient(!!settings.ambient_mode);
+      setMiniPlayerEnabled(settings.mini_player !== false);
+      autoPlayRef.current = !!settings.auto_play;
+    }).catch(() => {});
   }, []);
 
   // ── HLS Source Setup ───────────────────────────────

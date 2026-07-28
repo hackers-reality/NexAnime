@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getSettings } from '@/lib/settings-cache';
 import SearchDropdown from './SearchDropdown';
 import NotificationPanel from './NotificationPanel';
 import styles from './Header.module.css';
@@ -157,17 +158,14 @@ export default function Header() {
 
   useEffect(() => {
     // Load theme from settings API, fallback to localStorage, fallback to dark
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        const saved = data.settings?.theme as 'dark' | 'light' | null;
-        const initial = saved || (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
-        setTheme(initial);
-        document.documentElement.setAttribute('data-theme', initial);
-      })
-      .catch(() => {
-        const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
-        const initial = saved || 'dark';
+    getSettings().then((settings) => {
+      const saved = settings.theme as 'dark' | 'light' | null;
+      const initial = saved || (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+      setTheme(initial);
+      document.documentElement.setAttribute('data-theme', initial);
+    }).catch(() => {
+      const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
+      const initial = saved || 'dark';
         setTheme(initial);
         document.documentElement.setAttribute('data-theme', initial);
       });

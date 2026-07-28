@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getSettings } from '@/lib/settings-cache';
 import styles from './HomeCarousel.module.css';
 
 interface CarouselItem {
@@ -39,14 +40,11 @@ export default function HomeCarousel({ items }: { items: CarouselItem[] }) {
 
   // Read autoplay_trailers setting
   useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
-        const enabled = data.settings?.autoplay_trailers === 1;
-        trailerEnabledRef.current = enabled;
-        setTrailerActive(enabled);
-      })
-      .catch(() => {});
+    getSettings().then((settings) => {
+      const enabled = settings.autoplay_trailers === 1;
+      trailerEnabledRef.current = enabled;
+      setTrailerActive(enabled);
+    }).catch(() => {});
   }, []);
 
   const startTimer = useCallback(() => {

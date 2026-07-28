@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { getSettings } from '@/lib/settings-cache';
 import VideoPlayer from '@/components/player/VideoPlayer';
 import ServerPicker from '@/components/player/ServerPicker';
 import StatusDropdownButton from '@/components/detail/StatusDropdownButton';
@@ -147,16 +148,11 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }, [media.idMal, media.id]);
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.settings) {
-          setClientAutoPlay(data.settings.auto_next !== false);
-          setClientAutoSkip(!!data.settings.auto_skip_intro_outro);
-          setVideoQuality(data.settings.video_quality || 'auto');
-        }
-      })
-      .catch(() => {});
+    getSettings().then((settings) => {
+      setClientAutoPlay(settings.auto_next !== false);
+      setClientAutoSkip(!!settings.auto_skip_intro_outro);
+      setVideoQuality(settings.video_quality || 'auto');
+    }).catch(() => {});
   }, []);
 
   // Fetch watched episodes for checkmark display
