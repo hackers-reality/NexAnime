@@ -174,6 +174,10 @@ function BrowseContent() {
 
   const allLoaded = pageInfo ? currentPage >= pageInfo.lastPage : true;
 
+  useEffect(() => {
+    document.title = 'Browse Anime | NexAnime';
+  }, []);
+
 return (
      <ErrorBoundary>
        <div className={styles.page}>

@@ -251,7 +251,7 @@ export default function HomePage() {
           {carouselMedia.length > 0 && <HomeCarousel items={carouselMedia} />}
 
           <main id="main-content" className={styles.main}>
-            {continueWatching.length > 0 ? (
+            {continueWatching.length > 0 && (
               <section className={styles.section}>
                 <h2 className={styles.sectionTitle}>Dive Back In</h2>
                 <div className={styles.continueGrid}>
@@ -300,14 +300,6 @@ export default function HomePage() {
                       </Link>
                     );
                   })}
-                </div>
-              </section>
-            ) : (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Dive Back In</h2>
-                <div className={styles.emptyState}>
-                  <p>Start watching anime to see your progress here!</p>
-                  <Link href="/browse" className={styles.browseLink}>Browse Anime</Link>
                 </div>
               </section>
             )}

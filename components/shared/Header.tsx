@@ -75,6 +75,42 @@ export default function Header() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
+  const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Mobile nav: focus trap + Escape key
+  useEffect(() => {
+    if (!showMobileNav) return;
+    const nav = mobileNavRef.current;
+    if (!nav) return;
+
+    // Auto-focus the nav container
+    nav.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowMobileNav(false);
+        return;
+      }
+      // Trap focus inside nav
+      if (e.key === 'Tab') {
+        const focusable = nav.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showMobileNav]);
 
   const fetchProfile = async () => {
     try {
@@ -222,6 +258,7 @@ export default function Header() {
 
       {/* Hamburger (mobile) */}
       <button
+        ref={mobileNavTriggerRef}
         className={styles.hamburgerBtn}
         onClick={() => setShowMobileNav(!showMobileNav)}
         aria-label="Toggle navigation"
@@ -362,30 +399,31 @@ export default function Header() {
       {/* Mobile Nav Overlay */}
       {showMobileNav && (
         <>
-          <div className={styles.mobileOverlay} onClick={() => setShowMobileNav(false)} />
-          <nav className={styles.mobileNav} aria-label="Mobile navigation">
-            <Link href="/" className={styles.navLink} onClick={() => setShowMobileNav(false)}>
+          <div className={styles.mobileOverlay} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }} />
+          <nav ref={mobileNavRef} tabIndex={-1} className={styles.mobileNav} aria-label="Mobile navigation" role="dialog" aria-modal="true">
+            <Link href="/" className={styles.navLink} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               🏠 Home
             </Link>
-            <Link href="/browse" className={`${styles.navLink} ${isActive('/browse') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+            <Link href="/browse" className={`${styles.navLink} ${isActive('/browse') ? styles.navLinkActive : ''}`} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               🔍 Browse
             </Link>
-            <Link href="/watchlist" className={`${styles.navLink} ${isActive('/watchlist') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+            <Link href="/watchlist" className={`${styles.navLink} ${isActive('/watchlist') ? styles.navLinkActive : ''}`} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               📋 Watchlist
             </Link>
-            <Link href="/schedule" className={`${styles.navLink} ${isActive('/schedule') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+            <Link href="/schedule" className={`${styles.navLink} ${isActive('/schedule') ? styles.navLinkActive : ''}`} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               📅 Schedule
             </Link>
-            <Link href="/stats" className={`${styles.navLink} ${isActive('/stats') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+            <Link href="/stats" className={`${styles.navLink} ${isActive('/stats') ? styles.navLinkActive : ''}`} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               📊 Stats
             </Link>
-            <Link href="/history" className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`} onClick={() => setShowMobileNav(false)}>
+            <Link href="/history" className={`${styles.navLink} ${isActive('/history') ? styles.navLinkActive : ''}`} onClick={() => { setShowMobileNav(false); mobileNavTriggerRef.current?.focus(); }}>
               🕐 History
             </Link>
             <button
               className={styles.randomBtn}
               onClick={async () => {
                 setShowMobileNav(false);
+                mobileNavTriggerRef.current?.focus();
                 try {
                   const res = await fetch('/api/random');
                   const data = await res.json();
