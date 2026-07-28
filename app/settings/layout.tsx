@@ -52,6 +52,12 @@ export default function SettingsLayout({
               📺 Anime Settings
             </Link>
             <Link 
+              href="/settings/appearance" 
+              className={`${styles.navLink} ${isActive('/settings/appearance') ? styles.activeLink : ''}`}
+            >
+              🎨 Appearance
+            </Link>
+            <Link 
               href="/settings/playback" 
               className={`${styles.navLink} ${isActive('/settings/playback') ? styles.activeLink : ''}`}
             >
@@ -63,12 +69,6 @@ export default function SettingsLayout({
             >
               📥 Import List
             </Link>
-            <button 
-              className={`${styles.navLink} ${styles.navBtn}`}
-              onClick={() => alert('Device management is synced automatically with your active session.')}
-            >
-              🖥️ Devices
-            </button>
             <button 
               className={`${styles.navLink} ${styles.signOutBtn}`}
               onClick={handleSignOut}

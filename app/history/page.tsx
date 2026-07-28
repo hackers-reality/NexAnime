@@ -42,6 +42,20 @@ function timeAgo(dateStr: string): string {
 export default function WatchHistoryPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
+
+  const handleClearHistory = async () => {
+    if (!window.confirm('Are you sure you want to clear all watch history? This cannot be undone.')) return;
+    setClearing(true);
+    try {
+      const res = await fetch('/api/progress/history', { method: 'DELETE' });
+      if (res.ok) {
+        setHistory([]);
+      }
+    } finally {
+      setClearing(false);
+    }
+  };
 
   useEffect(() => {
     // Try history endpoint first, fallback to continue-watching
@@ -67,8 +81,21 @@ export default function WatchHistoryPage() {
     <div className={styles.container}>
       <Header />
       <div className={styles.page}>
-        <h1 className={styles.title}>Watch History</h1>
-        <p className={styles.subtitle}>Recently watched episodes</p>
+        <div className={styles.headerRow}>
+          <div>
+            <h1 className={styles.title}>Watch History</h1>
+            <p className={styles.subtitle}>Recently watched episodes</p>
+          </div>
+          {history.length > 0 && (
+            <button
+              className={styles.clearBtn}
+              onClick={handleClearHistory}
+              disabled={clearing}
+            >
+              {clearing ? 'Clearing...' : '🗑️ Clear History'}
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <div className={styles.loading}>Loading history...</div>

@@ -67,3 +67,14 @@ export async function GET() {
     return NextResponse.json({ progress: [] });
   }
 }
+
+export async function DELETE() {
+  try {
+    const db = getDb();
+    await db.execute('DELETE FROM watch_progress');
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Failed to clear watch history:', err);
+    return NextResponse.json({ error: 'Failed to clear history' }, { status: 500 });
+  }
+}

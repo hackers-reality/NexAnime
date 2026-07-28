@@ -276,6 +276,73 @@
   margin-bottom: var(--space-2);
 }
 
+.episodeFilterBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.episodeSearchInput {
+  flex: 1;
+  min-width: 160px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  outline: none;
+  transition: border-color var(--transition-normal);
+}
+
+.episodeSearchInput:focus {
+  border-color: var(--accent);
+}
+
+.episodeFilterButtons {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.episodeFilterBtn {
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  white-space: nowrap;
+}
+
+.episodeFilterBtn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.episodeFilterActive {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+@media (max-width: 600px) {
+  .episodeFilterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .episodeSearchInput {
+    min-width: 0;
+  }
+  .episodeFilterButtons {
+    justify-content: center;
+  }
+}
+
 .episodesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

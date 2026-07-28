@@ -97,7 +97,7 @@ export default function AccountSettingsPage() {
     try {
       const res = await fetch('/api/profile', { method: 'DELETE' });
       if (res.ok) {
-        toast('Profile saved successfully.', 'success');
+        toast('Data reset successfully.', 'success');
         window.location.href = '/onboarding';
       } else {
         toast('Failed to reset data.', 'error');

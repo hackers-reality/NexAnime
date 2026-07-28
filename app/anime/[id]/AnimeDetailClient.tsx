@@ -37,6 +37,8 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
   const [episodesLoading, setEpisodesLoading] = useState(true);
   const [watchProgress, setWatchProgress] = useState<Record<number, { secondsWatched: number; durationSeconds: number }>>({});
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [episodeSearch, setEpisodeSearch] = useState('');
+  const [episodeFilter, setEpisodeFilter] = useState<'all' | 'unwatched' | 'filler' | 'recap'>('all');
 
   useEffect(() => {
     if (!media.idMal && !media.id) return;
@@ -399,6 +401,37 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     })()}
                   </h3>
                 </div>
+                {!episodesLoading && (() => {
+                  const isNotYetReleased = media.status === 'NOT_YET_RELEASED';
+                  const actualEpisodes = reanimeEpisodes.length || jikanEpisodes.length || media.streamingEpisodes?.length || 0;
+                  const ec = isNotYetReleased ? 0 : (actualEpisodes || media.episodes || media.lastEpisode || (media.nextAiringEpisode ? media.nextAiringEpisode.episode - 1 : 0) || 0);
+                  if (ec <= 15) return null;
+                  return (
+                    <div className={styles.episodeFilterBar}>
+                      <input
+                        type="text"
+                        placeholder="Search episodes..."
+                        value={episodeSearch}
+                        onChange={(e) => setEpisodeSearch(e.target.value)}
+                        className={styles.episodeSearchInput}
+                        aria-label="Search episodes"
+                      />
+                      <div className={styles.episodeFilterButtons} role="radiogroup" aria-label="Filter episodes">
+                        {(['all', 'unwatched', 'filler', 'recap'] as const).map((f) => (
+                          <button
+                            key={f}
+                            onClick={() => setEpisodeFilter(f)}
+                            className={`${styles.episodeFilterBtn} ${episodeFilter === f ? styles.episodeFilterActive : ''}`}
+                            role="radio"
+                            aria-checked={episodeFilter === f}
+                          >
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 
                 {episodesLoading ? (
                   <div className={styles.episodesGrid}>
@@ -421,42 +454,60 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                     if (epCount === 0 && !media.streamingEpisodes?.length) {
                       return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>{isNotYetReleased ? 'This anime has not been released yet. No episodes available.' : 'No episode data available yet.'}</p>;
                     }
-                    return Array.from({ length: epCount || media.streamingEpisodes?.length || 0 }, (_, i) => {
-                    const epNum = i + 1;
-                    const streamingEp = media.streamingEpisodes?.find((ep) => {
-                      const match = ep.title?.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
-                      return match && parseInt(match[1]) === epNum;
-                    });
-                    const reanimeEp = reanimeEpisodes.find((e) => e.episode_number === epNum);
-                    const jikanEp = jikanEpisodes.find((e) => e.mal_id === epNum);
-                    // Helper: ignore reanime "Episode N" generic titles — they're not real titles
                     const isGenericTitle = (t: string | null | undefined) =>
                       !t || /^episode\s*\d+$/i.test(t.trim());
-                    const epTitle =
-                      (!isGenericTitle(reanimeEp?.title) ? reanimeEp?.title : null) ||
-                      (jikanEp?.title_english && jikanEp.title_english.trim()) ||
-                      (jikanEp?.title && jikanEp.title.trim()) ||
-                      (streamingEp?.title
-                        ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
-                        : null) ||
-                      `Episode ${epNum}`;
-                    const epThumb =
-                      reanimeEp?.thumbnail ||
-                      jikanEp?.images?.jpg?.large_image_url ||
-                      streamingEp?.thumbnail ||
-                      media.bannerImage ||
-                      media.coverImage?.large ||
-                      '';
-                    const progress = watchProgress[epNum];
-                    const hasProgress = progress && progress.durationSeconds > 0;
-                    const pct = hasProgress ? Math.min(progress.secondsWatched / progress.durationSeconds, 1) : 0;
-                    const isWatched = pct >= 0.9;
-                    // Strip HTML from synopsis
-                    const epSynopsis = jikanEp?.synopsis
-                      ? jikanEp.synopsis.replace(/<[^>]*>/g, '').trim()
-                      : null;
 
-                    return (
+                    const allEps = Array.from({ length: epCount || media.streamingEpisodes?.length || 0 }, (_, i) => {
+                      const epNum = i + 1;
+                      const streamingEp = media.streamingEpisodes?.find((ep) => {
+                        const match = ep.title?.match(/(?:Episode|Ep|Chapter)\s*(\d+)/i);
+                        return match && parseInt(match[1]) === epNum;
+                      });
+                      const reanimeEp = reanimeEpisodes.find((e) => e.episode_number === epNum);
+                      const jikanEp = jikanEpisodes.find((e) => e.mal_id === epNum);
+                      const epTitle =
+                        (!isGenericTitle(reanimeEp?.title) ? reanimeEp?.title : null) ||
+                        (jikanEp?.title_english && jikanEp.title_english.trim()) ||
+                        (jikanEp?.title && jikanEp.title.trim()) ||
+                        (streamingEp?.title
+                          ? (streamingEp.title.replace(/^(?:Episode|Ep|Chapter)\s*\d+[:\s\-–]*/i, '').trim() || `Episode ${epNum}`)
+                          : null) ||
+                        `Episode ${epNum}`;
+                      const epThumb =
+                        reanimeEp?.thumbnail ||
+                        jikanEp?.images?.jpg?.large_image_url ||
+                        streamingEp?.thumbnail ||
+                        media.bannerImage ||
+                        media.coverImage?.large ||
+                        '';
+                      const progress = watchProgress[epNum];
+                      const hasProgress = progress && progress.durationSeconds > 0;
+                      const pct = hasProgress ? Math.min(progress.secondsWatched / progress.durationSeconds, 1) : 0;
+                      const isWatched = pct >= 0.9;
+                      const epSynopsis = jikanEp?.synopsis
+                        ? jikanEp.synopsis.replace(/<[^>]*>/g, '').trim()
+                        : null;
+                      return { epNum, epTitle, epThumb, epSynopsis, hasProgress, pct, isWatched, jikanEp };
+                    });
+
+                    const filtered = allEps.filter((ep) => {
+                      if (episodeFilter === 'unwatched' && ep.isWatched) return false;
+                      if (episodeFilter === 'filler' && !ep.jikanEp?.filler) return false;
+                      if (episodeFilter === 'recap' && !ep.jikanEp?.recap) return false;
+                      if (episodeSearch) {
+                        const q = episodeSearch.toLowerCase();
+                        const matchNum = String(ep.epNum).includes(q);
+                        const matchTitle = ep.epTitle.toLowerCase().includes(q);
+                        if (!matchNum && !matchTitle) return false;
+                      }
+                      return true;
+                    });
+
+                    if (filtered.length === 0) {
+                      return <p style={{ color: 'var(--text-muted)', padding: '16px 0' }}>No episodes match your search.</p>;
+                    }
+
+                    return filtered.map(({ epNum, epTitle, epThumb, epSynopsis, hasProgress, pct, isWatched, jikanEp }) => (
                       <Link
                         key={epNum}
                         href={`/watch/${media.id}/${epNum}`}
@@ -484,9 +535,6 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           {epSynopsis && (
                             <div className={styles.epSynopsis}>{epSynopsis}</div>
                           )}
-                          {formatAirDate(jikanEp?.aired ?? null) && (
-                            <div className={styles.epAirDate}>Aired: {formatAirDate(jikanEp?.aired ?? null)}</div>
-                          )}
                           {hasProgress && (
                             <>
                               <div className={styles.epStatusText + ' ' + (isWatched ? styles.watchedText : styles.resumeText)}>
@@ -499,8 +547,7 @@ function AnimeDetailClientInner({ media }: AnimeDetailClientProps) {
                           )}
                         </div>
                       </Link>
-                    );
-                  });
+                    ));
                   })()}
                 </div>
                 )}
