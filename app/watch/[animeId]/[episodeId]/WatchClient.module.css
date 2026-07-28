@@ -1012,13 +1012,13 @@
   display: none;
   align-items: center;
   gap: 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  padding: 10px 16px;
-  border-radius: 8px;
+  background: var(--primary);
+  border: none;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   width: 100%;
   justify-content: center;
@@ -1026,7 +1026,7 @@
 }
 
 .mobileEpToggle:hover {
-  background: var(--bg-surface-hover);
+  background: var(--primary-dark);
 }
 
 .mobileEpToggle svg {
@@ -1038,11 +1038,17 @@
 @media (max-width: 1023px) {
   .container {
     padding: 12px;
+    padding-bottom: 72px;
     gap: 16px;
   }
 
   .mobileEpToggle {
     display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 900;
+    border-radius: 10px;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
   }
 
   .rightRail {
@@ -1055,11 +1061,12 @@
     top: 0;
     right: 0;
     bottom: 0;
-    width: min(380px, 90vw);
+    width: min(420px, 92vw);
     background: var(--bg-base);
     z-index: 1000;
     padding: 16px;
     overflow-y: auto;
+    scrollbar-width: thin;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
     animation: slideInRight 0.25s ease-out;
   }

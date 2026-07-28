@@ -5,7 +5,6 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UpdateBanner from '@/components/shared/UpdateBanner';
 import ShortcutsOverlay from '@/components/shared/ShortcutsOverlay';
-import ScrollToTop from '@/components/ui/ScrollToTop';
 import BackToTop from '@/components/shared/BackToTop';
 import ServiceWorkerRegistration from '@/components/ui/ServiceWorkerRegistration';
 import { ToastProvider } from '@/components/ui/Toast';
@@ -102,7 +101,6 @@ export default async function RootLayout({
           {children}
           <UpdateBanner />
           <ShortcutsOverlay />
-          <ScrollToTop />
           <BackToTop />
           <ServiceWorkerRegistration />
         </ToastProvider>

@@ -491,8 +491,11 @@ export default function VideoPlayer({
       const cy = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
       const dx = cx - dragRef.current.startX;
       const dy = cy - dragRef.current.startY;
-      const newX = Math.max(0, Math.min(window.innerWidth - 340, dragRef.current.startPosX - dx));
-      const newY = Math.max(0, Math.min(window.innerHeight - 191, dragRef.current.startPosY - dy));
+      const el = containerRef.current;
+      const w = el ? el.offsetWidth : 340;
+      const h = el ? el.offsetHeight : 191;
+      const newX = Math.max(0, Math.min(window.innerWidth - w, dragRef.current.startPosX + dx));
+      const newY = Math.max(0, Math.min(window.innerHeight - h, dragRef.current.startPosY + dy));
       setMiniPos({ x: newX, y: newY });
     };
 
@@ -510,6 +513,8 @@ export default function VideoPlayer({
     document.addEventListener('touchend', onEnd);
   };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 600;
+
   // ── Render ─────────────────────────────────────────
   return (
     <div
@@ -517,9 +522,13 @@ export default function VideoPlayer({
       className={`${styles.playerContainer} ${isMini && !dismissedMini ? styles.miniPlayer : ''}`}
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => { if (videoRef.current && !videoRef.current.paused) setShowControls(false); }}
-      style={isMini && !dismissedMini ? { bottom: miniPos.y, right: 'auto', left: miniPos.x, cursor: 'grab' } : undefined}
-      onMouseDown={isMini ? handleDragStart : undefined}
-      onTouchStart={isMini ? handleDragStart : undefined}
+      style={isMini && !dismissedMini
+        ? isMobile
+          ? { bottom: miniPos.y }
+          : { bottom: miniPos.y, right: 'auto', left: miniPos.x, cursor: 'grab' }
+        : undefined}
+      onMouseDown={isMini && !isMobile ? handleDragStart : undefined}
+      onTouchStart={isMini && !isMobile ? handleDragStart : undefined}
     >
       {/* Ambient glow */}
       {showAmbient && ambientColor && (

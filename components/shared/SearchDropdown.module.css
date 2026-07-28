@@ -139,3 +139,27 @@
 .viewAll:hover {
   background-color: var(--bg-surface-hover);
 }
+
+@media (max-width: 600px) {
+  .dropdown {
+    position: fixed;
+    top: 56px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 60vh;
+  }
+
+  .item {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .thumb {
+    width: 32px;
+    height: 44px;
+  }
+
+  .title {
+    font-size: 13px;
+  }
+}

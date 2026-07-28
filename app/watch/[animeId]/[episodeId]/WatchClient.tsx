@@ -173,11 +173,8 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
     // Auto-track progress on page visit (works for embed sources too)
     const trackProgress = () => {
-      fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ anilistId: media.id, episodeNumber, secondsWatched: 0, durationSeconds: 0 }),
-      }).catch(() => {});
+      // Only auto-add to watchlist — do NOT send secondsWatched: 0 here
+      // because it overwrites the real progress saved by VideoPlayer every 10s
 
       // Also auto-add to watchlist with "watching" status if not already
       fetch(`/api/watchlist?anilistId=${media.id}`)
@@ -225,16 +222,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
     trackProgress();
 
-    // Periodically update progress while on page (every 30s)
-    const interval = setInterval(() => {
-      fetch('/api/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ anilistId: media.id, episodeNumber, secondsWatched: 0, durationSeconds: 0 }),
-      }).catch(() => {});
-    }, 30000);
-
-    return () => clearInterval(interval);
+    // VideoPlayer handles saving real progress every 10s — no need for a polling interval here
   }, [media.id, episodeNumber, media.title?.english, media.title?.romaji]);
 
   const fetchWatchlistStatus = async () => {
@@ -748,6 +736,14 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
               aria-label={sortOrder === 'asc' ? "Sort descending" : "Sort ascending"}
             >
               {sortOrder === 'asc' ? '↓' : '↑'}
+            </button>
+            <button
+              className={styles.iconBtn}
+              onClick={() => setShowEpisodeList(false)}
+              aria-label="Close episode list"
+              style={{ fontSize: 18 }}
+            >
+              ✕
             </button>
           </div>
         </div>
