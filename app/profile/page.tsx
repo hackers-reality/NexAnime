@@ -61,10 +61,17 @@ export default async function ProfilePage() {
   const totalResult = await queryOne<{ total_count: number }>(
     'SELECT COUNT(*) as total_count FROM watchlist'
   );
+  const episodesResult = await queryOne<{ total_episodes: number }>(
+    'SELECT COUNT(*) as total_episodes FROM watch_progress WHERE seconds_watched > 0 AND duration_seconds > 0 AND CAST(seconds_watched AS REAL) / CAST(duration_seconds AS REAL) >= 0.9'
+  );
 
-  const minutesWatched = Math.floor(minutesResult?.total_minutes || 0);
+  const rawMinutes = Math.floor(minutesResult?.total_minutes || 0);
+  const hours = Math.floor(rawMinutes / 60);
+  const mins = rawMinutes % 60;
+  const minutesWatched = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   const finishedAnime = finishedResult?.finished_count || 0;
   const totalAnime = totalResult?.total_count || 0;
+  const episodesWatched = episodesResult?.total_episodes || 0;
 
   // 4. History (last watched items)
   const history = await query<WatchHistoryItem>(`
@@ -114,16 +121,24 @@ export default async function ProfilePage() {
         <section className={styles.statsGrid}>
           <div className={styles.statCard}>
             <span className={styles.statNumber}>{minutesWatched}</span>
-            <span className={styles.statLabel}>Minutes Watched</span>
+            <span className={styles.statLabel}>Time Watched</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statNumber}>{finishedAnime}</span>
-            <span className={styles.statLabel}>Completed Anime</span>
+            <span className={styles.statLabel}>Completed</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statNumber}>{episodesWatched}</span>
+            <span className={styles.statLabel}>Episodes</span>
           </div>
           <div className={styles.statCard}>
             <span className={styles.statNumber}>{totalAnime}</span>
-            <span className={styles.statLabel}>Total Anime</span>
+            <span className={styles.statLabel}>In Watchlist</span>
           </div>
+          <Link href="/stats" className={`${styles.statCard} ${styles.statCardLink}`}>
+            <span className={styles.statNumber} style={{ fontSize: '20px' }}>📊</span>
+            <span className={styles.statLabel}>Full Stats</span>
+          </Link>
         </section>
 
         <div className={styles.contentGrid}>

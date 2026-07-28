@@ -256,17 +256,19 @@ export async function getHomeData(): Promise<HomePayload> {
         flat.push(...arr);
       }
       const nowSec = Math.floor(Date.now() / 1000);
-      const seenMal = new Set<number>();
+      const seenMal = new Set<string>();
       recentlyUpdated = flat
         .filter((ep) => {
           const info = ep?.anime_info;
           if (!info) return false;
           const malId = info.mal_id;
-          if (!malId || seenMal.has(malId)) return false;
+          if (!malId) return false;
+          const malKey = String(malId);
+          if (seenMal.has(malKey)) return false;
           // Exclude not-yet-aired anime — they shouldn't appear under "recently updated" until they actually air
           const status = String(info.Status || '').toLowerCase();
           if (status.includes('not yet') || status.includes('upcoming')) return false;
-          seenMal.add(malId);
+          seenMal.add(malKey);
           return true;
         })
         .slice(0, 10)
@@ -299,12 +301,32 @@ export async function getHomeData(): Promise<HomePayload> {
     recentlyUpdated = schedule.slice(0, 12);
   }
 
+  // Step 3c: Last resort — use AniList's own airing schedule
+  if (recentlyUpdated.length === 0) {
+    try {
+      const anilistRecent = await getRecentlyUpdated(1, 15);
+      if (anilistRecent?.length) {
+        recentlyUpdated = anilistRecent.slice(0, 12);
+      }
+    } catch {}
+  }
+
   // Step 4: Fill schedule from AniList only if reanime.to failed
   if (schedule.length === 0) {
     try {
       const anilistSchedule = await getAnilistSchedule(now - 12 * 3600, now + sevenDaysSec, 1, 50);
       if (anilistSchedule?.length) schedule = anilistSchedule;
     } catch {}
+  }
+
+  // Step 5: Final dedup of recentlyUpdated by mediaId
+  {
+    const seen = new Set<number>();
+    recentlyUpdated = recentlyUpdated.filter((item) => {
+      if (seen.has(item.mediaId)) return false;
+      seen.add(item.mediaId);
+      return true;
+    });
   }
 
   return { trending, thisSeason, upcoming, recentlyUpdated, schedule };

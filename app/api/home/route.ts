@@ -95,7 +95,9 @@ export async function GET() {
       }, []),
     };
 
-    homeCache = { data: payload, expiry: Date.now() + HOME_CACHE_TTL };
+    if (payload.recentlyUpdated.length > 0) {
+      homeCache = { data: payload, expiry: Date.now() + HOME_CACHE_TTL };
+    }
     return NextResponse.json(payload);
   } catch (err) {
     console.error('[Home] Batch load error:', err);

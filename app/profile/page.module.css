@@ -140,6 +140,23 @@
   text-align: center;
 }
 
+.statCardLink {
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.statCardLink:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+@media (min-width: 601px) {
+  .statsGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 /* Content Split Grid */
 .contentGrid {
   display: grid;
