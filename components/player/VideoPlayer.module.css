@@ -448,8 +448,8 @@
 /* ── Mobile ─────────────────────────────── */
 @media (max-width: 600px) {
   .miniPlayer {
-    width: calc(100vw - 32px);
-    max-width: 340px;
+    width: 240px;
+    max-width: calc(100vw - 32px);
     height: auto;
     aspect-ratio: 16 / 9;
     bottom: calc(16px + var(--safe-area-bottom, 0px));
@@ -458,11 +458,11 @@
   }
 
   .closeMiniBtn {
-    width: 32px;
-    height: 32px;
-    top: -8px;
-    right: -8px;
-    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    top: -6px;
+    right: -6px;
+    font-size: 12px;
   }
 
   .ctrlBtn {

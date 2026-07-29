@@ -87,3 +87,26 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+@media (max-width: 600px) {
+  .card {
+    width: 200px;
+  }
+
+  .info {
+    padding: var(--space-1) var(--space-2) var(--space-2);
+  }
+
+  .title {
+    font-size: 11px;
+  }
+
+  .subtitle {
+    font-size: 10px;
+  }
+
+  .durationBadge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+}

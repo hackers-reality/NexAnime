@@ -70,6 +70,7 @@ export default function VideoPlayer({
   const [doubleTapSide, setDoubleTapSide] = useState<'left' | 'right' | null>(null);
   const [doubleTapAmount, setDoubleTapAmount] = useState(0);
   const [miniPos, setMiniPos] = useState({ x: 24, y: 24 });
+  const [hasDragged, setHasDragged] = useState(false);
   const dragRef = useRef<{ dragging: boolean; startX: number; startY: number; startPosX: number; startPosY: number }>({ dragging: false, startX: 0, startY: 0, startPosX: 0, startPosY: 0 });
   const autoPlayRef = useRef(true);
   const lastTapRef = useRef<{ time: number; x: number } | null>(null);
@@ -481,9 +482,17 @@ export default function VideoPlayer({
   const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isMini) return;
     e.preventDefault();
+    e.stopPropagation();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    dragRef.current = { dragging: true, startX: clientX, startY: clientY, startPosX: miniPos.x, startPosY: miniPos.y };
+    const el = containerRef.current;
+    const w = el ? el.offsetWidth : 300;
+    const h = el ? el.offsetHeight : 170;
+    const rect = el?.getBoundingClientRect();
+    const startPosX = rect ? rect.left : (window.innerWidth - 24 - w);
+    const startPosY = rect ? window.innerHeight - rect.bottom : 24;
+    dragRef.current = { dragging: true, startX: clientX, startY: clientY, startPosX, startPosY };
+    setHasDragged(true);
 
     const onMove = (ev: MouseEvent | TouchEvent) => {
       if (!dragRef.current.dragging) return;
@@ -491,12 +500,9 @@ export default function VideoPlayer({
       const cy = 'touches' in ev ? ev.touches[0].clientY : ev.clientY;
       const dx = cx - dragRef.current.startX;
       const dy = cy - dragRef.current.startY;
-      const el = containerRef.current;
-      const w = el ? el.offsetWidth : 340;
-      const h = el ? el.offsetHeight : 191;
-      const newX = Math.max(0, Math.min(window.innerWidth - w, dragRef.current.startPosX + dx));
-      const newY = Math.max(0, Math.min(window.innerHeight - h, dragRef.current.startPosY + dy));
-      setMiniPos({ x: newX, y: newY });
+      const newRight = Math.max(0, Math.min(window.innerWidth - w, dragRef.current.startPosX - dx));
+      const newBottom = Math.max(0, Math.min(window.innerHeight - h, dragRef.current.startPosY + dy));
+      setMiniPos({ x: newRight, y: newBottom });
     };
 
     const onEnd = () => {
@@ -513,8 +519,6 @@ export default function VideoPlayer({
     document.addEventListener('touchend', onEnd);
   };
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 600;
-
   // ── Render ─────────────────────────────────────────
   return (
     <div
@@ -522,13 +526,11 @@ export default function VideoPlayer({
       className={`${styles.playerContainer} ${isMini && !dismissedMini ? styles.miniPlayer : ''}`}
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => { if (videoRef.current && !videoRef.current.paused) setShowControls(false); }}
-      style={isMini && !dismissedMini
-        ? isMobile
-          ? { bottom: miniPos.y }
-          : { bottom: miniPos.y, right: 'auto', left: miniPos.x, cursor: 'grab' }
+      style={isMini && !dismissedMini && hasDragged
+        ? { bottom: miniPos.y, right: miniPos.x, left: 'auto', cursor: 'grab' }
         : undefined}
-      onMouseDown={isMini && !isMobile ? handleDragStart : undefined}
-      onTouchStart={isMini && !isMobile ? handleDragStart : undefined}
+      onMouseDown={isMini ? handleDragStart : undefined}
+      onTouchStart={isMini ? handleDragStart : undefined}
     >
       {/* Ambient glow */}
       {showAmbient && ambientColor && (

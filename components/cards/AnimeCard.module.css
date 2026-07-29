@@ -122,3 +122,28 @@
   border-radius: 50%;
   background-color: var(--text-muted);
 }
+
+@media (max-width: 600px) {
+  .info {
+    padding: var(--space-1) var(--space-2) var(--space-2);
+  }
+
+  .title {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .meta {
+    font-size: 10px;
+  }
+
+  .scoreBadge {
+    font-size: 9px;
+    padding: 1px 5px;
+  }
+
+  .statusIndicator {
+    font-size: 8px;
+    padding: 1px 5px;
+  }
+}

@@ -132,16 +132,27 @@
   scroll-snap-align: start;
 }
 
+@media (max-width: 600px) {
+  .cardWrapper {
+    width: 120px;
+  }
+
+  .horizontalScroll {
+    gap: 10px;
+  }
+}
+
 /* Home page card grid — replaces horizontal scroll on home */
 .homeCardGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
 }
 
 @media (min-width: 768px) {
   .homeCardGrid {
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
   }
 }
 
