@@ -37,9 +37,11 @@ export const metadata: Metadata = {
     images: [`${process.env.NEXT_PUBLIC_SITE_URL || 'https://anime.hackers-reality.com'}/og-image.png`],
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    apple: '/logo.svg',
   },
 };
 
