@@ -310,15 +310,17 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
 
   // Priority: lastEpisode (reanime, actual aired) > nextEpisode-1 (airing) > media.episodes (finished) > 0
   // Then: use fetched episode list count if it's higher (reanime API can be stale for long-running shows)
+  // Safety: only boost if fetched count is within +3 of server count to avoid showing unaired episodes
   const serverTotalEpisodes = isNotYetReleased
     ? 0
     : (media.lastEpisode
         || (isReleasing && nextEpisode ? nextEpisode - 1 : null)
         || media.episodes
         || 0);
-  const totalEpisodes = fetchedTotalEpisodes && fetchedTotalEpisodes > serverTotalEpisodes
-    ? fetchedTotalEpisodes
-    : serverTotalEpisodes;
+  const canBoostFromFetch = fetchedTotalEpisodes
+    && fetchedTotalEpisodes > serverTotalEpisodes
+    && (serverTotalEpisodes === 0 || fetchedTotalEpisodes <= serverTotalEpisodes + 3);
+  const totalEpisodes = canBoostFromFetch ? fetchedTotalEpisodes : serverTotalEpisodes;
   const hasNextEp = totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes;
 
   const [showAutoAdvance, setShowAutoAdvance] = useState(false);
