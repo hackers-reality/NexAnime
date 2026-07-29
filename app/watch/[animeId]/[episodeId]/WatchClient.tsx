@@ -129,6 +129,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [videoQuality, setVideoQuality] = useState('auto');
   const [jikanEpisodes, setJikanEpisodes] = useState<JikanEpisode[]>([]);
   const [reanimeEpisodes, setReanimeEpisodes] = useState<Array<{ episode_number: number; title: string | null; thumbnail: string | null }>>([]);
+  const [fetchedTotalEpisodes, setFetchedTotalEpisodes] = useState<number | null>(null);
   const [showEpisodeList, setShowEpisodeList] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [theatreMode, setTheatreMode] = useState(false);
@@ -141,8 +142,16 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
     fetch(`/api/meta?action=episodes&id=${media.id}${media.idMal ? `&malId=${media.idMal}` : ''}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(d => {
-        if (d.episodes?.length) setReanimeEpisodes(d.episodes);
-        if (d.jikanEpisodes?.length) setJikanEpisodes(d.jikanEpisodes);
+        if (d.episodes?.length) {
+          setReanimeEpisodes(d.episodes);
+          const maxEp = Math.max(...d.episodes.map((e: { episode_number: number }) => e.episode_number));
+          if (maxEp > 0) setFetchedTotalEpisodes(maxEp);
+        }
+        if (d.jikanEpisodes?.length) {
+          setJikanEpisodes(d.jikanEpisodes);
+          const maxJikan = Math.max(...d.jikanEpisodes.map((e: { mal_id: number }) => e.mal_id));
+          if (maxJikan > 0) setFetchedTotalEpisodes(prev => Math.max(prev || 0, maxJikan));
+        }
       })
       .catch(() => {});
   }, [media.idMal, media.id]);
@@ -300,12 +309,16 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const isReleasing = media.status === 'RELEASING' || !!nextEpisode;
 
   // Priority: lastEpisode (reanime, actual aired) > nextEpisode-1 (airing) > media.episodes (finished) > 0
-  const totalEpisodes = isNotYetReleased
+  // Then: use fetched episode list count if it's higher (reanime API can be stale for long-running shows)
+  const serverTotalEpisodes = isNotYetReleased
     ? 0
     : (media.lastEpisode
         || (isReleasing && nextEpisode ? nextEpisode - 1 : null)
         || media.episodes
         || 0);
+  const totalEpisodes = fetchedTotalEpisodes && fetchedTotalEpisodes > serverTotalEpisodes
+    ? fetchedTotalEpisodes
+    : serverTotalEpisodes;
   const hasNextEp = totalEpisodes > 0 && episodeNumber + 1 <= totalEpisodes;
 
   const [showAutoAdvance, setShowAutoAdvance] = useState(false);
