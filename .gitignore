@@ -27,6 +27,10 @@
 # database
 nexanime.db
 
+# generated CLI scripts (created by install scripts)
+nexanime.cmd
+nexanime
+
 # debug
 npm-debug.log*
 yarn-debug.log*
