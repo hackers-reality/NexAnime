@@ -2,6 +2,9 @@
   "name": "nexanime",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "nexanime": "./bin/nexanime.js"
+  },
   "scripts": {
     "dev": "next dev",
     "dev:host": "next dev -H 0.0.0.0",
