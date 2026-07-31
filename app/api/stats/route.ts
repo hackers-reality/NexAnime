@@ -5,13 +5,12 @@ export async function GET() {
   try {
     const db = getDb();
 
-    const [watchlistResult, progressResult, formatResult] = await Promise.all([
+    const [watchlistResult, progressResult, episodesResult, formatResult] = await Promise.all([
       db.execute(`
         SELECT 
           list_status,
           COUNT(*) as count,
           AVG(score) as avg_score,
-          SUM(episode_watched) as total_episodes_watched,
           SUM(total_rewatches) as total_rewatches
         FROM watchlist
         WHERE list_status IS NOT NULL
@@ -23,6 +22,11 @@ export async function GET() {
           SUM(seconds_watched) as total_seconds,
           COUNT(*) as total_entries
         FROM watch_progress
+      `),
+      db.execute(`
+        SELECT COUNT(DISTINCT anilist_id || '-' || episode_number) as total_episodes_watched
+        FROM watch_progress
+        WHERE seconds_watched > 0
       `),
       db.execute(`
         SELECT 
@@ -63,13 +67,11 @@ export async function GET() {
     const statusBreakdown: Record<string, number> = {};
     let totalScore = 0;
     let scoreCount = 0;
-    let totalEpisodesWatched = 0;
     let totalRewatches = 0;
 
     for (const row of watchlistResult.rows) {
       const status = row.list_status as string;
       statusBreakdown[status] = Number(row.count) || 0;
-      totalEpisodesWatched += Number(row.total_episodes_watched) || 0;
       totalRewatches += Number(row.total_rewatches) || 0;
       if (row.avg_score && Number(row.avg_score) > 0) {
         totalScore += Number(row.avg_score) * Number(row.count);
@@ -81,6 +83,8 @@ export async function GET() {
     const uniqueAnime = Number(progressRow?.unique_anime) || 0;
     const totalSeconds = Number(progressRow?.total_seconds) || 0;
     const totalHours = Math.round(totalSeconds / 3600);
+
+    const totalEpisodesWatched = Number(episodesResult.rows[0]?.total_episodes_watched) || 0;
 
     const formatBreakdown: Record<string, number> = {};
     for (const row of formatResult.rows) {

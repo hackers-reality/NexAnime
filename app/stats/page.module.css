@@ -206,35 +206,68 @@
 .activityChart {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  height: 120px;
-  padding: 8px 0;
+  gap: 3px;
+  height: 160px;
+  padding: 12px 0;
   overflow-x: auto;
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
 }
 
 .activityBar {
   flex: 1;
-  min-width: 12px;
+  min-width: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   height: 100%;
-  gap: 4px;
+  gap: 6px;
+  position: relative;
+}
+
+.activityBar:hover .activityBarFill {
+  filter: brightness(1.2);
+}
+
+.activityBar:hover .activityTooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.activityTooltip {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
 }
 
 .activityBarFill {
   width: 100%;
-  max-width: 20px;
-  border-radius: 3px 3px 0 0;
-  background: var(--primary);
-  min-height: 2px;
-  transition: height 0.4s ease;
+  max-width: 16px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--primary) 0%, rgba(59, 130, 246, 0.6) 100%);
+  min-height: 3px;
+  transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s;
 }
 
 .activityDay {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 768px) {

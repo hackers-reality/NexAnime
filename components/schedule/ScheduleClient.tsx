@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import Header from '@/components/shared/Header';
 import type { AniListAiringSchedule } from '@/types';
 import styles from './ScheduleClient.module.css';
 
@@ -93,7 +94,9 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
+      <Header />
+      <main className={styles.main}>
+        <div className={styles.header}>
         <h1 className={styles.title}>Airing Schedule</h1>
         <p className={styles.subtitle}>{totalThisWeek} episodes airing this week</p>
       </div>
@@ -157,6 +160,7 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
           ))
         )}
       </div>
+      </main>
     </div>
   );
 }

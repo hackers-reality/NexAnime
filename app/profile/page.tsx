@@ -62,7 +62,7 @@ export default async function ProfilePage() {
     'SELECT COUNT(*) as total_count FROM watchlist'
   );
   const episodesResult = await queryOne<{ total_episodes: number }>(
-    'SELECT COUNT(*) as total_episodes FROM watch_progress WHERE seconds_watched > 0 AND duration_seconds > 0 AND CAST(seconds_watched AS REAL) / CAST(duration_seconds AS REAL) >= 0.9'
+    'SELECT COUNT(DISTINCT anilist_id || \'-\' || episode_number) as total_episodes FROM watch_progress WHERE seconds_watched > 0'
   );
 
   const rawMinutes = Math.floor(minutesResult?.total_minutes || 0);

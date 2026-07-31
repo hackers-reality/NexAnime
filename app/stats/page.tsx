@@ -191,14 +191,17 @@ export default function StatsPage() {
                   {stats.recentActivity.map(({ day, entries }) => {
                     const maxEntries = Math.max(...stats.recentActivity.map((a) => a.entries));
                     const pct = maxEntries > 0 ? Math.round((entries / maxEntries) * 100) : 0;
+                    const date = new Date(day);
+                    const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     return (
-                      <div key={day} className={styles.activityBar} title={`${day}: ${entries} entries`}>
+                      <div key={day} className={styles.activityBar}>
+                        <div className={styles.activityTooltip}>{label}: {entries} {entries === 1 ? 'entry' : 'entries'}</div>
                         <div
                           className={styles.activityBarFill}
                           style={{ height: `${pct}%` }}
                         />
                         <span className={styles.activityDay}>
-                          {new Date(day).getDate()}
+                          {date.getDate()}
                         </span>
                       </div>
                     );
