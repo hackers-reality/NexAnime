@@ -1,8 +1,6 @@
 @echo off
 echo.
-echo   ╔═══════════════════════════════════════╗
-echo   ║       NexAnime Installer              ║
-echo   ╚═══════════════════════════════════════╝
+echo   ================= NexAnime Installer =================
 echo.
 
 cd /d "%~dp0"
@@ -56,44 +54,27 @@ echo   [3/4] Creating nexanime command...
 echo.
 echo   [4/4] Adding NexAnime to your PATH...
 
-:: Add project directory to user PATH permanently
+:: Use PowerShell to safely update user PATH (avoids registry parsing issues)
 set "NEXANIME_DIR=%~dp0"
 set "NEXANIME_DIR=%NEXANIME_DIR:~0,-1%"
 
-:: Check if already in PATH
-echo %PATH% | findstr /i /c:"%NEXANIME_DIR%" >nul 2>&1
-if %errorlevel% equ 0 (
-    echo   NexAnime is already in your PATH.
-) else (
-    :: Get current user PATH
-    for /f "tokens=2*" %%a in ('reg query "HKCU\Environment" /v Path 2^>nul') do set "USER_PATH=%%b"
-
-    :: Append NexAnime dir
-    if defined USER_PATH (
-        set "NEW_PATH=%USER_PATH%;%NEXANIME_DIR%"
-    ) else (
-        set "NEW_PATH=%NEXANIME_DIR%"
-    )
-
-    :: Save to registry
-    reg add "HKCU\Environment" /v Path /t REG_EXPAND_SZ /d "%NEW_PATH%" /f >nul 2>&1
-
-    :: Also update current session
-    setx Path "%NEW_PATH%" >nul 2>&1
-
-    echo   NexAnime added to PATH.
-)
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$currentPath = [Environment]::GetEnvironmentVariable('Path', 'User'); ^
+   if ($currentPath -like '*%NEXANIME_DIR%*') { ^
+     Write-Host '   NexAnime is already in your PATH.' ^
+   } else { ^
+     $newPath = if ($currentPath) { $currentPath + ';%NEXANIME_DIR%' } else { '%NEXANIME_DIR%' }; ^
+     [Environment]::SetEnvironmentVariable('Path', $newPath, 'User'); ^
+     Write-Host '   NexAnime added to PATH.' ^
+   }"
 
 echo.
-echo   ╔═══════════════════════════════════════╗
-echo   ║   Installation Complete!              ║
-echo   ║                                       ║
-echo   ║   Close this window and open a NEW    ║
-echo   ║   terminal, then type:                ║
-echo   ║                                       ║
-echo   ║       nexanime                        ║
-echo   ║                                       ║
-echo   ║   to start NexAnime.                  ║
-echo   ╚═══════════════════════════════════════╝
+echo   ================= Installation Complete =================
+echo.
+echo   Close this window and open a NEW terminal, then type:
+echo.
+echo       nexanime
+echo
+echo   to start NexAnime.
 echo.
 pause

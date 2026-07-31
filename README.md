@@ -1,85 +1,156 @@
-# 🌌 NexAnime — Premium Anime Tracker & Streaming Platform
+# NexAnime
 
 [![Next.js Version](https://img.shields.io/badge/Next.js-16.2.10--turbopack-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
 [![React Version](https://img.shields.io/badge/React-19.2.4-blue?style=for-the-badge&logo=react)](https://react.dev)
 [![Database](https://img.shields.io/badge/SQLite-Libsql-003b57?style=for-the-badge&logo=sqlite)](https://github.com/tursodatabase/libsql)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-NexAnime is a state-of-the-art, high-performance web application designed for anime tracking and streaming. Engineered with Next.js 16 (Turbopack) and SQLite, it offers a visual experience featuring rich dark mode themes, glassmorphic UI panels, micro-animations, and real-time streaming integrations.
-
----
-
-## ✨ Features
-
-### 🎨 Premium UI / UX Design
-* **Modern Aesthetic**: Harmonious glassmorphic cards, Outfit typography, vibrant gradients, and customized scrollbars.
-* **Responsive Layouts**: Designed to adapt across mobile, tablet, and desktop viewports.
-* **Micro-Animations**: Hover animations on posters, cards, and buttons for responsive feedback.
-
-### 📺 Interactive Playback Interface (`/watch/[animeId]/[episodeId]`)
-* **Anime Metadata Panel**: Integrates cover art, average score, airing season, and format with an expandable **Show More/Show Less** synopsis.
-* **Dub/Sub Toggle**: A clean action selector to toggle preferences.
-* **Watchlist Status Badge**: Dynamic color-coded status badge synced with the local database.
-* **Smart Right-Rail Navigation**:
-  - **Episode Filter/Search**: Instant search bar to filter episode lists.
-  - **Sorting Order**: Sort episodes in ascending (`↑`) or descending (`↓`) order.
-  - **Layout View Toggle**: Switch between List View (with thumbnails) and Grid View (square number cards, ideal for long-running series).
-  - **Recommendations Feed**: "More Like This" list matching the current title.
-
-### 📋 Watchlist & Settings Dashboard
-* **Dynamic Watchlist Categories**: All, Planning, Watching, On Hold, Dropped, Finished, and Rewatching panels with count badges.
-* **Settings Tabs**: Account configuration, Playback preferences, Anime listing style, and **AniList watchlist importer** syncing directly to SQLite.
+Self-hosted anime streaming and tracking platform. Browse, watch, track progress, maintain a watchlist, and get notified about new episodes.
 
 ---
 
-## 🛠 Tech Stack
+## Quick Install
 
-* **Framework**: [Next.js 16.2.10](https://nextjs.org/) (App Router, Turbopack)
-* **Frontend Library**: [React 19](https://react.dev/)
-* **Database Layer**: [LibSQL / SQLite Client](https://github.com/tursodatabase/libsql)
-* **Styling**: Vanilla CSS with CSS Modules and CSS variables
-* **Streaming Engine**: HLS.js video player integration
+### Windows
 
----
+Clone the repo, then double-click `install.cmd` (or run it in PowerShell):
 
-## ⚡ Scraper Architecture & Verification
-
-The streaming route `/api/stream/[animeId]/[episodeId]` executes two independent scraper engines (Gogoanime & Animepahe).
-
-### 🔍 Fast-Fail Domain Rotation
-To bypass ISP bans and network timeouts:
-1. **Mirror Rotation**: Iterates sequentially over unblocked mirrors (e.g. `anitaku.pe`, `gogoanime3.co`, `animepahe.pw`).
-2. **Fast-Fail on Timeout**: If the first domain is blocked by your ISP, the request immediately fails-fast (within 3 seconds) and skips to the next mirror, preventing browser thread hangs.
-3. **Local Test Stream**: If all mirror lookups fail or are blocked, the client safely falls back to a verified test stream.
-
-### 🧪 Stream Verification Tool
-A standalone integration test is included to resolve and verify streaming connections directly:
-* **Verify Script**: `verify-onepiece-streams.js` fetches metadata from AniList for *One Piece* (Episode 1 and the latest episode), resolves them using the project's scraping engine, and outputs a static page.
-* **Verification Page**: `verify-onepiece.html` allows you to play the HLS streams directly in your browser.
-
----
-
-## 🚀 Getting Started
-
-### 📦 Installation
-Clone the repository and install the dependencies:
 ```bash
+git clone https://github.com/hackers-reality/NexAnime.git
+cd NexAnime
+install.cmd
+```
+
+Once done, open a **new** terminal and type:
+
+```
+nexanime
+```
+
+### Mac / Linux
+
+```bash
+git clone https://github.com/hackers-reality/NexAnime.git
+cd NexAnime
+chmod +x install.sh
+./install.sh
+```
+
+Open a **new** terminal and type:
+
+```
+nexanime
+```
+
+The `nexanime` command starts the server and opens your browser automatically. On first run it builds the project, which takes a minute.
+
+### Manual Install
+
+```bash
+git clone https://github.com/hackers-reality/NexAnime.git
+cd NexAnime
 npm install
-```
-
-### 🔨 Build and Compile
-Compile the production Next.js bundle:
-```bash
 npm run build
-```
-
-### ▶ Start Application
-Run the local production server:
-```bash
 npm run start
 ```
-The server will boot on `http://localhost:3000`.
+
+Server runs at `http://localhost:3000`.
 
 ---
 
-## 📜 License
-Private repository. Built for personal educational purposes. All data fetched dynamically using the AniList API.
+## Features
+
+### Playback
+- Multi-server streaming with auto-failover (Zoko, MegaPlay, VidStreaming, StreamTape)
+- Dub/Sub toggle with server-specific source switching
+- Auto-skip intro/outro
+- Auto-play next episode
+- Keyboard shortcuts: `T` theatre mode, `E` episode list, `M` mute, `,`/`.` playback speed, `Shift+Left/Right` prev/next episode
+- Mini-player with drag support (persists across pages)
+- Progress tracking — saves watched position, resumes where you left off
+
+### Browse & Discovery
+- Trending tabs (TODAY, THIS WEEK, THIS MONTH) from AniList + reanime
+- Recently Updated with live episode counts
+- Upcoming anime with airing countdown timers
+- Genre quick-links
+- Full-text search with merged results (AniList + reanime)
+- Anime detail pages with characters, staff, relations, recommendations
+
+### Watchlist & Tracking
+- Categories: All, Planning, Watching, On Hold, Dropped, Finished, Rewatching
+- Inline status badges on cards — update without opening modals
+- Progress stats: hours watched, episodes completed
+- Watch history with timestamps
+- AniList watchlist import
+
+### Settings
+- Account: display name, avatar, pronouns, data reset
+- Playback: auto-play, auto-skip, video quality
+- Appearance: Dark / Light / System theme
+- Anime listing style preferences
+
+### Notifications
+- Auto-updates check on startup
+- Real-time anime update notifications from AniList
+- Episode release notifications
+
+### Keyboard Shortcuts
+| Key | Action |
+|-----|--------|
+| `/` | Focus search |
+| `?` | Show shortcuts overlay |
+| `g` then `h/b/w/s` | Go to Home/Browse/Watchlist/Stats |
+| `T` | Toggle theatre mode |
+| `E` | Toggle episode list |
+| `M` | Toggle mute |
+| `,` / `.` | Decrease/increase playback speed |
+| `Shift+Left/Right` | Previous/next episode |
+
+---
+
+## Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
+- **UI**: [React 19](https://react.dev/), CSS Modules, glassmorphic design
+- **Database**: [LibSQL / SQLite](https://github.com/tursodatabase/libsql)
+- **Video**: HLS.js, multi-source embed players
+- **APIs**: AniList GraphQL, reanime.to, Jikan (MAL), HiAnime
+- **PWA**: Service worker, offline support, installable
+
+---
+
+## Project Structure
+
+```
+app/
+  api/          # Route handlers (progress, watchlist, settings, stream, meta, etc.)
+  watch/        # Watch page with player + episode navigation
+  anime/        # Anime detail pages
+  browse/       # Browse/search with filters
+  watchlist/    # Watchlist management
+  stats/        # Viewing statistics
+  settings/     # Account, playback, appearance settings
+  onboarding/   # First-time user setup
+components/
+  cards/        # AnimeCard, ContinueWatchingCard, UpcomingCard, etc.
+  player/       # VideoPlayer (HLS + embed + mini-player)
+  shared/       # Header, SearchDropdown, BackToTop, Toast, etc.
+  watchlist/    # WatchlistStatusBadge
+lib/
+  anilist.ts    # AniList GraphQL client
+  reanime.ts    # reanime.to API
+  hianime-api.ts # HiAnime scraper
+  jikan-api.ts  # Jikan (MAL) API
+  db.ts         # SQLite database + schema
+  data-api.ts   # Unified data fetching layer
+  settings-cache.ts # Client-side settings cache
+bin/
+  nexanime.js   # CLI entry point
+```
+
+---
+
+## License
+
+[MIT](LICENSE) — Built by [Arnav Phulari](https://github.com/hackers-reality).

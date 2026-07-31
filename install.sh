@@ -1,9 +1,7 @@
 #!/bin/bash
 
 echo ""
-echo "  ╔═══════════════════════════════════════╗"
-echo "  ║       NexAnime Installer              ║"
-echo "  ╚═══════════════════════════════════════╝"
+echo "  ================ NexAnime Installer ================"
 echo ""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -80,13 +78,11 @@ else
 fi
 
 echo ""
-echo "  ╔═══════════════════════════════════════╗"
-echo "  ║   Installation Complete!              ║"
-echo "  ║                                       ║"
-echo "  ║   Open a NEW terminal and type:       ║"
-echo "  ║                                       ║"
-echo "  ║       nexanime                        ║"
-echo "  ║                                       ║"
-echo "  ║   to start NexAnime.                  ║"
-echo "  ╚═══════════════════════════════════════╝"
+echo "  =============== Installation Complete ================"
+echo ""
+echo "  Open a NEW terminal and type:"
+echo ""
+echo "      nexanime"
+echo ""
+echo "  to start NexAnime."
 echo ""
