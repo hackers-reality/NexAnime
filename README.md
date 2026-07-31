@@ -9,6 +9,17 @@ Self-hosted anime streaming and tracking platform. Browse, watch, track progress
 
 ---
 
+## Table of Contents
+
+- [Preview](#preview)
+- [Quick Install](#quick-install)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [License](#license)
+
+---
+
 ## Preview
 
 | | |
