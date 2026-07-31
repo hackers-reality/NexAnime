@@ -32,18 +32,25 @@ async function apiFetch<T>(path: string, timeoutMs = 10000): Promise<T | null> {
   const cachedVal = cached<T>(key);
   if (cachedVal !== null) return cachedVal;
 
-  try {
-    const res = await fetch(`${API_BASE}${path}`, {
-      headers: { 'User-Agent': UA, 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    setCache(key, json);
-    return json as T;
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        headers: { 'User-Agent': UA, 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!res.ok) {
+        if (attempt === 0) { await new Promise(r => setTimeout(r, 1000)); continue; }
+        return null;
+      }
+      const json = await res.json();
+      setCache(key, json);
+      return json as T;
+    } catch {
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 1000)); continue; }
+      return null;
+    }
   }
+  return null;
 }
 
 // ─── Raw API types from reanime.to ─────────────────────────

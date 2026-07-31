@@ -33,6 +33,13 @@ if ! npm run build; then
     exit 1
 fi
 
+# Verify production build was created
+if [ ! -f ".next/BUILD_ID" ]; then
+    echo "  [ERROR] Build completed but no production build was found."
+    echo "  Run 'npm run build' manually and check for errors."
+    exit 1
+fi
+
 echo ""
 echo "  [3/4] Creating nexanime command..."
 
@@ -61,8 +68,8 @@ elif [ -f "$HOME/.profile" ]; then
 fi
 
 if [ -n "$SHELL_CONFIG" ]; then
-    # Check if already added
-    if grep -q "$SCRIPT_DIR" "$SHELL_CONFIG" 2>/dev/null; then
+    # Check if already added (match as whole PATH entry, not substring)
+    if grep -qE "(^|:)\Q$SCRIPT_DIR\E(:|$)" "$SHELL_CONFIG" 2>/dev/null || grep -qF "export PATH=\"\$PATH:$SCRIPT_DIR\"" "$SHELL_CONFIG" 2>/dev/null; then
         echo "  NexAnime is already in your PATH."
     else
         echo "" >> "$SHELL_CONFIG"

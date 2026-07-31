@@ -16,6 +16,7 @@ interface VideoPlayerProps {
   introEnd?: number;
   outroStart?: number;
   outroEnd?: number;
+  onStreamError?: () => void;
 }
 
 function formatTime(sec: number): string {
@@ -35,6 +36,7 @@ export default function VideoPlayer({
   introEnd = 0,
   outroStart = 0,
   outroEnd = 0,
+  onStreamError,
 }: VideoPlayerProps) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -117,7 +119,11 @@ export default function VideoPlayer({
         if (data.fatal) {
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
           else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
-          else { hls.destroy(); setError('Fatal playback error occurred.'); }
+          else {
+            hls.destroy();
+            setError('Fatal playback error occurred.');
+            onStreamError?.();
+          }
         }
       });
       hlsRef.current = hls;
@@ -129,6 +135,7 @@ export default function VideoPlayer({
       if (autoPlayRef.current) video.play().catch(() => {});
     } else {
       setError('Your browser does not support HLS video playback.');
+      onStreamError?.();
     }
 
     return () => { hlsRef.current?.destroy(); hlsRef.current = null; };
@@ -203,7 +210,26 @@ export default function VideoPlayer({
     };
 
     video.addEventListener('timeupdate', onTimeUpdate);
-    return () => video.removeEventListener('timeupdate', onTimeUpdate);
+
+    // Final save on tab close / navigation — prevents losing last ~10s
+    const saveFinal = () => {
+      const t = video.currentTime;
+      const d = video.duration;
+      if (!d || isNaN(d) || t < 1) return;
+      navigator.sendBeacon('/api/progress', new Blob(
+        [JSON.stringify({ anilistId: animeId, episodeNumber, secondsWatched: Math.floor(t), durationSeconds: Math.floor(d) })],
+        { type: 'application/json' }
+      ));
+    };
+    window.addEventListener('beforeunload', saveFinal);
+    const onVisibilityChange = () => { if (document.visibilityState === 'hidden') saveFinal(); };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      video.removeEventListener('timeupdate', onTimeUpdate);
+      window.removeEventListener('beforeunload', saveFinal);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, [animeId, episodeNumber, isEmbed, introStart, introEnd, outroStart, outroEnd, autoSkip]);
 
   // ── Play state ─────────────────────────────────────

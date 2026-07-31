@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { getSettings } from '@/lib/settings-cache';
 import VideoPlayer from '@/components/player/VideoPlayer';
@@ -106,6 +106,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const streamErrorCountRef = useRef(0);
   const { toast } = useToast();
 
   const [watchlistStatus, setWatchlistStatus] = useState<string | null>(null);
@@ -250,6 +251,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
+    streamErrorCountRef.current = 0;
 
     if (!media.id) {
       setError('Invalid anime ID');
@@ -286,6 +288,19 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   }, [media.id, episodeNumber, isDub, videoQuality]);
 
   const activeSource = sources.find(s => s.adapterId === activeServerId);
+
+  // Auto-fallback: when stream fails, try next server (max 3 attempts)
+  const handleStreamError = useCallback(() => {
+    streamErrorCountRef.current += 1;
+    if (streamErrorCountRef.current > 3) return;
+    const currentIndex = sources.findIndex(s => s.adapterId === activeServerId);
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < sources.length) {
+      const nextServer = sources[nextIndex];
+      setActiveServerId(nextServer.adapterId);
+      toast(`Trying ${nextServer.sourceName}...`, 'info');
+    }
+  }, [sources, activeServerId, toast]);
 
   const nextAiring = media.nextAiringEpisode;
   let countdownText = '';
@@ -329,7 +344,9 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
   // ── Iframe postMessage progress tracking (Zoko + MegaPlay embeds) ──
   useEffect(() => {
     let lastSync = 0;
+    let lastKnownDuration = 0;
     const syncProgress = (currentTime: number, duration: number) => {
+      lastKnownDuration = duration;
       const now = Date.now();
       if (now - lastSync < 10000) return;
       lastSync = now;
@@ -345,14 +362,15 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
       }).catch(() => {});
     };
     const markComplete = () => {
+      const d = lastKnownDuration > 0 ? Math.floor(lastKnownDuration) : 0;
       fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           anilistId: media.id,
           episodeNumber,
-          secondsWatched: 99999,
-          durationSeconds: 99999,
+          secondsWatched: d > 0 ? d : 99999,
+          durationSeconds: d > 0 ? d : 99999,
         }),
       }).catch(() => {});
       // Auto-advance to next episode only if auto-play is enabled
@@ -491,6 +509,7 @@ export default function WatchClient({ media, episodeNumber }: WatchClientProps) 
                 animeId={media.id}
                 episodeNumber={episodeNumber}
                 totalEpisodes={totalEpisodes}
+                onStreamError={handleStreamError}
               />
               {showAutoAdvance && hasNextEp && (
                 <div className={styles.autoAdvanceBanner} role="status" aria-live="polite">

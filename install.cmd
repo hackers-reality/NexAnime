@@ -41,6 +41,14 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: Verify production build was created
+if not exist ".next\BUILD_ID" (
+    echo   [ERROR] Build completed but no production build was found.
+    echo   Run "npm run build" manually and check for errors.
+    pause
+    exit /b 1
+)
+
 echo.
 echo   [3/4] Creating nexanime command...
 
@@ -54,19 +62,48 @@ echo   [3/4] Creating nexanime command...
 echo.
 echo   [4/4] Adding NexAnime to your PATH...
 
-:: Use PowerShell to safely update user PATH (avoids registry parsing issues)
 set "NEXANIME_DIR=%~dp0"
 set "NEXANIME_DIR=%NEXANIME_DIR:~0,-1%"
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$currentPath = [Environment]::GetEnvironmentVariable('Path', 'User'); ^
-   if ($currentPath -like '*%NEXANIME_DIR%*') { ^
-     Write-Host '   NexAnime is already in your PATH.' ^
-   } else { ^
-     $newPath = if ($currentPath) { $currentPath + ';%NEXANIME_DIR%' } else { '%NEXANIME_DIR%' }; ^
-     [Environment]::SetEnvironmentVariable('Path', $newPath, 'User'); ^
-     Write-Host '   NexAnime added to PATH.' ^
-   }"
+:: Write PowerShell script to temp file using individual echo lines (avoids CMD block parsing issues)
+set "PS_SCRIPT=%TEMP%\nexanime_path.ps1"
+
+echo param([string]$Dir) > "%PS_SCRIPT%"
+echo $currentPath = [Environment]::GetEnvironmentVariable('Path', 'User') >> "%PS_SCRIPT%"
+echo if ($currentPath -like "*$Dir*") { >> "%PS_SCRIPT%"
+echo     Write-Host '   NexAnime is already in your PATH.' >> "%PS_SCRIPT%"
+echo } else { >> "%PS_SCRIPT%"
+echo     if ($currentPath) { >> "%PS_SCRIPT%"
+echo         $newPath = $currentPath + ';' + $Dir >> "%PS_SCRIPT%"
+echo     } else { >> "%PS_SCRIPT%"
+echo         $newPath = $Dir >> "%PS_SCRIPT%"
+echo     } >> "%PS_SCRIPT%"
+echo     try { >> "%PS_SCRIPT%"
+echo         [Environment]::SetEnvironmentVariable('Path', $newPath, 'User') >> "%PS_SCRIPT%"
+echo         Write-Host '   NexAnime added to PATH.' >> "%PS_SCRIPT%"
+echo     } catch { >> "%PS_SCRIPT%"
+echo         Write-Host '   [ERROR] Failed to update PATH:' >> "%PS_SCRIPT%"
+echo         Write-Host $_.Exception.Message >> "%PS_SCRIPT%"
+echo         exit 1 >> "%PS_SCRIPT%"
+echo     } >> "%PS_SCRIPT%"
+echo } >> "%PS_SCRIPT%"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS_SCRIPT%" -Dir "%NEXANIME_DIR%"
+set "PS_EXIT=%errorlevel%"
+
+del "%PS_SCRIPT%" >nul 2>&1
+
+if %PS_EXIT% neq 0 (
+    echo.
+    echo   [WARNING] PATH setup encountered an issue.
+    echo   You can manually add this directory to your PATH:
+    echo     %NEXANIME_DIR%
+    echo.
+    echo   nexanime.cmd was created and works from the project directory.
+    echo.
+    pause
+    exit /b 1
+)
 
 echo.
 echo   ================= Installation Complete =================
@@ -74,7 +111,7 @@ echo.
 echo   Close this window and open a NEW terminal, then type:
 echo.
 echo       nexanime
-echo
+echo.
 echo   to start NexAnime.
 echo.
 pause

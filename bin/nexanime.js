@@ -22,12 +22,18 @@ if (!fs.existsSync(path.join(projectDir, 'package.json'))) {
 
 // ── Ensure build exists ────────────────────────────────
 const nextDir = path.join(projectDir, '.next');
-if (!fs.existsSync(nextDir)) {
-  console.log('\n  First run detected — building NexAnime...\n');
+const buildIdFile = path.join(nextDir, 'BUILD_ID');
+if (!fs.existsSync(nextDir) || !fs.existsSync(buildIdFile)) {
+  console.log('\n  Building NexAnime...\n');
   try {
     execSync('npm run build', { cwd: projectDir, stdio: 'inherit' });
   } catch {
     console.error('\n  Build failed. Run "npm run build" manually and try again.\n');
+    process.exit(1);
+  }
+  // Verify build succeeded
+  if (!fs.existsSync(buildIdFile)) {
+    console.error('\n  Build completed but no production build was found.\n');
     process.exit(1);
   }
 }

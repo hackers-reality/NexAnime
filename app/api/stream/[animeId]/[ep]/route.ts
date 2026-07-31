@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADAPTERS } from '@/scraper/adapters';
 import { execute, query, queryOne } from '@/lib/db';
+import { recordSuccess, recordFailure, sortByHealth } from '@/lib/provider-health';
+import { logStream } from '@/lib/logger';
 
 interface RouteParams {
   params: Promise<{ animeId: string; ep: string }>;
 }
 
-// Fetch cached episode metadata (title, thumbnail) from anime_cache.episodes_data
 async function getEpisodeMeta(anilistId: number, epNum: number): Promise<{ title: string | null; thumbnail: string | null }> {
   try {
     const row = await queryOne<{ episodes_data: string }>(
@@ -32,18 +33,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
     }
 
-  const isDub = request.nextUrl.searchParams.get('dub') === 'true';
-  const all = request.nextUrl.searchParams.get('all') === 'true';
-  const quality = request.nextUrl.searchParams.get('quality');
+    const isDub = request.nextUrl.searchParams.get('dub') === 'true';
+    const all = request.nextUrl.searchParams.get('all') === 'true';
+    const isDubInt = isDub ? 1 : 0;
 
-  if (quality) {
-    // Quality preference noted — adapters do not support quality selection yet
-  }
+    const epMeta = await getEpisodeMeta(anilistId, episodeNumber);
 
-  // Look up episode metadata for cache enrichment
-  const epMeta = await getEpisodeMeta(anilistId, episodeNumber);
-
-    // Check episode_sources cache first
+    // Check episode_sources cache, filtered by SUB/DUB
     const cachedSources = await query<{
       source_adapter: string;
       stream_url: string;
@@ -52,43 +48,56 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }>(
       `SELECT source_adapter, stream_url, subtitle_url, resolved_at
        FROM episode_sources
-       WHERE anilist_id = ? AND episode_number = ?
+       WHERE anilist_id = ? AND episode_number = ? AND is_dub = ?
        AND resolved_at >= datetime('now', '-24 hours')
        ORDER BY resolved_at DESC`,
-      [anilistId, episodeNumber]
+      [anilistId, episodeNumber, isDubInt]
     );
 
     const knownAdapters = new Set(ADAPTERS.map(a => a.id));
+    const adapterNameMap = Object.fromEntries(ADAPTERS.map(a => [a.id, a.name]));
     const validCached = cachedSources.filter(s => knownAdapters.has(s.source_adapter));
 
     if (validCached.length > 0 && !all) {
       return NextResponse.json({
         sources: validCached.map(s => ({
           adapterId: s.source_adapter,
-          sourceName: s.source_adapter,
+          sourceName: adapterNameMap[s.source_adapter] || s.source_adapter,
           streamUrl: s.stream_url,
           subtitleUrl: s.subtitle_url,
         })),
       });
     }
 
-    // Try primary adapters (RapidStream + Nova + MegaPlay) first, then fallbacks in parallel
-    const primaryAdapters = ADAPTERS.filter(a => a.id === 'rapidstream' || a.id === 'nova' || a.id === 'megaplay');
-    const fallbackAdapters = ADAPTERS.filter(a => a.id !== 'rapidstream' && a.id !== 'nova' && a.id !== 'megaplay');
+    // Sort adapters by health score (healthiest first)
+    const sortedPrimary = sortByHealth(
+      ADAPTERS.filter(a => a.id === 'rapidstream' || a.id === 'nova' || a.id === 'megaplay').map(a => a.id)
+    );
+    const sortedFallback = sortByHealth(
+      ADAPTERS.filter(a => a.id !== 'rapidstream' && a.id !== 'nova' && a.id !== 'megaplay').map(a => a.id)
+    );
+    const adapterMap = Object.fromEntries(ADAPTERS.map(a => [a.id, a]));
 
     const sources: { adapterId: string; sourceName: string; streamUrl: string; subtitleUrl: string | null }[] = [];
 
-    // Try primary adapters in parallel (fast — just HEAD requests)
+    // Try primary adapters in health order
     const primaryResults = await Promise.allSettled(
-      primaryAdapters.map(async (adapter) => {
+      sortedPrimary.map(async (adapterId) => {
+        const adapter = adapterMap[adapterId];
+        const start = Date.now();
         const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
+        const latency = Date.now() - start;
         if (source) {
+          recordSuccess(adapterId, latency);
+          logStream(`${adapterNameMap[adapterId] || adapterId} resolved ep ${episodeNumber} in ${latency}ms`);
           await execute(
-            `INSERT OR IGNORE INTO episode_sources
-             (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-            [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
+            `INSERT OR REPLACE INTO episode_sources
+             (anilist_id, episode_number, is_dub, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+            [anilistId, episodeNumber, isDubInt, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
           );
+        } else {
+          recordFailure(adapterId);
         }
         return source;
       })
@@ -96,22 +105,30 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     for (const result of primaryResults) {
       if (result.status === 'fulfilled' && result.value) {
-        sources.push(result.value);
+        sources.push({
+          ...result.value,
+          sourceName: adapterNameMap[result.value.adapterId] || result.value.adapterId,
+        });
       }
     }
 
-    // If no primary sources found or all requested, try fallbacks
     if (sources.length === 0 || all) {
       const fallbackResults = await Promise.allSettled(
-        fallbackAdapters.map(async (adapter) => {
+        sortedFallback.map(async (adapterId) => {
+          const adapter = adapterMap[adapterId];
+          const start = Date.now();
           const source = await adapter.resolveEpisodeSource(anilistId, episodeNumber, isDub);
+          const latency = Date.now() - start;
           if (source) {
+            recordSuccess(adapterId, latency);
             await execute(
-              `INSERT OR IGNORE INTO episode_sources
-               (anilist_id, episode_number, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-              [anilistId, episodeNumber, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
+              `INSERT OR REPLACE INTO episode_sources
+               (anilist_id, episode_number, is_dub, source_adapter, stream_url, subtitle_url, title, thumbnail, resolved_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+              [anilistId, episodeNumber, isDubInt, source.adapterId, source.streamUrl, source.subtitleUrl, epMeta.title, epMeta.thumbnail]
             );
+          } else {
+            recordFailure(adapterId);
           }
           return source;
         })
@@ -119,11 +136,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
       for (const result of fallbackResults) {
         if (result.status === 'fulfilled' && result.value) {
-          sources.push(result.value);
+          sources.push({
+            ...result.value,
+            sourceName: adapterNameMap[result.value.adapterId] || result.value.adapterId,
+          });
         }
       }
     }
 
+    logStream(`ep ${episodeNumber}: ${sources.length} source(s) found`);
     return NextResponse.json({ sources });
   } catch (error) {
     console.error('Stream resolution API error:', error);

@@ -181,6 +181,63 @@ export default function AccountSettingsPage() {
               Reset Local Data
             </button>
           </div>
+
+          <div className={styles.backupSection}>
+            <h4 className={styles.dangerTitle}>Backup & Restore</h4>
+            <p className={styles.dangerDesc}>
+              Export your watchlist, progress, and settings as a JSON file. Auto-backups run every 5 minutes.
+            </p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/backup');
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `nexanime-backup-${new Date().toISOString().slice(0, 10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast('Backup downloaded.', 'success');
+                  } catch { toast('Backup failed.', 'error'); }
+                }}
+                className={styles.saveBtn}
+              >
+                Export Backup
+              </button>
+              <label className={styles.saveBtn} style={{ cursor: 'pointer', textAlign: 'center' }}>
+                Import Backup
+                <input
+                  type="file"
+                  accept=".json"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    if (data.format !== 'nexanime-export' || !data.version) { toast('Invalid backup file.', 'error'); return; }
+                      if (!window.confirm('This will overwrite all current data. Continue?')) return;
+                      const res = await fetch('/api/restore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: text,
+                      });
+                      const result = await res.json();
+                      if (result.success) {
+                        toast(`Restored ${result.restored} records.`, 'success');
+                        window.location.reload();
+                      } else {
+                        toast(result.error || 'Restore failed.', 'error');
+                      }
+                    } catch { toast('Failed to read backup file.', 'error'); }
+                  }}
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className={styles.rightCol}>

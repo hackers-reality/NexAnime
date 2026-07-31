@@ -263,7 +263,8 @@ export async function getHianimeStreamUrls(
 
 // ─── Mappers ──────────────────────────────────────────────
 
-const malIdCache = new Map<number, number>();
+const malIdCache = new Map<number, { id: number; at: number }>();
+const MAL_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 async function mapAnime(anime: HianimeAnime): Promise<AniListMedia | null> {
   if (!anime) return null;
@@ -271,11 +272,11 @@ async function mapAnime(anime: HianimeAnime): Promise<AniListMedia | null> {
   let id = extractAnilistId(anime.image);
   if (!id && anime.mal_id) {
     const cached = malIdCache.get(anime.mal_id);
-    if (cached) {
-      id = cached;
+    if (cached && Date.now() - cached.at < MAL_CACHE_TTL) {
+      id = cached.id;
     } else {
       id = await getAnilistIdByMalId(anime.mal_id);
-      if (id) malIdCache.set(anime.mal_id, id);
+      if (id) malIdCache.set(anime.mal_id, { id, at: Date.now() });
     }
   }
   if (!id) id = hashStringToNumber(anime.title);

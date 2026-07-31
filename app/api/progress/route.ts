@@ -21,30 +21,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    const safeSeconds = secondsWatched ?? 0;
-    const safeDuration = durationSeconds ?? 0;
+    const safeSeconds = Math.max(0, Math.floor(secondsWatched ?? 0));
+    const safeDuration = Math.max(0, Math.floor(durationSeconds ?? 0));
 
-    // Check if progress already exists
+    // Stale-request protection: only update if new seconds >= current saved seconds
+    // This prevents an old in-flight request from overwriting newer progress
     const existing = await db.execute({
-      sql: 'SELECT id FROM watch_progress WHERE anilist_id = ? AND episode_number = ?',
+      sql: 'SELECT seconds_watched FROM watch_progress WHERE anilist_id = ? AND episode_number = ?',
       args: [anilistId, episodeNumber]
     });
 
     if (existing.rows.length > 0) {
+      const currentSeconds = Number(existing.rows[0].seconds_watched) || 0;
+      if (safeSeconds < currentSeconds) {
+        // Stale request — skip write but still sync watchlist
+        await db.execute({
+          sql: `
+            UPDATE watchlist
+            SET episode_watched = (
+              SELECT COALESCE(MAX(episode_number), 0)
+              FROM watch_progress
+              WHERE anilist_id = ?
+            ),
+            updated_at = datetime('now')
+            WHERE anilist_id = ?
+          `,
+          args: [anilistId, anilistId]
+        });
+        return NextResponse.json({ success: true, skipped: true });
+      }
       await db.execute({
-        sql: `
-          UPDATE watch_progress 
-          SET seconds_watched = ?, duration_seconds = ?, last_watched_at = datetime('now')
-          WHERE anilist_id = ? AND episode_number = ?
-        `,
+        sql: `UPDATE watch_progress SET seconds_watched = ?, duration_seconds = ?, last_watched_at = datetime('now') WHERE anilist_id = ? AND episode_number = ?`,
         args: [safeSeconds, safeDuration, anilistId, episodeNumber]
       });
     } else {
       await db.execute({
-        sql: `
-          INSERT INTO watch_progress (anilist_id, episode_number, seconds_watched, duration_seconds, last_watched_at)
-          VALUES (?, ?, ?, ?, datetime('now'))
-        `,
+        sql: `INSERT INTO watch_progress (anilist_id, episode_number, seconds_watched, duration_seconds, last_watched_at) VALUES (?, ?, ?, ?, datetime('now'))`,
         args: [anilistId, episodeNumber, safeSeconds, safeDuration]
       });
     }
@@ -63,6 +75,9 @@ export async function POST(req: NextRequest) {
       `,
       args: [anilistId, anilistId]
     });
+
+    // Fire-and-forget auto-backup (5min cooldown handled inside)
+    fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/backup`, { method: 'POST' }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (err) {

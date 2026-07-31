@@ -74,6 +74,7 @@ async function anilistFetch<T>(
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ query, variables }),
+        signal: AbortSignal.timeout(15000),
       });
 
       releaseRateLimit();

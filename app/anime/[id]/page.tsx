@@ -7,8 +7,25 @@ import type { AniListMedia } from '@/types';
 import Header from '@/components/shared/Header';
 import AnimeDetailClient from './AnimeDetailClient';
 
-async function getMediaSafe(anilistId: number) {
-  try { return await getMediaDetail(anilistId); } catch { return null; }
+async function getMediaSafe(anilistId: number): Promise<{ media: AniListMedia | null; fromCache: boolean }> {
+  // Try live fetch first
+  try {
+    const media = await getMediaDetail(anilistId);
+    if (media) return { media, fromCache: false };
+  } catch {}
+
+  // Fallback to DB cache
+  try {
+    const cached = await queryOne<{ full_data: string }>(
+      'SELECT full_data FROM anime_cache WHERE anilist_id = ? AND full_data IS NOT NULL',
+      [anilistId]
+    );
+    if (cached?.full_data) {
+      return { media: JSON.parse(cached.full_data) as AniListMedia, fromCache: true };
+    }
+  } catch {}
+
+  return { media: null, fromCache: false };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -53,7 +70,7 @@ export default async function AnimeDetailPage({ params }: PageProps) {
   const anilistId = parseInt(id);
   if (isNaN(anilistId)) return notFound();
 
-  const media = await getMediaSafe(anilistId);
+  const { media, fromCache } = await getMediaSafe(anilistId);
   if (!media) return notFound();
 
   // Fetch recommendations in parallel (5s timeout)
@@ -65,6 +82,11 @@ export default async function AnimeDetailPage({ params }: PageProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Header />
+      {fromCache && (
+        <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', color: '#fbbf24', padding: '10px 16px', fontSize: '13px', textAlign: 'center' }}>
+          Showing cached data — unable to refresh from source
+        </div>
+      )}
       <AnimeDetailClient media={media} />
     </div>
   );
