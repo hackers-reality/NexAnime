@@ -56,13 +56,23 @@ export default async function ProfilePage() {
     'SELECT SUM(seconds_watched) / 60 as total_minutes FROM watch_progress'
   );
   const finishedResult = await queryOne<{ finished_count: number }>(
-    "SELECT COUNT(*) as finished_count FROM watchlist WHERE list_status = 'finished'"
+    "SELECT COUNT(*) as finished_count FROM watchlist WHERE list_status = 'completed'"
   );
   const totalResult = await queryOne<{ total_count: number }>(
     'SELECT COUNT(*) as total_count FROM watchlist'
   );
   const episodesResult = await queryOne<{ total_episodes: number }>(
-    'SELECT COUNT(DISTINCT anilist_id || \'-\' || episode_number) as total_episodes FROM watch_progress WHERE seconds_watched > 0'
+    `SELECT COALESCE(SUM(
+      CASE
+        WHEN w.list_status = 'completed' THEN
+          COALESCE(c.episode_count, w.episode_watched, 0) * (1 + COALESCE(w.total_rewatches, 0))
+        ELSE
+          COALESCE(w.episode_watched, 0) * (1 + COALESCE(w.total_rewatches, 0))
+      END
+    ), 0) as total_episodes
+    FROM watchlist w
+    LEFT JOIN anime_cache c ON w.anilist_id = c.anilist_id
+    WHERE COALESCE(w.episode_watched, 0) > 0 OR w.list_status = 'completed'`
   );
 
   const rawMinutes = Math.floor(minutesResult?.total_minutes || 0);

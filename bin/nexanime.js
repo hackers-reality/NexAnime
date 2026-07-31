@@ -23,15 +23,25 @@ if (!fs.existsSync(path.join(projectDir, 'package.json'))) {
 // ── Ensure build exists ────────────────────────────────
 const nextDir = path.join(projectDir, '.next');
 const buildIdFile = path.join(nextDir, 'BUILD_ID');
-if (!fs.existsSync(nextDir) || !fs.existsSync(buildIdFile)) {
-  console.log('\n  Building NexAnime...\n');
+const devDir = path.join(nextDir, 'dev');
+
+// Detect stale dev artifacts — they corrupt production builds
+const hasStaleDev = fs.existsSync(devDir);
+const hasBuild = fs.existsSync(nextDir) && fs.existsSync(buildIdFile);
+
+if (!hasBuild || hasStaleDev) {
+  if (hasStaleDev) {
+    console.log('\n  Stale dev cache detected — cleaning before build...\n');
+    try { fs.rmSync(nextDir, { recursive: true, force: true }); } catch {}
+  } else {
+    console.log('\n  Building NexAnime...\n');
+  }
   try {
     execSync('npm run build', { cwd: projectDir, stdio: 'inherit' });
   } catch {
     console.error('\n  Build failed. Run "npm run build" manually and try again.\n');
     process.exit(1);
   }
-  // Verify build succeeded
   if (!fs.existsSync(buildIdFile)) {
     console.error('\n  Build completed but no production build was found.\n');
     process.exit(1);
@@ -58,23 +68,33 @@ server.stderr?.pipe(process.stderr);
 // ── Open browser when server is ready ──────────────────
 let attempts = 0;
 const maxAttempts = 30;
+let ready = false; // one-shot guard — only the FIRST success proceeds
 
-const checkReady = setInterval(() => {
+function checkServer() {
+  if (ready) return; // another callback already handled it
   http
     .get(url, (res) => {
+      res.resume(); // drain response body
+      if (ready) return; // double-check after async gap
       if (res.statusCode) {
-        clearInterval(checkReady);
+        ready = true; // atomically mark as ready — all other callbacks become no-ops
         console.log(`\n  NexAnime is running at ${url}\n`);
         openBrowser(url);
       }
     })
     .on('error', () => {
+      if (ready) return;
       if (++attempts > maxAttempts) {
-        clearInterval(checkReady);
+        ready = true; // stop all further checks
         console.log(`\n  Server may still be starting. Open ${url} in your browser.\n`);
+        return;
       }
+      setTimeout(checkServer, 1000);
     });
-}, 1000);
+}
+
+// Start the first check after 1s — no overlap since each check completes before scheduling next
+setTimeout(checkServer, 1000);
 
 function openBrowser(targetUrl) {
   try {
@@ -96,7 +116,7 @@ function openBrowser(targetUrl) {
 
 // ── Graceful shutdown ──────────────────────────────────
 server.on('close', (code) => {
-  clearInterval(checkReady);
+  ready = true; // stop any pending readiness checks
   process.exit(code ?? 0);
 });
 

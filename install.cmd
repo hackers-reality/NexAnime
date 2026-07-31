@@ -34,6 +34,13 @@ if %errorlevel% neq 0 (
 
 echo.
 echo   [2/4] Building NexAnime (this may take a minute)...
+
+:: Clean stale dev artifacts that corrupt production builds
+if exist ".next\dev" (
+    echo   Stale dev cache detected — cleaning before build...
+    rmdir /s /q ".next" >nul 2>&1
+)
+
 call npm run build
 if %errorlevel% neq 0 (
     echo   [ERROR] Build failed.

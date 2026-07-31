@@ -93,9 +93,10 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
   const totalThisWeek = initialSchedule.length;
 
   return (
-    <div className={styles.page}>
+    <>
       <Header />
-      <main className={styles.main}>
+      <div className={styles.page}>
+        <main className={styles.main}>
         <div className={styles.header}>
         <h1 className={styles.title}>Airing Schedule</h1>
         <p className={styles.subtitle}>{totalThisWeek} episodes airing this week</p>
@@ -162,5 +163,6 @@ export default function ScheduleClient({ initialSchedule }: { initialSchedule: A
       </div>
       </main>
     </div>
+    </>
   );
 }

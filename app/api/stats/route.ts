@@ -24,9 +24,17 @@ export async function GET() {
         FROM watch_progress
       `),
       db.execute(`
-        SELECT COUNT(DISTINCT anilist_id || '-' || episode_number) as total_episodes_watched
-        FROM watch_progress
-        WHERE seconds_watched > 0
+        SELECT COALESCE(SUM(
+          CASE
+            WHEN w.list_status = 'completed' THEN
+              COALESCE(c.episode_count, w.episode_watched, 0) * (1 + COALESCE(w.total_rewatches, 0))
+            ELSE
+              COALESCE(w.episode_watched, 0) * (1 + COALESCE(w.total_rewatches, 0))
+          END
+        ), 0) as total_episodes_watched
+        FROM watchlist w
+        LEFT JOIN anime_cache c ON w.anilist_id = c.anilist_id
+        WHERE COALESCE(w.episode_watched, 0) > 0 OR w.list_status = 'completed'
       `),
       db.execute(`
         SELECT 
